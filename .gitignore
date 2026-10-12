@@ -1,0 +1,27 @@
+# Frontend dependencies and build output
+node_modules/
+dist/
+.npm-cache/
+
+# Python environments and generated caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Bundles, archives and output directories
+*.zip
+outputs/
+dist/
+
+# Runtime-only data and model artifacts. Rebuild with backend/train_model.py.
+backend/data/raw/
+backend/artifacts/*.joblib
+backend/artifacts/*.json
+backend/runtime/
+
+# Editor / operating-system clutter
+.vscode/
+.DS_Store
+Thumbs.db
+

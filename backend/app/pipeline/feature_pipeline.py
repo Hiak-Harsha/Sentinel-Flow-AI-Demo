@@ -1,17 +1,15 @@
-"""Streaming window feature pipeline for Sentinel Flow v2.
-
-Ingests server-measured TrafficRecords directly from TrafficLogger, maintains per-identity
-rolling sliding windows (5s, 30s, 5min), and computes statistical & behavioural feature vectors.
-"""
+"""Streaming sliding-window feature calculation pipeline for Sentinel Flow v2."""
 
 from __future__ import annotations
 
 import logging
 import math
 import time
-from collections import Counter, defaultdict, deque
+from collections import defaultdict, deque
 from datetime import datetime, timezone
 from typing import Any, Callable
+
+import numpy as np
 
 from app.pipeline.feature_store import FeatureStore, IdentityFeatureVector
 from app.proxy.traffic_logger import TrafficLogger, TrafficRecord
@@ -23,12 +21,14 @@ def _iso_now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def _calculate_entropy(items: list[str]) -> float:
-    """Calculate Shannon entropy (in bits) over a collection of discrete items."""
-    if not items:
+def _calculate_entropy(paths: list[str]) -> float:
+    """Calculate Shannon entropy (in bits) over a sequence of requested path strings."""
+    if not paths:
         return 0.0
-    total = len(items)
-    counts = Counter(items)
+    counts: dict[str, int] = defaultdict(int)
+    for p in paths:
+        counts[p] += 1
+    total = len(paths)
     entropy = 0.0
     for count in counts.values():
         p = count / total
@@ -38,15 +38,11 @@ def _calculate_entropy(items: list[str]) -> float:
 
 
 class FeaturePipeline:
-    """Streaming window processor that calculates behavioural feature vectors."""
+    """Consumes TrafficRecords and computes sliding behavioural feature vectors."""
 
-    def __init__(
-        self,
-        traffic_logger: TrafficLogger,
-        feature_store: FeatureStore | None = None,
-    ) -> None:
+    def __init__(self, traffic_logger: TrafficLogger, feature_store: FeatureStore | None = None) -> None:
         self.traffic_logger = traffic_logger
-        self.store = feature_store or FeatureStore()
+        self.store = feature_store if feature_store is not None else FeatureStore()
 
         # Sliding window queues per identity: stores (timestamp_epoch, TrafficRecord)
         self._windows_5m: dict[str, deque[TrafficRecord]] = defaultdict(deque)
@@ -65,7 +61,7 @@ class FeaturePipeline:
         self._listeners.append(callback)
 
     def on_traffic_record(self, record: TrafficRecord) -> None:
-        """Callback invoked whenever the reverse proxy logs a request."""
+        """Callback invoked whenever the reverse proxy or lab target logs a request."""
         now = record.timestamp_epoch
         identity_id = record.identity_id
 
@@ -120,9 +116,11 @@ class FeaturePipeline:
         # Filter windows
         cutoff_5s = now - 5.0
         cutoff_30s = now - 30.0
+        cutoff_10s = now - 10.0
 
         records_5s = [r for r in records_5m if r.timestamp_epoch >= cutoff_5s]
         records_30s = [r for r in records_5m if r.timestamp_epoch >= cutoff_30s]
+        records_10s = [r for r in records_5m if r.timestamp_epoch >= cutoff_10s]
 
         # Counts & Rates
         count_5s = len(records_5s)
@@ -152,6 +150,53 @@ class FeaturePipeline:
         errors_5m = sum(1 for r in records_5m if r.status_code >= 400)
         error_ratio_5m = round(errors_5m / count_5m, 4) if count_5m > 0 else 0.0
 
+        # Specific Security Evidence Counters:
+        # 1. Genuine Auth Failures (status 401 or login failure)
+        auth_failures_30s = sum(
+            1 for r in records_30s
+            if r.status_code == 401
+            or (r.path.endswith("/login") and r.status_code in (401, 403))
+            or "/webhook/auth.failure" in r.path
+            or "/webhook/auth_failed" in r.path
+            or (r.path == "/lab-target/auth/login" and r.status_code != 200)
+        )
+
+        # 2. Distinct Ports Scanned in 10s
+        distinct_ports = set()
+        for r in records_10s:
+            if "port://" in r.path:
+                try:
+                    port_num = int(r.path.split("port://")[-1].split("/")[0])
+                    distinct_ports.add(port_num)
+                except ValueError:
+                    pass
+            elif "port=" in r.query_string:
+                for param in r.query_string.split("&"):
+                    if param.startswith("port="):
+                        try:
+                            distinct_ports.add(int(param.split("=")[1]))
+                        except ValueError:
+                            pass
+        distinct_ports_10s = len(distinct_ports)
+
+        # 3. Safe Canary Exploit Probes in 30s
+        canary_hits_30s = sum(
+            1 for r in records_30s
+            if "/canary/" in r.path
+            or "/webhook/canary" in r.path
+            or any(sqli_term in r.query_string.lower() for sqli_term in ("%27", "1=1", "union", "script"))
+            or "/etc/passwd" in r.path
+            or ".env" in r.path
+        )
+
+        # 4. Latency p95 in 30s
+        latencies = [r.latency_ms for r in records_30s if r.latency_ms > 0]
+        p95_lat = float(np.percentile(latencies, 95)) if latencies else 0.0
+
+        # 5. Target error ratio (5xx)
+        target_5xx = sum(1 for r in records_30s if r.status_code >= 500)
+        target_error_ratio = round(target_5xx / count_30s, 4) if count_30s > 0 else 0.0
+
         # Inter-request intervals in 30s window (ms)
         intervals_ms: list[float] = []
         if len(records_30s) >= 2:
@@ -178,7 +223,6 @@ class FeaturePipeline:
         current_fp = records_5m[-1].fingerprint_hash if records_5m and records_5m[-1].fingerprint_hash else None
         if current_fp and current_fp in self._fingerprint_identities:
             cutoff_5m = now - 300.0
-            cutoff_30s = now - 30.0
             shared_identities = set(
                 user_id
                 for ts, user_id in self._fingerprint_identities[current_fp]
@@ -186,8 +230,6 @@ class FeaturePipeline:
             )
             cohort_size = max(1, len(shared_identities))
 
-            # Decouple co-presence from attack: only count other identities that ALSO
-            # exhibit failed requests / auth errors (error_ratio_30s >= 0.3)
             suspicious_identities = {identity_id}
             for user_id in shared_identities:
                 if user_id == identity_id:
@@ -197,7 +239,7 @@ class FeaturePipeline:
                     if r.timestamp_epoch >= cutoff_30s
                 ]
                 if other_recs:
-                    other_err = sum(1 for r in other_recs if r.status_code >= 400) / len(other_recs)
+                    other_err = sum(1 for r in other_recs if r.status_code == 401) / len(other_recs)
                     if other_err >= 0.3:
                         suspicious_identities.add(user_id)
             account_churn = len(suspicious_identities)
@@ -222,6 +264,11 @@ class FeaturePipeline:
             error_ratio_5m=error_ratio_5m,
             inter_request_interval_mean_30s=mean_interval,
             inter_request_interval_std_30s=std_interval,
+            auth_failures_30s=auth_failures_30s,
+            distinct_ports_10s=distinct_ports_10s,
+            canary_hits_30s=canary_hits_30s,
+            p95_latency_30s=round(p95_lat, 2),
+            target_error_ratio_30s=target_error_ratio,
             fingerprint_churn_5m=fp_churn,
             account_churn_5m=account_churn,
             cohort_size_5m=cohort_size,

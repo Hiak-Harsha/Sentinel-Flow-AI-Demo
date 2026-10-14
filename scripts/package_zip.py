@@ -38,6 +38,7 @@ EXCLUDE_EXTS = {
 
 EXCLUDE_FILES = {
     "sentinel_flow.db",
+    "evidence.db",
     "package_zip.py",
 }
 

@@ -1,4 +1,4 @@
-"""Webhook receiver for target application events.
+"""Webhook receiver for target application events with cryptographic authentication and replay protection.
 
 Receives structured application-level security and audit events from the target application
 (e.g., login failure, order checkout, permission changes, rate limit triggers) and records
@@ -7,12 +7,15 @@ them alongside reverse-proxy telemetry.
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import logging
 import time
 from typing import Any
-from fastapi import APIRouter, HTTPException, Request, Response, status
+from fastapi import APIRouter, Header, HTTPException, Request, Response, status
 from pydantic import BaseModel, Field
 
+from app.config import WEBHOOK_SHARED_SECRET, is_private_or_loopback_host
 from app.proxy.traffic_logger import TrafficLogger
 
 logger = logging.getLogger("sentinel_flow.proxy.webhook_receiver")
@@ -41,9 +44,61 @@ def set_webhook_traffic_logger(logger_instance: TrafficLogger) -> None:
     _traffic_logger_instance = logger_instance
 
 
+def verify_webhook_signature(body_bytes: bytes, signature: str | None, timestamp_header: str | None) -> None:
+    """Verify HMAC-SHA256 signature and prevent replay attacks."""
+    if not signature:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Missing required X-Sentinel-Signature header.",
+        )
+
+    # Replay protection: check timestamp within 60s
+    if timestamp_header:
+        try:
+            req_time = float(timestamp_header)
+            if abs(time.time() - req_time) > 60.0:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Webhook request expired: clock skew or replay attack detected.",
+                )
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid X-Sentinel-Timestamp header format.",
+            )
+
+    # Calculate expected HMAC (support both raw concatenation and dot-delimited)
+    msg1 = f"{timestamp_header or ''}".encode("utf-8") + body_bytes
+    msg2 = f"{timestamp_header or ''}.".encode("utf-8") + body_bytes
+    sig1 = hmac.new(WEBHOOK_SHARED_SECRET.encode("utf-8"), msg1, hashlib.sha256).hexdigest()
+    sig2 = hmac.new(WEBHOOK_SHARED_SECRET.encode("utf-8"), msg2, hashlib.sha256).hexdigest()
+
+    if not (hmac.compare_digest(sig1, signature) or hmac.compare_digest(sig2, signature)):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid webhook HMAC signature.",
+        )
+
+
 @router.post("/target-event", status_code=status.HTTP_202_ACCEPTED)
-async def receive_target_event(event: TargetEventPayload, request: Request) -> dict[str, Any]:
-    """Receive an application-level event from the target app."""
+async def receive_target_event(
+    event: TargetEventPayload,
+    request: Request,
+    x_sentinel_signature: str | None = Header(default=None),
+    x_sentinel_timestamp: str | None = Header(default=None),
+) -> dict[str, Any]:
+    """Receive an authenticated application-level event from the target app."""
+    # Check sender host is private or loopback
+    sender_host = request.client.host if request.client else "127.0.0.1"
+    if not is_private_or_loopback_host(sender_host):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Webhook events accepted only from private lab networks.",
+        )
+
+    body_bytes = await request.body()
+    verify_webhook_signature(body_bytes, x_sentinel_signature, x_sentinel_timestamp)
+
     ts = event.timestamp or time.time()
     event_dict = {
         "event_type": event.event_type,
@@ -52,7 +107,7 @@ async def receive_target_event(event: TargetEventPayload, request: Request) -> d
         "path": event.path,
         "status_code": event.status_code,
         "metadata": event.metadata,
-        "source_ip": request.client.host if request.client else "unknown",
+        "source_ip": sender_host,
     }
     _webhook_events.append(event_dict)
     if len(_webhook_events) > 10_000:
@@ -60,7 +115,6 @@ async def receive_target_event(event: TargetEventPayload, request: Request) -> d
 
     # If logger is attached, record this as synthetic traffic or correlated marker
     if _traffic_logger_instance:
-        # Log to traffic records so pipeline can ingest target app security signals
         _traffic_logger_instance.log(
             identity_id=event.identity_id,
             method="WEBHOOK",
@@ -73,7 +127,7 @@ async def receive_target_event(event: TargetEventPayload, request: Request) -> d
             target_origin=str(event.metadata.get("target_origin", "webhook")),
         )
 
-    logger.info("Received target event [%s] for %s", event.event_type, event.identity_id)
+    logger.info("Received authenticated target event [%s] for %s", event.event_type, event.identity_id)
     return {"status": "accepted", "event_type": event.event_type, "timestamp": ts}
 
 

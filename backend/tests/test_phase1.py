@@ -1,12 +1,14 @@
 """Unit and integration test script for Sentinel Flow Phase 1."""
 
 import asyncio
+import json
 import os
 import sys
+import time
 from pathlib import Path
 
 # Add backend directory to sys.path
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.config import TARGET_CONFIG_PATH
 from app.proxy.allowlist import AllowlistViolation, TargetAllowlist, load_allowlist_from_config
@@ -91,7 +93,7 @@ def test_api_integration():
         assert "not in operator allowlist" in res.text
         print("  /proxy/ blocked unauthorized target host with 403.")
 
-        # Webhook event
+        # Webhook event without signature should be rejected with 403
         webhook_payload = {
             "event_type": "auth_failed",
             "identity_id": "test_user_42",
@@ -100,6 +102,23 @@ def test_api_integration():
             "metadata": {"ip": "127.0.0.1", "attempts": 3},
         }
         res = client.post("/api/webhook/target-event", json=webhook_payload)
+        assert res.status_code == 403, f"Expected 403 for unsigned webhook, got {res.status_code}"
+
+        # Webhook event with valid HMAC-SHA256 signature should succeed
+        import hmac, hashlib
+        from app.config import WEBHOOK_SHARED_SECRET
+        ts = str(int(time.time()))
+        body_bytes = json.dumps(webhook_payload).encode("utf-8")
+        sig = hmac.new(WEBHOOK_SHARED_SECRET.encode("utf-8"), ts.encode("utf-8") + b"." + body_bytes, hashlib.sha256).hexdigest()
+        res = client.post(
+            "/api/webhook/target-event",
+            content=body_bytes,
+            headers={
+                "Content-Type": "application/json",
+                "X-Sentinel-Timestamp": ts,
+                "X-Sentinel-Signature": sig,
+            },
+        )
         assert res.status_code == 202
         assert res.json()["status"] == "accepted"
 

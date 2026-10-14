@@ -44,7 +44,7 @@ export function ParticipantApp({
       try {
         const [assess, featRes] = await Promise.all([
           api.getDeviceAssessment(deviceInfo.device_id).catch(() => null),
-          api.getFeatures(deviceInfo.device_id).catch(() => null),
+          api.getIdentityFeatures(deviceInfo.device_id).catch(() => null),
         ]);
         if (isMounted) {
           if (assess) setMyAssessment(assess);

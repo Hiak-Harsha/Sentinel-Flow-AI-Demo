@@ -45,6 +45,13 @@ class IdentityFeatureVector:
     inter_request_interval_mean_30s: float = 0.0
     inter_request_interval_std_30s: float = 0.0
 
+    # Specific Security Evidence Counters
+    auth_failures_30s: int = 0
+    distinct_ports_10s: int = 0
+    canary_hits_30s: int = 0
+    p95_latency_30s: float = 0.0
+    target_error_ratio_30s: float = 0.0
+
     # Churn metrics
     fingerprint_churn_5m: int = 1
     account_churn_5m: int = 1

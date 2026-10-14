@@ -20,12 +20,7 @@ export function Model({ academicStatus = {}, baselineStats = {} }) {
   const precisionStr = metrics ? `${metrics.precision.toFixed(2)}%` : "Loading...";
   const f1Str = metrics ? `${(metrics.f1 / 100).toFixed(3)}` : "Loading...";
 
-  const cm = metrics?.confusion_matrix || {
-    true_normal_pred_normal: 34100,
-    true_normal_pred_suspicious: 2900,
-    true_suspicious_pred_normal: 600,
-    true_suspicious_pred_suspicious: 44732,
-  };
+  const cm = metrics?.confusion_matrix || null;
 
   return (
     <div className="space-y-6">

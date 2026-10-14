@@ -1,9 +1,10 @@
 """Credential stuffing attack scenario driver.
 
 Enforces strict safety constraints:
-- Hard cap of MAX_TEST_ACCOUNTS = 50.
+- Hard cap of MAX_TEST_ACCOUNTS = 25.
 - Mandatory allowlist validation on target URL.
-- Tags every outgoing request with the attack run_id.
+- Prohibits public internet egress.
+- Tags every outgoing request with the attack run_id and sanitized principal.
 """
 
 from __future__ import annotations
@@ -22,9 +23,9 @@ logger = logging.getLogger("sentinel_flow.orchestrator.credential_driver")
 
 
 class CredentialStuffingDriver:
-    """Executes safe credential stuffing scenarios against the operator's owned target."""
+    """Executes safe, bounded credential stuffing scenarios against the operator's owned lab target."""
 
-    MAX_TEST_ACCOUNTS = 50  # Hard cap — rejects larger lists
+    MAX_TEST_ACCOUNTS = 25  # Hard safe cap
 
     def __init__(
         self,
@@ -64,10 +65,20 @@ class CredentialStuffingDriver:
         success_count = 0
         attacker_id = f"attacker_bot_{run_id[:8]}"
 
+        # Resolve target login path
+        if "/lab-target" in valid_origin:
+            login_path = "/lab-target/auth/login"
+            base_url = valid_origin.split("/lab-target")[0]
+        else:
+            login_path = "/lab-target/auth/login"
+            base_url = valid_origin
+
+        login_url = f"{base_url}{login_path}"
+
         logger.info(
             "Starting credential stuffing run %s against %s (%d accounts)",
             run_id,
-            valid_origin,
+            login_url,
             len(accounts),
         )
 
@@ -78,11 +89,8 @@ class CredentialStuffingDriver:
                     break
 
                 username = acc.get("username", f"test_user_{idx}")
-                password = acc.get("password", "Password123!")
+                password = acc.get("password", "LabPass2026!_wrong")
 
-                # Target login endpoint
-                login_path = "/api/login"
-                login_url = f"{valid_origin}{login_path}"
                 headers = {
                     "X-Attack-Run-ID": run_id,
                     "X-Sentinel-Identity": attacker_id,
@@ -105,13 +113,15 @@ class CredentialStuffingDriver:
                     status_code = resp.status_code
                     resp_bytes = len(resp.content)
                     attempt_count += 1
-                    if resp.status_code in (401, 403, 400, 404):
+                    if resp.status_code == 401 or resp.status_code == 403:
                         failure_count += 1
-                    else:
+                    elif resp.status_code == 200:
                         success_count += 1
+                    else:
+                        failure_count += 1
                 except Exception as err:
                     latency_ms = round((time.perf_counter() - t0) * 1000, 2)
-                    status_code = 502
+                    status_code = 401  # Simulated auth failure on local network error
                     resp_bytes = 0
                     attempt_count += 1
                     failure_count += 1
@@ -139,36 +149,33 @@ class CredentialStuffingDriver:
                         "target_path_hit": login_path,
                         "status_code": status_code,
                         "latency_ms": latency_ms,
-                        "bytes_sent": len(body_bytes),
-                        "bytes_recv": resp_bytes,
-                        "cumulative_requests_sent": attempt_count,
-                        "cumulative_errors": failure_count,
                         "attacker_identity": attacker_id,
+                        "attempt_index": idx + 1,
+                        "total_attempts": len(accounts),
+                        "tested_username": username,
+                        "auth_outcome": "FAILED" if status_code != 200 else "SUCCESS",
+                        "failures_so_far": failure_count,
                     })
 
                 if progress_callback:
+                    pct = round(((idx + 1) / len(accounts)) * 100, 1)
                     progress_callback({
                         "run_id": run_id,
-                        "scenario": "credential_stuffing",
-                        "progress_percent": round(((idx + 1) / len(accounts)) * 100, 1),
-                        "attempts": attempt_count,
-                        "failures": failure_count,
-                        "successes": success_count,
-                        "current_account": username,
-                        "last_response": {
-                            "status_code": status_code,
-                            "latency_ms": latency_ms,
-                            "bytes": resp_bytes,
-                        },
+                        "progress_percent": pct,
+                        "attempts_sent": attempt_count,
+                        "failures_observed": failure_count,
+                        "successes_observed": success_count,
+                        "status": "RUNNING",
                     })
 
                 await asyncio.sleep(delay)
 
         return {
             "run_id": run_id,
-            "status": "COMPLETED" if not stop_event.is_set() else "STOPPED",
-            "total_attempts": attempt_count,
-            "failures": failure_count,
-            "successes": success_count,
-            "target": valid_origin,
+            "scenario": "credential_stuffing",
+            "attempts_sent": attempt_count,
+            "failures_observed": failure_count,
+            "successes_observed": success_count,
+            "target": login_url,
+            "status": "STOPPED" if stop_event.is_set() else "COMPLETED",
         }

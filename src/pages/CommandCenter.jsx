@@ -14,7 +14,7 @@ export function CommandCenter({
   const [gridDevices, setGridDevices] = useState([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState(null);
   const [showTargetPanel, setShowTargetPanel] = useState(false);
-  const [targetOrigin, setTargetOrigin] = useState("https://kee-crochet-shop.vercel.app");
+  const [targetOrigin, setTargetOrigin] = useState("http://127.0.0.1:8000/lab-target");
   const [allowedOrigins, setAllowedOrigins] = useState([]);
   const [attackRuns, setAttackRuns] = useState([]);
   const [haltingId, setHaltingId] = useState(null);

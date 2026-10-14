@@ -109,10 +109,19 @@ export const api = {
   getIdentityFeatures: (identityId) => request(`/api/features/${identityId}`),
   getNetworkFeatureSnapshot: () => request("/api/features/network/snapshot"),
 
-  // Detection & Baseline Engine
+  // Detection, Alerts & Baseline Engine
   getBaseline: () => request("/api/detection/baseline"),
   calibrateBaseline: () => request("/api/detection/baseline/calibrate", { method: "POST" }),
   getDetectionStatus: () => request("/api/detection/status"),
+  getActiveAlerts: () => request("/api/detection/alerts"),
+  getAlertHistory: (limit = 50) => request(`/api/detection/alerts/history?limit=${limit}`),
+  resolveAlert: (alertId) => request(`/api/detection/alerts/${alertId}/resolve`, { method: "POST" }),
+  updateAlertDisposition: (alertId, disposition, analystNotes = "") =>
+    request(`/api/detection/alerts/${alertId}/disposition`, {
+      method: "POST",
+      body: JSON.stringify({ disposition, analyst_notes: analystNotes }),
+    }),
+  verifyEvidenceChain: () => request("/api/detection/evidence/verify"),
   getDeviceAssessment: (deviceId) => request(`/api/detection/device/${deviceId}`),
   getDetectionGrid: () => request("/api/detection/grid"),
 
@@ -121,6 +130,7 @@ export const api = {
   getAcademicModelBenchmark: () => request("/api/academic-model/benchmark"),
   getHistory: () => request("/api/history"),
   getTelemetryTimeseries: () => request("/api/telemetry/timeseries"),
+  getActivityStream: (limit = 50) => request(`/api/activity/stream?limit=${limit}`),
 
   // Client Activity Telemetry Ingestion
   recordActivity: (deviceId, action, isBurst = false, bytesIn = 150, bytesOut = 450) =>
@@ -146,6 +156,8 @@ export const api = {
       });
     },
     stopRun: (runId) => request(`/api/orchestrator/run/${runId}/stop`, { method: "POST" }),
+    emergencyStop: () => request("/api/orchestrator/emergency-stop", { method: "POST" }),
+    resetEmergencyStop: () => request("/api/orchestrator/emergency-stop/reset", { method: "POST" }),
     getRunStatus: (runId) => request(`/api/orchestrator/run/${runId}`),
     getEffectTimeline: (runId) => request(`/api/orchestrator/run/${runId}/effect-timeline`),
     listRuns: () => request("/api/orchestrator/runs"),

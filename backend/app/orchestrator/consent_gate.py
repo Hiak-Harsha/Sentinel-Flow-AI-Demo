@@ -90,3 +90,14 @@ class ConsentGate:
 
     def get_audit_log(self) -> list[dict[str, Any]]:
         return [asdict(r) for r in self._audit_log]
+
+    def has_consent_for_target(self, target_origin: str) -> bool:
+        """Check if any active ownership confirmation exists for target."""
+        try:
+            valid_origin = self.enforcer.validate_target(target_origin)
+            return any(
+                r.target_origin.lower() == valid_origin.lower() and r.confirmed_ownership
+                for r in self._audit_log
+            )
+        except Exception:
+            return False

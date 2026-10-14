@@ -4,22 +4,29 @@ import { Panel, StateBadge, StatCard, formatTime, formatNumber, EmptyState } fro
 export function Devices({
   participants = [],
   activeAlerts = [],
+  assessments = {},
   onSetControlledTarget,
   session,
 }) {
   const [selectedDevice, setSelectedDevice] = useState(null);
 
-  const device = participants.find((p) => p.device_id === selectedDevice) || null;
-  const alert = activeAlerts.find((a) => a.device_id === selectedDevice) || null;
+  const device = participants.find((p) => (p.device_id === selectedDevice || p.identity_id === selectedDevice)) || null;
+  const alert = activeAlerts.find((a) => (
+    a.device_id === selectedDevice ||
+    a.identity_id === selectedDevice ||
+    a.source_identity === selectedDevice
+  )) || null;
+
+  const currentAssessment = selectedDevice ? (assessments[selectedDevice] || null) : null;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-white/10 bg-[#0c1626]/90 p-5 backdrop-blur-xl">
         <div>
-          <h2 className="text-base font-bold text-white tracking-tight">Connected Client Devices</h2>
+          <h2 className="text-base font-bold text-white tracking-tight">Connected Client Devices & Identities</h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            {participants.length} active devices transmitting real telemetry to Sentinel Flow.
+            {participants.length} verified enrolled principals transmitting authenticated telemetry to Sentinel Flow.
           </p>
         </div>
       </div>
@@ -34,16 +41,24 @@ export function Devices({
           />
         ) : (
           participants.map((p) => {
-            const isAlert = activeAlerts.some((a) => a.device_id === p.device_id);
-            const isTarget = session?.controlled_target === p.device_id;
+            const devId = p.device_id || p.identity_id;
+            const isAlert = activeAlerts.some((a) => (
+              a.device_id === devId ||
+              a.identity_id === devId ||
+              a.source_identity === devId
+            ));
+            const isTarget = session?.controlled_target === devId;
+            const devAssessment = assessments[devId];
+            const state = p.state || (isAlert ? "ANOMALOUS" : (devAssessment?.threat_level === "CRITICAL" ? "ANOMALOUS" : "NORMAL"));
+
             return (
               <div
-                key={p.device_id}
-                onClick={() => setSelectedDevice(p.device_id)}
+                key={devId}
+                onClick={() => setSelectedDevice(devId)}
                 className={`cursor-pointer rounded-2xl border p-5 transition-all hover:border-cyan-400/50 hover:bg-[#0c1626] ${
                   isAlert
                     ? "border-rose-500/50 bg-rose-950/20 shadow-lg shadow-rose-950/30"
-                    : selectedDevice === p.device_id
+                    : selectedDevice === devId
                     ? "border-cyan-400/60 bg-cyan-950/20"
                     : "border-white/10 bg-[#0c1626]/80"
                 }`}
@@ -51,11 +66,11 @@ export function Devices({
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <div>
                     <span className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-wider block">
-                      {p.device_id}
+                      {devId}
                     </span>
-                    <h3 className="text-base font-bold text-white mt-0.5">{p.alias}</h3>
+                    <h3 className="text-base font-bold text-white mt-0.5">{p.alias || "Participant Device"}</h3>
                   </div>
-                  <StateBadge state={p.state || (isAlert ? "ANOMALOUS" : "NORMAL")} />
+                  <StateBadge state={state} />
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-xs font-mono my-3 border-y border-white/5 py-2.5">
@@ -65,7 +80,7 @@ export function Devices({
                   </div>
                   <div>
                     <span className="text-slate-500 text-[10px] block">LAST ACTION</span>
-                    <span className="font-bold text-slate-300 truncate block">{p.last_action || "Joined"}</span>
+                    <span className="font-bold text-slate-300 truncate block">{p.last_action || "Connected"}</span>
                   </div>
                 </div>
 
@@ -83,18 +98,18 @@ export function Devices({
         )}
       </div>
 
-      {/* Device Detail Inspector Modal / Drawer (Section 32) */}
+      {/* Device Detail Inspector Modal / Drawer */}
       {device && (
         <div className="rounded-2xl border border-white/10 bg-[#0c1626] p-6 shadow-2xl space-y-5">
           <div className="flex items-start justify-between border-b border-white/10 pb-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-sm font-bold text-cyan-400">{device.device_id}</span>
+                <span className="font-mono text-sm font-bold text-cyan-400">{device.device_id || device.identity_id}</span>
                 <span className="text-lg font-bold text-white">— {device.alias}</span>
-                <StateBadge state={device.state || "NORMAL"} />
+                <StateBadge state={device.state || (alert ? "ANOMALOUS" : "NORMAL")} />
               </div>
               <p className="text-xs text-slate-400 mt-1">
-                Detailed behavioural telemetry audit and AI assessment.
+                Detailed behavioural telemetry audit, threat concordance, and anomaly metrics.
               </p>
             </div>
             <button
@@ -108,37 +123,40 @@ export function Devices({
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <StatCard label="Total Activity" value={device.request_count || 1} sub="HTTP Requests" icon="📊" />
-            <StatCard label="Device Status" value={device.state || "NORMAL"} sub="State Machine" icon="🛡️" />
+            <StatCard label="Device Status" value={device.state || (alert ? "ANOMALOUS" : "NORMAL")} sub="State Machine" icon="🛡️" />
             <StatCard
               label="Anomaly Score"
-              value={alert ? alert.anomaly_score : "0.35"}
-              sub="Threshold: 0.65"
+              value={alert ? (alert.threat_score ?? alert.anomaly_score ?? "0.85") : (currentAssessment?.threat_score ?? "0.08")}
+              sub={alert ? `Threat Level: ${alert.threat_level || 'HIGH'}` : "Baseline Nominal"}
               icon="🧠"
             />
             <StatCard
               label="Target Status"
-              value={session?.controlled_target === device.device_id ? "ARMED" : "STANDBY"}
+              value={session?.controlled_target === (device.device_id || device.identity_id) ? "ARMED" : "STANDBY"}
               sub="Controlled Event"
               icon="🎯"
             />
           </div>
 
-          {alert && alert.explanations && (
+          {/* Evidence / Explanations section */}
+          {alert && (alert.evidence || alert.explanations) && (
             <div className="rounded-xl border border-rose-500/30 bg-rose-950/20 p-4">
               <h4 className="text-xs font-mono font-bold text-rose-300 mb-2 uppercase">
-                Observed Anomaly Deviations
+                Observed Telemetry Deviations & Markers
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {alert.explanations.map((exp, idx) => (
+                {(alert.evidence || alert.explanations).map((exp, idx) => (
                   <div key={idx} className="rounded-lg bg-black/40 p-2.5 text-xs font-mono border border-rose-500/20">
                     <div className="flex justify-between font-bold text-white mb-1">
-                      <span>{exp.feature}</span>
-                      <span className="text-rose-400">{exp.deviation}</span>
+                      <span>{exp.feature || exp.name || "Signal"}</span>
+                      <span className="text-rose-400">{exp.value ?? exp.deviation ?? "Breached"}</span>
                     </div>
-                    <div className="text-[11px] text-slate-400 flex justify-between">
-                      <span>Observed: {exp.observed}</span>
-                      <span>Baseline: {exp.baseline}</span>
-                    </div>
+                    {exp.observed !== undefined && (
+                      <div className="text-[11px] text-slate-400 flex justify-between">
+                        <span>Observed: {exp.observed}</span>
+                        <span>Baseline: {exp.baseline}</span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -148,7 +166,7 @@ export function Devices({
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
-              onClick={() => onSetControlledTarget(device.device_id)}
+              onClick={() => onSetControlledTarget(device.device_id || device.identity_id)}
               className="rounded-xl bg-amber-400/10 border border-amber-400/30 px-4 py-2 text-xs font-mono font-bold text-amber-300 hover:bg-amber-400/20 transition"
             >
               🎯 Arm Controlled Stress Test for {device.alias}

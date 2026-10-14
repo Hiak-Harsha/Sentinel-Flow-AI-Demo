@@ -14,6 +14,7 @@ import { Analytics } from "./pages/Analytics";
 import { History } from "./pages/History";
 import { Model } from "./pages/Model";
 import { ParticipantApp } from "./pages/ParticipantApp";
+import { AlertsWorkbench } from "./pages/AlertsWorkbench";
 
 export default function App() {
   // Role State: "landing" | "operator" | "participant"
@@ -24,10 +25,10 @@ export default function App() {
   // Navigation State with URL Hash support
   const [activeTab, setActiveTab] = useState(() => {
     const hash = window.location.hash.replace("#/", "").replace("#", "");
-    if (["command", "overview", "live", "topology", "targets", "attack", "devices", "analytics", "history", "model", "participant", "join"].includes(hash)) {
+    if (["command", "overview", "alerts", "live", "topology", "targets", "attack", "devices", "analytics", "history", "model", "participant", "join"].includes(hash)) {
       return hash === "join" ? "participant" : hash;
     }
-    return "command";
+    return "overview";
   });
 
   // Application Data States
@@ -47,6 +48,8 @@ export default function App() {
   const [wsStatus, setWsStatus] = useState("reconnecting");
   const [notice, setNotice] = useState(null);
   const [isBusy, setIsBusy] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Check role on mount
   useEffect(() => {
@@ -83,7 +86,7 @@ export default function App() {
         setActiveTab("participant");
       } else if (hash === "attack") {
         setActiveTab("attack");
-      } else if (["command", "overview", "live", "topology", "targets", "devices", "analytics", "history", "model"].includes(hash)) {
+      } else if (["command", "overview", "alerts", "live", "topology", "targets", "attack", "devices", "analytics", "history", "model"].includes(hash)) {
         if (role === "participant") {
           setActiveTab("participant");
         } else {
@@ -114,12 +117,14 @@ export default function App() {
   // Core Refresh Function
   const refreshAll = useCallback(async () => {
     try {
-      const [sessionData, timeseriesData, historyData, logsData, alertsData, academicData] = await Promise.all([
+      const [sessionData, timeseriesData, historyData, logsData, alertsData, activeAlertsData, activityData, academicData] = await Promise.all([
         api.getSession().catch(() => null),
         api.getTelemetryTimeseries().catch(() => ({ timeseries: [] })),
         api.getHistory().catch(() => ({ history: [] })),
         api.getProxyLogs(40).catch(() => []),
         api.getDetectionStatus().catch(() => null),
+        api.getActiveAlerts().catch(() => []),
+        api.getActivityStream(40).catch(() => []),
         api.getAcademicModelStatus().catch(() => null),
       ]);
 
@@ -133,6 +138,14 @@ export default function App() {
 
       if (alertsData) {
         setThreatLevel(alertsData.threat_level || "LOW");
+      }
+
+      if (Array.isArray(activeAlertsData)) {
+        setActiveAlerts(activeAlertsData);
+      }
+
+      if (Array.isArray(activityData)) {
+        setRecentActivity(activityData);
       }
 
       if (academicData) {
@@ -247,6 +260,12 @@ export default function App() {
         }
         break;
 
+      case "causal_activity":
+        if (data.activity) {
+          setRecentActivity((prev) => [data.activity, ...prev.slice(0, 49)]);
+        }
+        break;
+
       case "participant_joined":
         refreshAll();
         break;
@@ -275,7 +294,7 @@ export default function App() {
     sessionStorage.setItem("sf_session_token", res.token);
     sessionStorage.setItem("sf_role", "operator");
     setRole("operator");
-    setActiveTab("command");
+    setActiveTab("overview");
   };
 
   // Handler for Switching Roles / Logout
@@ -333,6 +352,7 @@ export default function App() {
 
   const handleResolveAlert = async (alertId) => {
     try {
+      await api.resolveAlert(alertId).catch(() => null);
       setActiveAlerts((prev) => prev.filter((a) => a.id !== alertId && a.alert_id !== alertId));
       setNotice({ type: "success", message: `Alert marked as mitigated.` });
     } catch (err) {
@@ -358,8 +378,8 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-[#03060c] text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
-        {/* Navigation Bar */}
+      <div className="min-h-screen bg-[#0b0f19] text-slate-100 flex flex-col font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
+        {/* Navigation Bar (Sidebar + Top Bar) */}
         <Navigation
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -372,13 +392,17 @@ export default function App() {
           isBusy={isBusy}
           role={role}
           onLogout={handleLogout}
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
         />
 
         {/* Global Alert & Notice Toast */}
         {notice && (
-          <div className="mx-auto max-w-[1600px] w-full px-4 sm:px-6 lg:px-8 mt-4">
+          <div className={`${role === "operator" ? "md:pl-60" : ""} px-4 sm:px-6 lg:px-8 mt-3`}>
             <div
-              className={`p-3.5 rounded-xl border text-xs font-mono flex items-center justify-between shadow-lg ${
+              className={`p-3 rounded-xl border text-xs font-mono flex items-center justify-between shadow-lg ${
                 notice.type === "error"
                   ? "border-rose-400/40 bg-rose-400/10 text-rose-200"
                   : "border-emerald-400/40 bg-emerald-400/10 text-emerald-200"
@@ -393,7 +417,7 @@ export default function App() {
         )}
 
         {/* Main Content Area */}
-        <main className="flex-1 mx-auto max-w-[1600px] w-full px-4 sm:px-6 lg:px-8 py-6">
+        <main className={`flex-1 ${role === "operator" ? "md:pl-60" : ""} w-full px-4 sm:px-6 lg:px-8 py-5 transition-all`}>
           {activeTab === "command" && (
             <CommandCenter
               session={session}
@@ -414,6 +438,13 @@ export default function App() {
               recentActivity={recentActivity}
               academicModelReady={academicStatus?.ready ?? true}
               onNavigate={setActiveTab}
+            />
+          )}
+
+          {activeTab === "alerts" && (
+            <AlertsWorkbench
+              activeAlerts={activeAlerts}
+              onResolveAlert={handleResolveAlert}
             />
           )}
 
@@ -455,10 +486,10 @@ export default function App() {
               activeAlerts={activeAlerts}
               participant={(() => {
                 try {
-                  return JSON.parse(sessionStorage.getItem("sf_participant") || "null");
-                } catch {
-                  return null;
-                }
+                  const p = JSON.parse(sessionStorage.getItem("sf_participant") || "null");
+                  if (p) return p;
+                } catch {}
+                return { alias: role === "operator" ? "Operator (Lab Lead)" : "Student Runner", device_id: role === "operator" ? "operator-console" : "lab-runner" };
               })()}
             />
           )}
@@ -469,6 +500,7 @@ export default function App() {
               activeAlerts={activeAlerts}
               onSetControlledTarget={handleSetControlledTarget}
               session={session}
+              assessments={assessments}
             />
           )}
 

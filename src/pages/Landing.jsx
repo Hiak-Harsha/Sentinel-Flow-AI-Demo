@@ -118,7 +118,7 @@ export function Landing({ onSelectRole, onOperatorLogin }) {
                     type="password"
                     value={passcode}
                     onChange={(e) => setPasscode(e.target.value)}
-                    placeholder="Enter operator passcode (default: SF-OPERATOR-2026)"
+                    placeholder="Enter operator authorization passcode"
                     className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-sm font-mono focus:border-cyan-400 focus:outline-none"
                     autoFocus
                   />

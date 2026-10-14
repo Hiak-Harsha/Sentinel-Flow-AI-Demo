@@ -1,0 +1,38 @@
+{
+  "target_origins": [
+    "http://127.0.0.1:8000/lab-target",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+  ],
+  "target_inventory": [
+    {
+      "target_id": "lab-target-local",
+      "name": "Sentinel Flow Disposable Lab Target",
+      "origin": "http://127.0.0.1:8000/lab-target",
+      "network_boundary": "isolated_lab_loopback",
+      "description": "Built-in disposable target fixture with auth audit events and safe canary markers",
+      "is_active": true
+    },
+    {
+      "target_id": "local-app-3000",
+      "name": "Local Development Target (Port 3000)",
+      "origin": "http://localhost:3000",
+      "network_boundary": "isolated_lab_loopback",
+      "description": "Local mock or student project app running on port 3000",
+      "is_active": false
+    }
+  ],
+  "authorization_record": {
+    "authorization_id": "AUTH-LAB-TEMPLATE",
+    "operator_name": "Lab Administrator",
+    "purpose": "Authorized educational classroom security exercise",
+    "target_boundary": "isolated_private_network_only",
+    "issued_at_utc": "2026-10-14T00:00:00Z",
+    "expires_at_utc": "2027-10-14T00:00:00Z",
+    "max_scenario_quota": 50,
+    "confirmed_ownership": true
+  },
+  "operator_name": "Lab Administrator",
+  "confirmed_ownership": true,
+  "description": "Authorized local isolated lab target inventory template"
+}

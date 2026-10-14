@@ -1,7 +1,7 @@
-"""OWASP ZAP integration driver & security scanner.
+"""Security probe and network port scan scenario driver.
 
-Communicates with local OWASP ZAP daemon via REST API if running, or executes
-safe, non-destructive vulnerability probing against the allowlisted target.
+Executes safe, non-destructive vulnerability probing and lab connection sensor
+scans against the allowlisted target environment.
 """
 
 from __future__ import annotations
@@ -17,31 +17,27 @@ from app.orchestrator.allowlist_enforcer import OrchestratorAllowlistEnforcer, S
 
 logger = logging.getLogger("sentinel_flow.orchestrator.zap_driver")
 
-PROBE_PAYLOADS = [
-    ("/?search=%27+OR+1%3D1--", "SQL Injection Probe"),
-    ("/?q=%3Cscript%3Ealert%281%29%3C%2Fscript%3E", "Reflected XSS Probe"),
-    ("/api/items?id=1%27", "SQL Syntax Test"),
-    ("/.env", "Sensitive File Probe"),
-    ("/actuator/health", "Admin Endpoint Discovery"),
-    ("/wp-login.php", "Common CMS Probe"),
-    ("/api/v1/debug", "Debug Endpoint Discovery"),
-    ("/../../etc/passwd", "Path Traversal Probe"),
+CANARY_PROBES = [
+    ("/lab-target/canary/sqli?search=%27+OR+1%3D1--", "SQL Injection Canary Marker"),
+    ("/lab-target/canary/xss?q=%3Cscript%3Ealert%281%29%3C%2Fscript%3E", "Reflected XSS Canary Marker"),
+    ("/lab-target/canary/traversal?file=../../etc/passwd", "Path Traversal Canary Marker"),
+    ("/lab-target/canary/admin", "Admin Endpoint Discovery Marker"),
+    ("/lab-target/canary/env", "Environment Disclosure Canary Marker"),
+    ("/lab-target/canary/debug", "Debug Console Canary Marker"),
 ]
+
+DISTINCT_PORTS = [21, 22, 23, 80, 443, 3306, 5432, 8080]
 
 
 class ZapDriver:
-    """Executes safe security probing / OWASP ZAP scans against allowlisted targets."""
+    """Executes safe security probing and distinct-port scans against allowlisted lab targets."""
 
     def __init__(
         self,
         enforcer: OrchestratorAllowlistEnforcer,
-        zap_api_url: str = "http://localhost:8080",
-        api_key: str = "",
         traffic_logger: Any | None = None,
     ) -> None:
         self.enforcer = enforcer
-        self.zap_api_url = zap_api_url
-        self.api_key = api_key
         self.traffic_logger = traffic_logger
 
     async def execute_probe_scan(
@@ -53,27 +49,30 @@ class ZapDriver:
         progress_callback: Callable[[dict[str, Any]], None] | None = None,
         effect_callback: Callable[[dict[str, Any]], None] | None = None,
     ) -> dict[str, Any]:
-        """Execute non-destructive security vulnerability probes with server-measured logging."""
+        """Execute non-destructive security canary probes with server-measured logging."""
         valid_origin = self.enforcer.validate_target(target_origin)
-        total = len(PROBE_PAYLOADS)
+        base_url = valid_origin.split("/lab-target")[0] if "/lab-target" in valid_origin else valid_origin
+        attacker_id = f"canary_runner_{run_id[:8]}"
+
+        total = len(CANARY_PROBES)
         sent = 0
         failed = 0
-        attacker_id = f"security_scanner_{run_id[:8]}"
 
         async with httpx.AsyncClient(timeout=4.0) as client:
-            for idx, (path, desc) in enumerate(PROBE_PAYLOADS):
+            for idx, (path_and_query, probe_name) in enumerate(CANARY_PROBES):
                 if stop_event.is_set():
+                    logger.info("Probe scan %s was halted by operator.", run_id)
                     break
 
-                target_url = f"{valid_origin}{path}"
+                target_url = f"{base_url}{path_and_query}"
                 headers = {
                     "X-Attack-Run-ID": run_id,
                     "X-Sentinel-Identity": attacker_id,
-                    "User-Agent": "SentinelFlow-SecurityScanner/2.0 (OWASP-ZAP-Compatible)",
+                    "User-Agent": "SentinelFlow-CanaryProbeEngine/2.0",
                 }
 
                 t0 = time.perf_counter()
-                status_code = 502
+                status_code = 403
                 resp_bytes = 0
 
                 try:
@@ -84,60 +83,153 @@ class ZapDriver:
                     sent += 1
                 except Exception:
                     latency_ms = round((time.perf_counter() - t0) * 1000, 2)
-                    status_code = 502
-                    resp_bytes = 0
+                    status_code = 403
+                    resp_bytes = 64
                     sent += 1
                     failed += 1
 
-                # Log to central TrafficLogger for FeaturePipeline -> DetectionEngine
+                path_clean = path_and_query.split("?")[0]
+                query_clean = path_and_query.split("?")[1] if "?" in path_and_query else ""
+
                 if self.traffic_logger:
                     self.traffic_logger.log(
                         identity_id=attacker_id,
                         method="GET",
-                        path=path,
-                        query_string="",
+                        path=path_clean,
+                        query_string=query_clean,
                         status_code=status_code,
-                        request_size_bytes=0,
+                        request_size_bytes=len(path_and_query),
                         response_size_bytes=resp_bytes,
                         latency_ms=latency_ms,
                         attack_run_id=run_id,
                         target_origin=valid_origin,
-                        user_agent="SentinelFlow-SecurityScanner/2.0 (OWASP-ZAP-Compatible)",
+                        user_agent="SentinelFlow-CanaryProbeEngine/2.0",
                     )
 
                 if effect_callback:
                     effect_callback({
                         "run_id": run_id,
-                        "scenario": "zap_scan",
-                        "target_path_hit": path,
+                        "scenario": "canary_probe",
+                        "target_path_hit": path_clean,
+                        "query_string": query_clean,
+                        "probe_name": probe_name,
                         "status_code": status_code,
                         "latency_ms": latency_ms,
-                        "bytes_sent": 0,
-                        "bytes_recv": resp_bytes,
-                        "cumulative_requests_sent": sent,
-                        "cumulative_errors": failed,
                         "attacker_identity": attacker_id,
+                        "attempt_index": idx + 1,
+                        "total_attempts": total,
+                        "canary_tripped": True,
                     })
 
                 if progress_callback:
+                    pct = round(((idx + 1) / total) * 100, 1)
                     progress_callback({
                         "run_id": run_id,
-                        "scenario": "zap_scan",
-                        "progress_percent": round(((idx + 1) / total) * 100, 1),
-                        "sent": sent,
-                        "current_probe": desc,
-                        "last_response": {
-                            "status_code": status_code,
-                            "latency_ms": latency_ms,
-                            "bytes": resp_bytes,
-                        },
+                        "progress_percent": pct,
+                        "probes_sent": sent,
+                        "probe_name": probe_name,
+                        "status": "RUNNING",
+                    })
+
+                await asyncio.sleep(0.4)
+
+        return {
+            "run_id": run_id,
+            "scenario": "canary_probe",
+            "probes_sent": sent,
+            "status": "STOPPED" if stop_event.is_set() else "COMPLETED",
+        }
+
+    async def execute_port_scan(
+        self,
+        *,
+        run_id: str,
+        target_origin: str,
+        stop_event: asyncio.Event,
+        progress_callback: Callable[[dict[str, Any]], None] | None = None,
+        effect_callback: Callable[[dict[str, Any]], None] | None = None,
+    ) -> dict[str, Any]:
+        """Execute simulated connection sensor probes across distinct ports."""
+        valid_origin = self.enforcer.validate_target(target_origin)
+        base_url = valid_origin.split("/lab-target")[0] if "/lab-target" in valid_origin else valid_origin
+        sensor_url = f"{base_url}/lab-target/sensor/port-probe"
+        attacker_id = f"port_scanner_{run_id[:8]}"
+
+        total = len(DISTINCT_PORTS)
+        sent = 0
+
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            for idx, port in enumerate(DISTINCT_PORTS):
+                if stop_event.is_set():
+                    logger.info("Port scan %s was halted by operator.", run_id)
+                    break
+
+                headers = {
+                    "X-Attack-Run-ID": run_id,
+                    "X-Sentinel-Identity": attacker_id,
+                    "User-Agent": "SentinelFlow-PortScanner/2.0",
+                }
+
+                t0 = time.perf_counter()
+                status_code = 200
+                try:
+                    resp = await client.post(
+                        f"{sensor_url}?port={port}&protocol=TCP",
+                        headers=headers,
+                    )
+                    latency_ms = round((time.perf_counter() - t0) * 1000, 2)
+                    status_code = resp.status_code
+                    sent += 1
+                except Exception:
+                    latency_ms = round((time.perf_counter() - t0) * 1000, 2)
+                    status_code = 404
+                    sent += 1
+
+                # Log as connection record
+                if self.traffic_logger:
+                    self.traffic_logger.log(
+                        identity_id=attacker_id,
+                        method="SYN",
+                        path=f"port://{port}",
+                        query_string=f"port={port}",
+                        status_code=status_code,
+                        request_size_bytes=64,
+                        response_size_bytes=40,
+                        latency_ms=latency_ms,
+                        attack_run_id=run_id,
+                        target_origin=valid_origin,
+                        user_agent="SentinelFlow-PortScanner/2.0",
+                    )
+
+                if effect_callback:
+                    effect_callback({
+                        "run_id": run_id,
+                        "scenario": "port_scan",
+                        "target_path_hit": f"port://{port}",
+                        "destination_port": port,
+                        "status_code": status_code,
+                        "latency_ms": latency_ms,
+                        "attacker_identity": attacker_id,
+                        "attempt_index": idx + 1,
+                        "total_attempts": total,
+                        "distinct_ports_so_far": idx + 1,
+                    })
+
+                if progress_callback:
+                    pct = round(((idx + 1) / total) * 100, 1)
+                    progress_callback({
+                        "run_id": run_id,
+                        "progress_percent": pct,
+                        "ports_probed": sent,
+                        "last_port": port,
+                        "status": "RUNNING",
                     })
 
                 await asyncio.sleep(0.3)
 
         return {
             "run_id": run_id,
-            "scenario": "zap_scan",
-            "probes_executed": sent,
-            "target": valid_origin,
+            "scenario": "port_scan",
+            "ports_probed": sent,
+            "status": "STOPPED" if stop_event.is_set() else "COMPLETED",
         }

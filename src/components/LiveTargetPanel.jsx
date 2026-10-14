@@ -2,25 +2,16 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function LiveTargetPanel({
-  targetUrl = "https://kee-crochet-shop.vercel.app",
+  targetUrl = "http://127.0.0.1:8000/lab-target",
   onSelectTargetUrl,
   allowedOrigins = [],
   recentRequests = [],
   activeAttack = null,
 }) {
-  const [iframeLoaded, setIframeLoaded] = useState(false);
-  const [iframeError, setIframeError] = useState(false);
+  const [activeTab, setActiveTab] = useState("endpoints");
 
   // Take the last 5 requests
   const tickerItems = (recentRequests || []).slice(0, 5);
-
-  const isLocalhost =
-    targetUrl.startsWith("http://localhost:3000") ||
-    targetUrl.startsWith("http://127.0.0.1:3000");
-
-  const vercelOrigin =
-    allowedOrigins.find((o) => o.includes("kee-crochet-shop.vercel.app")) ||
-    "https://kee-crochet-shop.vercel.app";
 
   return (
     <div className="relative rounded-2xl border border-cyan-500/30 bg-slate-950 overflow-hidden shadow-2xl">
@@ -28,18 +19,18 @@ export function LiveTargetPanel({
       <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 bg-slate-900 border-b border-slate-800 text-xs font-mono">
         <div className="flex items-center space-x-2">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-          <span className="font-bold text-slate-200">TARGET APPLICATION PREVIEW</span>
+          <span className="font-bold text-slate-200">ISOLATED LAB TARGET INVENTORY</span>
           <span className="text-slate-500">|</span>
 
           {allowedOrigins && allowedOrigins.length > 0 && onSelectTargetUrl ? (
             <select
               value={targetUrl}
               onChange={(e) => onSelectTargetUrl(e.target.value)}
-              className="bg-slate-950 border border-slate-700 rounded px-2 py-0.5 text-cyan-300 text-xs focus:outline-none focus:border-cyan-400"
+              className="bg-slate-950 border border-slate-700 rounded px-2 py-0.5 text-cyan-300 text-xs focus:outline-none focus:border-cyan-400 font-mono"
             >
               {allowedOrigins.map((origin) => (
                 <option key={origin} value={origin}>
-                  {origin}
+                  {origin} (Private Lab)
                 </option>
               ))}
             </select>
@@ -49,127 +40,90 @@ export function LiveTargetPanel({
         </div>
 
         <div className="flex items-center space-x-2">
+          <span className="rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 px-2 py-0.5 text-[10px]">
+            ✓ LOCAL BOUNDARY ENFORCED
+          </span>
           {activeAttack && (
             <span className="px-2 py-0.5 rounded bg-rose-950/70 border border-rose-500/50 text-rose-300 text-[10px] animate-pulse flex items-center">
               <span className="w-1.5 h-1.5 rounded-full bg-rose-400 mr-1.5 animate-ping"></span>
-              {activeAttack.scenario || "ATTACK SIMULATION ACTIVE"}
+              SCENARIO ACTIVE: {activeAttack.scenario}
             </span>
           )}
-          <a
-            href={targetUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="text-slate-400 hover:text-white px-2 py-0.5 rounded hover:bg-slate-800 transition text-[11px]"
-          >
-            Open in Tab ↗
-          </a>
         </div>
       </div>
 
-      {/* Localhost Offline Helper Strip */}
-      {isLocalhost && onSelectTargetUrl && (
-        <div className="px-4 py-2 bg-slate-900/90 border-b border-slate-800 text-[11px] font-mono text-slate-300 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center space-x-1.5 text-slate-400">
-            <span>ℹ️</span>
-            <span>
-              If your local clone is not running on port 3000 (showing <em>refused to connect</em>):
+      {/* Target Details Viewport */}
+      <div className="p-5 bg-gradient-to-b from-slate-950 to-slate-900 text-slate-300 text-xs font-mono space-y-4">
+        <div className="flex items-center justify-between border-b border-white/5 pb-3">
+          <div>
+            <h4 className="text-sm font-bold text-white flex items-center gap-2">
+              <span>Sentinel Flow Disposable Target</span>
+              <span className="text-[10px] text-cyan-400 font-normal">v1.0.0</span>
+            </h4>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Instrumented internal fixture with authentication audit event sinks, canary traps, and port telemetry.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <span className="px-2 py-1 rounded bg-slate-800 text-[10px] text-slate-300">
+              Boundary: Loopback / RFC1918
             </span>
           </div>
-          <button
-            type="button"
-            onClick={() => onSelectTargetUrl(vercelOrigin)}
-            className="px-2.5 py-1 rounded bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 font-bold hover:bg-cyan-500/30 transition text-[11px]"
-          >
-            👉 Switch Preview to Kee Crochet Shop ({vercelOrigin})
-          </button>
         </div>
-      )}
 
-      {/* Embedded Application Viewport */}
-      <div className="relative h-[420px] w-full bg-[#030712] overflow-hidden">
-        {/* Iframe View */}
-        {!iframeError ? (
-          <iframe
-            key={targetUrl}
-            src={targetUrl}
-            title="Target Application"
-            className="w-full h-full border-0 select-none bg-white"
-            onLoad={() => setIframeLoaded(true)}
-            onError={() => setIframeError(true)}
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-          />
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full p-8 text-center text-slate-400 space-y-3">
-            <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-              ⚠
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-200">Target Direct Embed Restricted</p>
-              <p className="text-xs text-slate-400 mt-1 max-w-md">
-                The target origin has restrictive frame policies. All traffic is still proxied and monitored seamlessly via Sentinel Flow.
-              </p>
-            </div>
-            <a
-              href={targetUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs font-mono text-cyan-400 underline"
-            >
-              Open {targetUrl} in a new tab
-            </a>
-          </div>
-        )}
-
-        {/* Visual Effect Layer for active attacks */}
-        <AnimatePresence>
-          {activeAttack && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="pointer-events-none absolute inset-0 z-20 overflow-hidden"
-            >
-              {/* Scanline sweep effect */}
-              <div className="absolute inset-0 bg-gradient-to-b from-rose-500/10 via-transparent to-rose-500/10"></div>
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-rose-500 to-transparent animate-pulse"></div>
-
-              {/* Red border flash */}
-              <div className="absolute inset-0 border-2 border-rose-500/40 animate-pulse"></div>
-
-              {/* Watermark badge */}
-              <div className="absolute top-3 left-3 bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-rose-500/50 text-[11px] font-mono text-rose-300 flex items-center space-x-2">
-                <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
-                <span>INTRUSION STRESS SIMULATION IN PROGRESS</span>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Live Traffic Ticker along the bottom edge */}
-        <div className="absolute bottom-0 inset-x-0 z-30 bg-slate-950/90 backdrop-blur-md border-t border-slate-800 px-3 py-2 flex items-center justify-between text-[11px] font-mono">
-          <div className="flex items-center space-x-2 text-slate-400">
-            <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></span>
-            <span className="font-bold text-slate-300">LIVE PROXIED INBOUND:</span>
+        {/* Endpoints Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="p-3 rounded-xl border border-white/5 bg-slate-950/60">
+            <span className="text-[10px] text-cyan-400 block font-bold">1. AUTHENTICATION SINK</span>
+            <span className="text-slate-200 font-bold block mt-1">/lab-target/auth/login</span>
+            <span className="text-[10px] text-slate-400 mt-1 block">
+              Emits verified <code className="text-cyan-300">auth.failure</code> and <code className="text-emerald-300">auth.success</code> events.
+            </span>
           </div>
 
-          <div className="flex items-center space-x-2 overflow-x-auto max-w-xl">
-            {tickerItems.length === 0 ? (
-              <span className="text-slate-600 italic">Waiting for proxied participant traffic...</span>
-            ) : (
-              tickerItems.map((req, i) => (
-                <span
-                  key={req.id || i}
-                  className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300 whitespace-nowrap"
-                >
-                  <span className="text-cyan-400 font-bold mr-1">{req.method || "GET"}</span>
-                  <span className="text-slate-400">{req.path || "/"}</span>
-                  <span className="ml-1 text-[10px] text-emerald-400 font-semibold">
-                    {req.status_code || 200}
+          <div className="p-3 rounded-xl border border-white/5 bg-slate-950/60">
+            <span className="text-[10px] text-amber-400 block font-bold">2. CANARY TRAPS (EXPLOIT PROBES)</span>
+            <span className="text-slate-200 font-bold block mt-1">/lab-target/canary/*</span>
+            <span className="text-[10px] text-slate-400 mt-1 block">
+              Safe canary markers for SQLi, XSS, and Traversal without code execution.
+            </span>
+          </div>
+
+          <div className="p-3 rounded-xl border border-white/5 bg-slate-950/60">
+            <span className="text-[10px] text-indigo-400 block font-bold">3. PORT SENSOR TELEMETRY</span>
+            <span className="text-slate-200 font-bold block mt-1">/lab-target/sensor/port-probe</span>
+            <span className="text-[10px] text-slate-400 mt-1 block">
+              Connection attempt telemetry observing TCP ports 21, 22, 23, 80, 443, 8080.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Live Transaction Ticker */}
+      <div className="flex items-center space-x-3 px-4 py-2 bg-slate-900/90 border-t border-slate-800 text-[11px] font-mono">
+        <span className="text-slate-500 font-bold flex-shrink-0">RECENT TRAFFIC:</span>
+        <div className="flex-1 overflow-hidden">
+          {tickerItems.length === 0 ? (
+            <span className="text-slate-600 italic">No proxy requests observed yet...</span>
+          ) : (
+            <div className="flex items-center space-x-4 animate-pulse">
+              {tickerItems.map((req, i) => (
+                <span key={i} className="flex items-center space-x-1.5 flex-shrink-0">
+                  <span className="text-cyan-400 font-bold">{req.method}</span>
+                  <span className="text-slate-300">{req.path}</span>
+                  <span
+                    className={`px-1 rounded text-[10px] font-bold ${
+                      req.status_code < 400
+                        ? "bg-emerald-950 text-emerald-400 border border-emerald-500/30"
+                        : "bg-rose-950 text-rose-400 border border-rose-500/30"
+                    }`}
+                  >
+                    {req.status_code}
                   </span>
                 </span>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

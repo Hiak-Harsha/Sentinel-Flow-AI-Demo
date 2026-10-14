@@ -12,7 +12,7 @@ import { Panel } from "../components/shared";
 export function AttackConsole({ trafficLogs = [], activeAlerts = [], participant = null }) {
   const [scenarios, setScenarios] = useState([]);
   const [selectedScenario, setSelectedScenario] = useState("credential_stuffing");
-  const [targetOrigin, setTargetOrigin] = useState("https://kee-crochet-shop.vercel.app");
+  const [targetOrigin, setTargetOrigin] = useState("http://127.0.0.1:8000/lab-target");
   const [approvedTargets, setApprovedTargets] = useState([]);
   const [consentedOrigins, setConsentedOrigins] = useState(new Set());
   const [studentAgreement, setStudentAgreement] = useState(true);
@@ -122,8 +122,21 @@ export function AttackConsole({ trafficLogs = [], activeAlerts = [], participant
     }
   };
 
+  const handleEmergencyStop = async () => {
+    try {
+      setLoading(true);
+      await api.orchestrator.emergencyStop();
+      setStatusMsg("EMERGENCY KILL SWITCH TRIPPED: All active attack runs terminated immediately.");
+      setActiveRun(null);
+    } catch (err) {
+      setErrorMsg(`Emergency stop failed: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const attackLogs = trafficLogs.filter(
-    (l) => l.attack_run_id || (l.identity_id && (l.identity_id.includes("bot") || l.identity_id.includes("agent") || l.identity_id.includes("scanner")))
+    (l) => l.attack_run_id || (l.identity_id && (l.identity_id.includes("bot") || l.identity_id.includes("agent") || l.identity_id.includes("scanner") || l.identity_id.includes("attacker")))
   );
 
   return (
@@ -225,11 +238,19 @@ export function AttackConsole({ trafficLogs = [], activeAlerts = [], participant
             </p>
           </div>
           <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={handleEmergencyStop}
+              className="px-3.5 py-2 rounded-xl bg-red-700 hover:bg-red-600 text-white font-mono font-bold text-xs border border-red-500 shadow-lg shadow-red-700/30 flex items-center gap-1.5"
+            >
+              <span>🛑</span>
+              <span>EMERGENCY STOP</span>
+            </button>
             {activeRun && (
               <button
                 type="button"
                 onClick={handleStop}
-                className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-mono font-bold text-xs transition"
+                className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-mono font-bold text-xs transition"
               >
                 ■ HALT ACTIVE RUN
               </button>

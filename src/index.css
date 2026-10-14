@@ -49,6 +49,42 @@ body {
   background-size: 32px 32px;
 }
 
+/* NIDS specific styles */
+.nids-card {
+  background: #111726;
+  border: 1px solid #1a2235;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.15s ease;
+}
+
+.nids-card:hover {
+  border-color: #243049;
+}
+
+.nids-sidebar {
+  background: #0d121f;
+  border-right: 1px solid #182032;
+}
+
+.nids-header {
+  background: #0b0f19;
+  border-bottom: 1px solid #182032;
+}
+
+.wazuh-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dark .wazuh-card,
+.wazuh-card-dark {
+  background: #111726;
+  border: 1px solid #1c2438;
+}
+
 button,
 input,
 select {

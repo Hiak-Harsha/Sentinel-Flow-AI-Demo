@@ -48,7 +48,8 @@ export default function ParticipantPage() {
     const token = sessionStorage.getItem("sf_session_token");
     const deviceId = sessionStorage.getItem("sf_device_fingerprint");
     const alias = sessionStorage.getItem("sf_participant_alias") || "Participant";
-    if (token && deviceId) {
+    const role = sessionStorage.getItem("sf_role");
+    if (token && deviceId && role === "participant") {
       setEnrolled({ joinCode: "ACTIVE", alias, deviceId, token });
     }
   }, []);
@@ -74,8 +75,9 @@ export default function ParticipantPage() {
         joinCode,
         alias: res.alias || alias,
         deviceId: res.device_id || `dev_${Date.now().toString().slice(-6)}`,
-        token: res.session_token || "tok_participant",
+        token: res.token || res.session_token || "tok_participant",
       };
+      sessionStorage.setItem("sf_role", "participant");
       sessionStorage.setItem("sf_session_token", enrolledData.token);
       sessionStorage.setItem("sf_device_fingerprint", enrolledData.deviceId);
       sessionStorage.setItem("sf_participant_alias", enrolledData.alias);

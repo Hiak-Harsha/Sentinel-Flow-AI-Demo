@@ -173,30 +173,53 @@ export default function App() {
     refreshAll();
   }, [refreshAll]);
 
-  // Setup WebSocket connection
+  // Setup WebSocket connection with Ticket Authentication & Protocol v1 support
   useEffect(() => {
     let ws = null;
     let reconnectTimeout = null;
+    let pingInterval = null;
 
-    const connectWebSocket = () => {
+    const connectWebSocket = async () => {
       try {
-        const endpoint = socketEndpoint();
+        let ticket = null;
+        try {
+          const currentRole = sessionStorage.getItem("sf_role") || "operator";
+          const identityId = sessionStorage.getItem("sf_device_fingerprint") || null;
+          const ticketRes = await api.getWsTicket({
+            role: currentRole === "operator" ? "operator" : "participant",
+            identity_id: identityId,
+            passcode: "SF-OPERATOR-2026",
+          });
+          ticket = ticketRes?.ticket;
+        } catch {
+          // If ticket request fails (e.g. backend booting), continue to reconnect loop
+        }
+
+        const endpoint = socketEndpoint(ticket);
         ws = new WebSocket(endpoint);
 
         ws.onopen = () => {
           setWsStatus("connected");
+          // Heartbeat ping every 20 seconds
+          if (pingInterval) clearInterval(pingInterval);
+          pingInterval = setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ type: "ping" }));
+            }
+          }, 20000);
         };
 
         ws.onmessage = (event) => {
           try {
-            const data = JSON.parse(event.data);
-            handleWsMessage(data);
+            const raw = JSON.parse(event.data);
+            handleWsMessage(raw);
           } catch (err) {
             console.error("WS Parse Error", err);
           }
         };
 
         ws.onclose = () => {
+          if (pingInterval) clearInterval(pingInterval);
           setWsStatus("reconnecting");
           reconnectTimeout = setTimeout(connectWebSocket, 3000);
         };
@@ -215,21 +238,28 @@ export default function App() {
 
     return () => {
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      if (pingInterval) clearInterval(pingInterval);
       if (ws) ws.close();
     };
   }, []);
 
-  // Dispatch WebSocket Messages
-  const handleWsMessage = (data) => {
-    switch (data.type) {
+  // Dispatch WebSocket Messages (Protocol v1 Envelope + Legacy Support)
+  const handleWsMessage = (raw) => {
+    const isV1 = raw && raw.v === 1;
+    const type = isV1 ? raw.type : raw.type;
+    const data = isV1 ? raw.data : raw;
+
+    switch (type) {
       case "initial_state":
         if (data.session) setSession(data.session);
         if (data.participants) setParticipants(data.participants);
         if (data.threat_level) setThreatLevel(data.threat_level);
         if (data.baseline_stats) setBaselineStats(data.baseline_stats);
         if (data.telemetry) setTelemetrySnap(data.telemetry);
+        if (data.recent_activity) setRecentActivity(data.recent_activity);
         break;
 
+      case "telemetry.tick":
       case "telemetry_update":
         if (data.telemetry) setTelemetrySnap(data.telemetry);
         if (data.threat_level) setThreatLevel(data.threat_level);
@@ -238,6 +268,7 @@ export default function App() {
         }
         break;
 
+      case "assessment.updated":
       case "assessment_update":
         if (data.assessment) {
           setAssessments((prev) => ({ ...prev, [data.identity_id]: data.assessment }));
@@ -250,6 +281,7 @@ export default function App() {
         }
         break;
 
+      case "alert.raised":
       case "alert_raised":
         if (data.alert) {
           setActiveAlerts((prev) => {
@@ -260,18 +292,58 @@ export default function App() {
         }
         break;
 
-      case "causal_activity":
-        if (data.activity) {
-          setRecentActivity((prev) => [data.activity, ...prev.slice(0, 49)]);
+      case "alert.updated":
+        if (data.alert_id) {
+          setActiveAlerts((prev) =>
+            prev.map((a) =>
+              (a.alert_id === data.alert_id || a.id === data.alert_id)
+                ? { ...a, disposition: data.disposition, analyst_notes: data.notes || a.analyst_notes }
+                : a
+            )
+          );
         }
         break;
 
+      case "causal.activity":
+      case "causal_activity": {
+        const ev = data.event || data.activity || data;
+        if (ev && (ev.id || ev.event_type)) {
+          setRecentActivity((prev) => [ev, ...prev.slice(0, 49)]);
+        }
+        break;
+      }
+
+      case "participant.joined":
       case "participant_joined":
-        refreshAll();
+        if (data.participant) {
+          setParticipants((prev) => {
+            const exists = prev.some((p) => p.device_id === data.participant.device_id);
+            if (!exists) return [...prev, data.participant];
+            return prev;
+          });
+        } else {
+          refreshAll();
+        }
         break;
 
+      case "session.created":
+      case "session.phase_changed":
       case "session_phase_changed":
         if (data.session) setSession(data.session);
+        break;
+
+      case "emergency_stop.engaged":
+      case "emergency_stop":
+        setThreatLevel("EMERGENCY_STOP");
+        break;
+
+      case "emergency_stop.reset":
+      case "emergency_stop_reset":
+        setThreatLevel("LOW");
+        break;
+
+      case "resync_required":
+        refreshAll();
         break;
 
       default:

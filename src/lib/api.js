@@ -5,9 +5,9 @@
  */
 
 export const API_BASE =
-  (typeof window !== "undefined" && window.location.hostname
-    ? `http://${window.location.hostname}:8000`
-    : "http://127.0.0.1:8000");
+  (import.meta.env && import.meta.env.VITE_API_BASE_URL)
+    ? import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, "")
+    : "";
 
 async function request(path, options = {}) {
   try {
@@ -173,15 +173,29 @@ export const api = {
       }),
   },
 
+  // WebSocket Auth Ticket
+  getWsTicket: (params = { role: "operator", passcode: "SF-OPERATOR-2026" }) =>
+    request("/api/v1/ws/ticket", { method: "POST", body: JSON.stringify(params) }),
+
   // Backwards compatibility aliases
   snapshot: () => request("/api/sessions/current"),
   startSession: () => request("/api/sessions", { method: "POST" }),
   baseline: () => request("/api/detection/baseline/calibrate", { method: "POST" }),
 };
 
-export function socketEndpoint() {
-  const url = new URL(API_BASE);
-  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
-  url.pathname = "/ws";
+export function socketEndpoint(ticket = null) {
+  let wsUrlString = "";
+  if (import.meta.env && import.meta.env.VITE_WS_URL) {
+    wsUrlString = import.meta.env.VITE_WS_URL;
+  } else if (typeof window !== "undefined" && window.location) {
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    wsUrlString = `${protocol}//${window.location.host}/ws`;
+  } else {
+    wsUrlString = "ws://127.0.0.1:8000/ws";
+  }
+  const url = new URL(wsUrlString);
+  if (ticket) {
+    url.searchParams.set("ticket", ticket);
+  }
   return url.toString();
 }

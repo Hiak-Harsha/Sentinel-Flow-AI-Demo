@@ -300,7 +300,11 @@ def init_proxy_handler(
 proxy_router = APIRouter(tags=["Reverse Proxy"])
 
 
-@proxy_router.api_route("/proxy/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"])
+@proxy_router.api_route(
+    "/proxy/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
+    include_in_schema=False,
+)
 async def handle_proxy(path: str, request: Request) -> Response:
     """Transparently proxies HTTP requests to allowed target application."""
     handler = get_proxy_handler()

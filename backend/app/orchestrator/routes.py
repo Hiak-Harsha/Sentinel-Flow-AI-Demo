@@ -124,6 +124,13 @@ class StartRunRequest(BaseModel):
     launched_by: str = Field(default="operator", description="Participant alias or operator")
 
 
+@router.get("/status")
+async def get_orchestrator_status() -> dict[str, Any]:
+    """Return status of red team orchestrator, consent gate, and active runs."""
+    manager = get_run_manager()
+    return manager.get_status()
+
+
 @router.get("/scenarios")
 async def list_scenarios() -> list[dict[str, Any]]:
     """List available red team scenarios with safety limits and parameter schema."""

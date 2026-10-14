@@ -1,0 +1,4539 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Sentinel Flow API",
+    "description": "Real-Time Network Intrusion & Behavioural Anomaly Detection Platform",
+    "version": "3.0.0"
+  },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "Overview & Telemetry"
+        ],
+        "summary": "Health check endpoint",
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Api V1 Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/overview": {
+      "get": {
+        "tags": [
+          "Overview & Telemetry"
+        ],
+        "summary": "Aggregate command center and SOC overview metrics",
+        "operationId": "get_overview_api_v1_overview_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Overview Api V1 Overview Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/activity/stream": {
+      "get": {
+        "tags": [
+          "Overview & Telemetry"
+        ],
+        "summary": "Chronological activity stream from tamper-evident evidence ledger",
+        "operationId": "get_activity_stream_api_v1_activity_stream_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Get Activity Stream Api V1 Activity Stream Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/telemetry/stats": {
+      "get": {
+        "tags": [
+          "Overview & Telemetry"
+        ],
+        "summary": "Current 5s sliding window network feature statistics",
+        "operationId": "get_telemetry_stats_api_v1_telemetry_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Telemetry Stats Api V1 Telemetry Stats Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/telemetry/timeseries": {
+      "get": {
+        "tags": [
+          "Overview & Telemetry"
+        ],
+        "summary": "Bounded timeseries points for telemetry charts",
+        "operationId": "get_telemetry_timeseries_api_v1_telemetry_timeseries_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Telemetry Timeseries Api V1 Telemetry Timeseries Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/academic-model/status": {
+      "get": {
+        "tags": [
+          "Overview & Telemetry"
+        ],
+        "summary": "Academic supervised model (UNSW-NB15) status",
+        "operationId": "get_academic_model_status_api_v1_academic_model_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Academic Model Status Api V1 Academic Model Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/academic-model/benchmark": {
+      "get": {
+        "tags": [
+          "Overview & Telemetry"
+        ],
+        "summary": "Academic supervised model benchmark metrics",
+        "operationId": "get_academic_model_benchmark_api_v1_academic_model_benchmark_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Academic Model Benchmark Api V1 Academic Model Benchmark Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/academic-model/predict": {
+      "post": {
+        "tags": [
+          "Overview & Telemetry"
+        ],
+        "summary": "Inference endpoint for academic UNSW-NB15 flow model",
+        "operationId": "predict_academic_flow_api_v1_academic_model_predict_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object",
+                "title": "Features"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Predict Academic Flow Api V1 Academic Model Predict Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions": {
+      "post": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Create a new classroom session",
+        "operationId": "create_session_api_v1_sessions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateSessionRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionModel"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/current": {
+      "get": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Get the currently active session",
+        "operationId": "get_current_session_api_v1_sessions_current_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Current Session Api V1 Sessions Current Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/join": {
+      "post": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Join a session as a classroom participant",
+        "operationId": "join_session_api_v1_sessions_join_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__schemas__sessions__JoinSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParticipantModel"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/participants": {
+      "get": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "List all active participants in current session",
+        "operationId": "get_participants_api_v1_sessions_participants_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Participants Api V1 Sessions Participants Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/controlled-target": {
+      "post": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Designate or clear controlled target device",
+        "operationId": "set_controlled_target_api_v1_sessions_controlled_target_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__schemas__sessions__ControlledTargetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Set Controlled Target Api V1 Sessions Controlled Target Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/activity": {
+      "post": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Ingest participant synthetic web application activity",
+        "operationId": "record_activity_api_v1_activity_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__schemas__sessions__ActivityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Record Activity Api V1 Activity Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/history": {
+      "get": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "List historical classroom demonstration sessions",
+        "operationId": "get_history_api_v1_history_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get History Api V1 History Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/detection/status": {
+      "get": {
+        "tags": [
+          "Detection & Evidence"
+        ],
+        "summary": "Get global detection engine threat status",
+        "operationId": "get_detection_status_api_v1_detection_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectionStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/detection/alerts": {
+      "get": {
+        "tags": [
+          "Detection & Evidence"
+        ],
+        "summary": "List security alerts with optional disposition filter",
+        "operationId": "list_alerts_api_v1_detection_alerts_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "disposition",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Disposition"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlertModel"
+                  },
+                  "title": "Response List Alerts Api V1 Detection Alerts Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/detection/alerts/{alert_id}/disposition": {
+      "patch": {
+        "tags": [
+          "Detection & Evidence"
+        ],
+        "summary": "Update alert disposition and analyst investigation notes",
+        "operationId": "update_alert_disposition_api_v1_detection_alerts__alert_id__disposition_patch",
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Alert Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertDispositionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Update Alert Disposition Api V1 Detection Alerts  Alert Id  Disposition Patch"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/detection/evidence/verify": {
+      "get": {
+        "tags": [
+          "Detection & Evidence"
+        ],
+        "summary": "Verify cryptographic SHA-256 evidence chain integrity",
+        "operationId": "verify_evidence_chain_api_v1_detection_evidence_verify_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainVerifyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/detection/chain/verify": {
+      "get": {
+        "tags": [
+          "Detection & Evidence"
+        ],
+        "summary": "Verify cryptographic SHA-256 evidence chain integrity",
+        "operationId": "verify_evidence_chain_api_v1_detection_chain_verify_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainVerifyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/detection/baseline/calibrate": {
+      "post": {
+        "tags": [
+          "Detection & Evidence"
+        ],
+        "summary": "Calibrate detection baseline metrics",
+        "operationId": "calibrate_baseline_api_v1_detection_baseline_calibrate_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Calibrate Baseline Api V1 Detection Baseline Calibrate Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orchestrator/status": {
+      "get": {
+        "tags": [
+          "Attack Orchestrator"
+        ],
+        "summary": "Get status of orchestrator, active runs, and emergency stop",
+        "operationId": "get_orchestrator_status_api_v1_orchestrator_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Orchestrator Status Api V1 Orchestrator Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orchestrator/runs": {
+      "get": {
+        "tags": [
+          "Attack Orchestrator"
+        ],
+        "summary": "List all attack scenario runs",
+        "operationId": "list_runs_api_v1_orchestrator_runs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Runs Api V1 Orchestrator Runs Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Attack Orchestrator"
+        ],
+        "summary": "Launch a bounded, consented attack scenario",
+        "operationId": "launch_run_api_v1_orchestrator_runs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__schemas__orchestrator__StartRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Launch Run Api V1 Orchestrator Runs Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orchestrator/runs/{run_id}": {
+      "get": {
+        "tags": [
+          "Attack Orchestrator"
+        ],
+        "summary": "Get execution status and effect timeline for a run",
+        "operationId": "get_run_api_v1_orchestrator_runs__run_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Run Api V1 Orchestrator Runs  Run Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orchestrator/emergency-stop": {
+      "post": {
+        "tags": [
+          "Attack Orchestrator"
+        ],
+        "summary": "Trip emergency stop circuit breaker and halt all scenarios",
+        "operationId": "emergency_stop_api_v1_orchestrator_emergency_stop_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmergencyStopResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orchestrator/emergency-stop/reset": {
+      "post": {
+        "tags": [
+          "Attack Orchestrator"
+        ],
+        "summary": "Reset emergency stop circuit breaker",
+        "operationId": "reset_emergency_stop_api_v1_orchestrator_emergency_stop_reset_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmergencyStopResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orchestrator/consent": {
+      "post": {
+        "tags": [
+          "Attack Orchestrator"
+        ],
+        "summary": "Issue verified operator consent token for an allowlisted target",
+        "operationId": "grant_consent_api_v1_orchestrator_consent_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantConsentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orchestrator/consent/log": {
+      "get": {
+        "tags": [
+          "Attack Orchestrator"
+        ],
+        "summary": "Get operator consent audit ledger",
+        "operationId": "get_consent_audit_log_api_v1_orchestrator_consent_log_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Consent Audit Log Api V1 Orchestrator Consent Log Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/targets": {
+      "get": {
+        "tags": [
+          "Targets & Allowlist"
+        ],
+        "summary": "Get target origins and current target inventory",
+        "operationId": "list_targets_api_v1_targets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Targets Api V1 Targets Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/targets/authorize": {
+      "post": {
+        "tags": [
+          "Targets & Allowlist"
+        ],
+        "summary": "Add new authorized target origin to private network boundary",
+        "operationId": "authorize_target_api_v1_targets_authorize_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthorizeTargetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Authorize Target Api V1 Targets Authorize Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ws/ticket": {
+      "post": {
+        "tags": [
+          "WebSocket Tickets"
+        ],
+        "summary": "Issue a short-lived ticket for WebSocket connection authentication",
+        "operationId": "issue_ws_ticket_api_v1_ws_ticket_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WsTicketRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WsTicketResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/identity/operator-login": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "summary": "Operator Login",
+        "description": "Verify operator passcode and issue operator session token.",
+        "operationId": "operator_login_api_v1_api_identity_operator_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OperatorLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Operator Login Api V1 Api Identity Operator Login Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/identity/whoami": {
+      "get": {
+        "tags": [
+          "Identity"
+        ],
+        "summary": "Whoami",
+        "description": "Return identity and role from session token header.",
+        "operationId": "whoami_api_v1_api_identity_whoami_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Whoami Api V1 Api Identity Whoami Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/identity/register": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "summary": "Register Identity",
+        "description": "Register participant alias, compute device fingerprint, and issue secure session token.",
+        "operationId": "register_identity_api_v1_api_identity_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterIdentityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Register Identity Api V1 Api Identity Register Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/identity/validate": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "summary": "Validate Session",
+        "description": "Validate a participant token against active sessions.",
+        "operationId": "validate_session_api_v1_api_identity_validate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Validate Session Api V1 Api Identity Validate Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/identity/list": {
+      "get": {
+        "tags": [
+          "Identity"
+        ],
+        "summary": "List Identities",
+        "description": "List all registered identities and device fingerprints.",
+        "operationId": "list_identities_api_v1_api_identity_list_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response List Identities Api V1 Api Identity List Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/features": {
+      "get": {
+        "tags": [
+          "Feature Pipeline"
+        ],
+        "summary": "Get All Features",
+        "description": "Return latest feature vectors for all active identities.",
+        "operationId": "get_all_features_api_v1_api_features_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get All Features Api V1 Api Features Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/features/network/snapshot": {
+      "get": {
+        "tags": [
+          "Feature Pipeline"
+        ],
+        "summary": "Get Network Feature Snapshot",
+        "description": "Return aggregate network telemetry snapshot.",
+        "operationId": "get_network_feature_snapshot_api_v1_api_features_network_snapshot_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Network Feature Snapshot Api V1 Api Features Network Snapshot Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/features/debug/{identity_id}": {
+      "get": {
+        "tags": [
+          "Feature Pipeline"
+        ],
+        "summary": "Get Identity Features",
+        "description": "Inspect calculated streaming feature vector for a specific identity.",
+        "operationId": "get_identity_features_api_v1_api_features_debug__identity_id__get",
+        "parameters": [
+          {
+            "name": "identity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Identity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Identity Features Api V1 Api Features Debug  Identity Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/api/features/{identity_id}": {
+      "get": {
+        "tags": [
+          "Feature Pipeline"
+        ],
+        "summary": "Get Identity Features",
+        "description": "Inspect calculated streaming feature vector for a specific identity.",
+        "operationId": "get_identity_features_api_v1_api_features__identity_id__get",
+        "parameters": [
+          {
+            "name": "identity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Identity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Identity Features Api V1 Api Features  Identity Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lab-target/": {
+      "get": {
+        "tags": [
+          "Disposable Lab Target"
+        ],
+        "summary": "Target Root",
+        "description": "Target home page.",
+        "operationId": "target_root_lab_target__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Target Root Lab Target  Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lab-target": {
+      "get": {
+        "tags": [
+          "Disposable Lab Target"
+        ],
+        "summary": "Target Root",
+        "description": "Target home page.",
+        "operationId": "target_root_lab_target_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Target Root Lab Target Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lab-target/auth/login": {
+      "post": {
+        "tags": [
+          "Disposable Lab Target"
+        ],
+        "summary": "Target Login",
+        "description": "Instrumented login endpoint producing verified target-side auth audit events.",
+        "operationId": "target_login_lab_target_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Target Login Lab Target Auth Login Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lab-target/api/products": {
+      "get": {
+        "tags": [
+          "Disposable Lab Target"
+        ],
+        "summary": "List Products",
+        "description": "Inexpensive catalog endpoint for testing regular browsing.",
+        "operationId": "list_products_lab_target_api_products_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response List Products Lab Target Api Products Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lab-target/api/status": {
+      "get": {
+        "tags": [
+          "Disposable Lab Target"
+        ],
+        "summary": "Get Service Status",
+        "description": "Target service health and saturation indicator endpoint.",
+        "operationId": "get_service_status_lab_target_api_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Service Status Lab Target Api Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lab-target/canary/{probe_type}": {
+      "post": {
+        "tags": [
+          "Disposable Lab Target"
+        ],
+        "summary": "Canary Probe",
+        "description": "Harmless canary trap route that records exploit attempts safely.",
+        "operationId": "canary_probe_lab_target_canary__probe_type__post",
+        "parameters": [
+          {
+            "name": "probe_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Probe Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Canary Probe Lab Target Canary  Probe Type  Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Disposable Lab Target"
+        ],
+        "summary": "Canary Probe",
+        "description": "Harmless canary trap route that records exploit attempts safely.",
+        "operationId": "canary_probe_lab_target_canary__probe_type__get",
+        "parameters": [
+          {
+            "name": "probe_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Probe Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Canary Probe Lab Target Canary  Probe Type  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lab-target/sensor/port-probe": {
+      "post": {
+        "tags": [
+          "Disposable Lab Target"
+        ],
+        "summary": "Record Port Probe",
+        "description": "Simulated lab-sensor connection telemetry for distinct port scanning.",
+        "operationId": "record_port_probe_lab_target_sensor_port_probe_post",
+        "parameters": [
+          {
+            "name": "port",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 65535,
+              "minimum": 1,
+              "title": "Port"
+            }
+          },
+          {
+            "name": "protocol",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "TCP",
+              "title": "Protocol"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Record Port Probe Lab Target Sensor Port Probe Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/proxy/status": {
+      "get": {
+        "tags": [
+          "Reverse Proxy"
+        ],
+        "summary": "Proxy Status",
+        "description": "Returns proxy status, target origins, and logged metrics count.",
+        "operationId": "proxy_status_api_proxy_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Proxy Status Api Proxy Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/proxy/logs": {
+      "get": {
+        "tags": [
+          "Reverse Proxy"
+        ],
+        "summary": "Proxy Recent Logs",
+        "description": "Returns recent server-measured traffic records, optionally filtered by identity_id.",
+        "operationId": "proxy_recent_logs_api_proxy_logs_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "identity_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Identity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Proxy Recent Logs Api Proxy Logs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/webhook/target-event": {
+      "post": {
+        "tags": [
+          "Webhook"
+        ],
+        "summary": "Receive Target Event",
+        "description": "Receive an authenticated application-level event from the target app.",
+        "operationId": "receive_target_event_api_webhook_target_event_post",
+        "parameters": [
+          {
+            "name": "x-sentinel-signature",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Sentinel-Signature"
+            }
+          },
+          {
+            "name": "x-sentinel-timestamp",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Sentinel-Timestamp"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TargetEventPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Receive Target Event Api Webhook Target Event Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/webhook/events": {
+      "get": {
+        "tags": [
+          "Webhook"
+        ],
+        "summary": "List Target Events",
+        "description": "List recent received webhook events.",
+        "operationId": "list_target_events_api_webhook_events_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response List Target Events Api Webhook Events Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/features": {
+      "get": {
+        "tags": [
+          "Feature Pipeline"
+        ],
+        "summary": "Get All Features",
+        "description": "Return latest feature vectors for all active identities.",
+        "operationId": "get_all_features_api_features_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get All Features Api Features Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/features/network/snapshot": {
+      "get": {
+        "tags": [
+          "Feature Pipeline"
+        ],
+        "summary": "Get Network Feature Snapshot",
+        "description": "Return aggregate network telemetry snapshot.",
+        "operationId": "get_network_feature_snapshot_api_features_network_snapshot_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Network Feature Snapshot Api Features Network Snapshot Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/features/debug/{identity_id}": {
+      "get": {
+        "tags": [
+          "Feature Pipeline"
+        ],
+        "summary": "Get Identity Features",
+        "description": "Inspect calculated streaming feature vector for a specific identity.",
+        "operationId": "get_identity_features_api_features_debug__identity_id__get",
+        "parameters": [
+          {
+            "name": "identity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Identity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Identity Features Api Features Debug  Identity Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/features/{identity_id}": {
+      "get": {
+        "tags": [
+          "Feature Pipeline"
+        ],
+        "summary": "Get Identity Features",
+        "description": "Inspect calculated streaming feature vector for a specific identity.",
+        "operationId": "get_identity_features_api_features__identity_id__get",
+        "parameters": [
+          {
+            "name": "identity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Identity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Identity Features Api Features  Identity Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/identity/operator-login": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "summary": "Operator Login",
+        "description": "Verify operator passcode and issue operator session token.",
+        "operationId": "operator_login_api_identity_operator_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OperatorLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Operator Login Api Identity Operator Login Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/identity/whoami": {
+      "get": {
+        "tags": [
+          "Identity"
+        ],
+        "summary": "Whoami",
+        "description": "Return identity and role from session token header.",
+        "operationId": "whoami_api_identity_whoami_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Whoami Api Identity Whoami Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/identity/register": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "summary": "Register Identity",
+        "description": "Register participant alias, compute device fingerprint, and issue secure session token.",
+        "operationId": "register_identity_api_identity_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterIdentityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Register Identity Api Identity Register Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/identity/validate": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "summary": "Validate Session",
+        "description": "Validate a participant token against active sessions.",
+        "operationId": "validate_session_api_identity_validate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Validate Session Api Identity Validate Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/identity/list": {
+      "get": {
+        "tags": [
+          "Identity"
+        ],
+        "summary": "List Identities",
+        "description": "List all registered identities and device fingerprints.",
+        "operationId": "list_identities_api_identity_list_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response List Identities Api Identity List Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/detection/status": {
+      "get": {
+        "tags": [
+          "Detection"
+        ],
+        "summary": "Get Detection Status",
+        "description": "Get real-time multi-layer detection status.",
+        "operationId": "get_detection_status_api_detection_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Detection Status Api Detection Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/detection/alerts": {
+      "get": {
+        "tags": [
+          "Detection"
+        ],
+        "summary": "Get Active Alerts",
+        "description": "Get currently active security alerts.",
+        "operationId": "get_active_alerts_api_detection_alerts_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response Get Active Alerts Api Detection Alerts Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/detection/alerts/history": {
+      "get": {
+        "tags": [
+          "Detection"
+        ],
+        "summary": "Get Alert History",
+        "description": "Get chronological alert history.",
+        "operationId": "get_alert_history_api_detection_alerts_history_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Get Alert History Api Detection Alerts History Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/detection/alerts/{alert_id}/resolve": {
+      "post": {
+        "tags": [
+          "Detection"
+        ],
+        "summary": "Resolve Alert",
+        "description": "Mark an alert as resolved.",
+        "operationId": "resolve_alert_api_detection_alerts__alert_id__resolve_post",
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Alert Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Resolve Alert Api Detection Alerts  Alert Id  Resolve Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/detection/alerts/{alert_id}/disposition": {
+      "post": {
+        "tags": [
+          "Detection"
+        ],
+        "summary": "Update Disposition",
+        "description": "Update formal analyst triage disposition.",
+        "operationId": "update_disposition_api_detection_alerts__alert_id__disposition_post",
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Alert Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DispositionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Update Disposition Api Detection Alerts  Alert Id  Disposition Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/detection/baseline": {
+      "get": {
+        "tags": [
+          "Detection"
+        ],
+        "summary": "Get Baseline",
+        "description": "Get unsupervised baseline distribution stats.",
+        "operationId": "get_baseline_api_detection_baseline_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Baseline Api Detection Baseline Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Detection"
+        ],
+        "summary": "Calibrate Baseline",
+        "description": "Trigger baseline calibration by fitting empirical distribution on observed normal traffic.",
+        "operationId": "calibrate_baseline_api_detection_baseline_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Calibrate Baseline Api Detection Baseline Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/detection/baseline/calibrate": {
+      "post": {
+        "tags": [
+          "Detection"
+        ],
+        "summary": "Calibrate Baseline",
+        "description": "Trigger baseline calibration by fitting empirical distribution on observed normal traffic.",
+        "operationId": "calibrate_baseline_api_detection_baseline_calibrate_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Calibrate Baseline Api Detection Baseline Calibrate Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/detection/evidence/verify": {
+      "get": {
+        "tags": [
+          "Detection"
+        ],
+        "summary": "Verify Evidence Chain",
+        "description": "Cryptographically verify the forward SHA-256 hash chain of the evidence ledger.",
+        "operationId": "verify_evidence_chain_api_detection_evidence_verify_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Verify Evidence Chain Api Detection Evidence Verify Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/detection/device/{device_id}": {
+      "get": {
+        "tags": [
+          "Detection"
+        ],
+        "summary": "Get Device Assessment",
+        "description": "Get real-time security assessment for an individual identity.",
+        "operationId": "get_device_assessment_api_detection_device__device_id__get",
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Device Assessment Api Detection Device  Device Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/detection/grid": {
+      "get": {
+        "tags": [
+          "Detection"
+        ],
+        "summary": "Get Detection Grid",
+        "description": "Return compact status for all known devices for the operator heatmap.",
+        "operationId": "get_detection_grid_api_detection_grid_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response Get Detection Grid Api Detection Grid Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orchestrator/status": {
+      "get": {
+        "tags": [
+          "Attack Orchestrator"
+        ],
+        "summary": "Get Orchestrator Status",
+        "description": "Return status of red team orchestrator, consent gate, and active runs.",
+        "operationId": "get_orchestrator_status_api_orchestrator_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Orchestrator Status Api Orchestrator Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orchestrator/scenarios": {
+      "get": {
+        "tags": [
+          "Attack Orchestrator"
+        ],
+        "summary": "List Scenarios",
+        "description": "List available red team scenarios with safety limits and parameter schema.",
+        "operationId": "list_scenarios_api_orchestrator_scenarios_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response List Scenarios Api Orchestrator Scenarios Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orchestrator/consent": {
+      "post": {
+        "tags": [
+          "Attack Orchestrator"
+        ],
+        "summary": "Record Consent",
+        "description": "Record operator ownership confirmation for an allowlisted private target.",
+        "operationId": "record_consent_api_orchestrator_consent_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Record Consent Api Orchestrator Consent Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orchestrator/consent/audit": {
+      "get": {
+        "tags": [
+          "Attack Orchestrator"
+        ],
+        "summary": "Get Consent Audit",
+        "description": "Inspect operator consent audit log.",
+        "operationId": "get_consent_audit_api_orchestrator_consent_audit_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response Get Consent Audit Api Orchestrator Consent Audit Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orchestrator/runs": {
+      "get": {
+        "tags": [
+          "Attack Orchestrator"
+        ],
+        "summary": "List Runs",
+        "description": "List all attack runs in chronological order.",
+        "operationId": "list_runs_api_orchestrator_runs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response List Runs Api Orchestrator Runs Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Attack Orchestrator"
+        ],
+        "summary": "Start Run",
+        "description": "Launch an authorized attack scenario against allowlisted private lab target.",
+        "operationId": "start_run_api_orchestrator_runs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__orchestrator__routes__StartRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Start Run Api Orchestrator Runs Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orchestrator/run": {
+      "post": {
+        "tags": [
+          "Attack Orchestrator"
+        ],
+        "summary": "Start Run",
+        "description": "Launch an authorized attack scenario against allowlisted private lab target.",
+        "operationId": "start_run_api_orchestrator_run_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__orchestrator__routes__StartRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Start Run Api Orchestrator Run Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orchestrator/run/{run_id}/stop": {
+      "post": {
+        "tags": [
+          "Attack Orchestrator"
+        ],
+        "summary": "Stop Run",
+        "description": "Halt an active attack run.",
+        "operationId": "stop_run_api_orchestrator_run__run_id__stop_post",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Stop Run Api Orchestrator Run  Run Id  Stop Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orchestrator/emergency-stop": {
+      "post": {
+        "tags": [
+          "Attack Orchestrator"
+        ],
+        "summary": "Emergency Stop",
+        "description": "Immediately halt ALL active runs and trip the circuit breaker.",
+        "operationId": "emergency_stop_api_orchestrator_emergency_stop_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Emergency Stop Api Orchestrator Emergency Stop Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orchestrator/emergency-stop/reset": {
+      "post": {
+        "tags": [
+          "Attack Orchestrator"
+        ],
+        "summary": "Reset Emergency Stop",
+        "description": "Reset the emergency stop circuit breaker.",
+        "operationId": "reset_emergency_stop_api_orchestrator_emergency_stop_reset_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Reset Emergency Stop Api Orchestrator Emergency Stop Reset Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orchestrator/run/{run_id}": {
+      "get": {
+        "tags": [
+          "Attack Orchestrator"
+        ],
+        "summary": "Get Run Status",
+        "description": "Get status and metrics of a specific attack run.",
+        "operationId": "get_run_status_api_orchestrator_run__run_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Run Status Api Orchestrator Run  Run Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orchestrator/run/{run_id}/effect-timeline": {
+      "get": {
+        "tags": [
+          "Attack Orchestrator"
+        ],
+        "summary": "Get Run Effect Timeline",
+        "description": "Return ordered list of per-request effect events for run (up to 500).",
+        "operationId": "get_run_effect_timeline_api_orchestrator_run__run_id__effect_timeline_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Get Run Effect Timeline Api Orchestrator Run  Run Id  Effect Timeline Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Api Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/overview": {
+      "get": {
+        "summary": "Get Overview",
+        "operationId": "get_overview_api_overview_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Overview Api Overview Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sessions": {
+      "post": {
+        "summary": "Create Session",
+        "operationId": "create_session_api_sessions_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Create Session Api Sessions Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sessions/current": {
+      "get": {
+        "summary": "Get Current Session",
+        "operationId": "get_current_session_api_sessions_current_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Current Session Api Sessions Current Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/session": {
+      "get": {
+        "summary": "Get Current Session",
+        "operationId": "get_current_session_api_session_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Current Session Api Session Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sessions/join": {
+      "post": {
+        "summary": "Join Session",
+        "operationId": "join_session_api_sessions_join_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__main__JoinSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Join Session Api Sessions Join Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sessions/participants": {
+      "get": {
+        "summary": "Get Participants",
+        "operationId": "get_participants_api_sessions_participants_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Participants Api Sessions Participants Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sessions/controlled-target": {
+      "post": {
+        "summary": "Set Controlled Target",
+        "operationId": "set_controlled_target_api_sessions_controlled_target_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__main__ControlledTargetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Set Controlled Target Api Sessions Controlled Target Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activity": {
+      "post": {
+        "summary": "Record Activity",
+        "operationId": "record_activity_api_activity_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__main__ActivityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Record Activity Api Activity Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activity/stream": {
+      "get": {
+        "summary": "Get Activity Stream",
+        "description": "Return genuine chronological activity stream from tamper-evident event ledger.",
+        "operationId": "get_activity_stream_api_activity_stream_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Get Activity Stream Api Activity Stream Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/telemetry/stats": {
+      "get": {
+        "summary": "Get Telemetry Stats",
+        "operationId": "get_telemetry_stats_api_telemetry_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Telemetry Stats Api Telemetry Stats Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/telemetry/timeseries": {
+      "get": {
+        "summary": "Get Telemetry Timeseries",
+        "operationId": "get_telemetry_timeseries_api_telemetry_timeseries_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Telemetry Timeseries Api Telemetry Timeseries Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/academic-model/status": {
+      "get": {
+        "summary": "Get Academic Model Status",
+        "operationId": "get_academic_model_status_api_academic_model_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Academic Model Status Api Academic Model Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/academic-model/benchmark": {
+      "get": {
+        "summary": "Get Academic Model Benchmark",
+        "operationId": "get_academic_model_benchmark_api_academic_model_benchmark_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Academic Model Benchmark Api Academic Model Benchmark Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/academic-model/predict": {
+      "post": {
+        "summary": "Predict Academic Flow",
+        "operationId": "predict_academic_flow_api_academic_model_predict_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object",
+                "title": "Features"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Predict Academic Flow Api Academic Model Predict Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/history": {
+      "get": {
+        "summary": "Get History",
+        "operationId": "get_history_api_history_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get History Api History Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AlertDispositionRequest": {
+        "properties": {
+          "disposition": {
+            "type": "string",
+            "title": "Disposition",
+            "description": "Alert status: OPEN, ACKNOWLEDGED, INVESTIGATING, RESOLVED, FALSE_POSITIVE"
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes",
+            "description": "Analyst investigation notes",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "disposition"
+        ],
+        "title": "AlertDispositionRequest"
+      },
+      "AlertModel": {
+        "properties": {
+          "alert_id": {
+            "type": "string",
+            "title": "Alert Id"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id",
+            "default": "current"
+          },
+          "rule_id": {
+            "type": "string",
+            "title": "Rule Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "identity_id": {
+            "type": "string",
+            "title": "Identity Id"
+          },
+          "threat_score": {
+            "type": "number",
+            "title": "Threat Score"
+          },
+          "disposition": {
+            "type": "string",
+            "title": "Disposition",
+            "default": "OPEN"
+          },
+          "analyst_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analyst Notes"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "alert_id",
+          "rule_id",
+          "name",
+          "severity",
+          "identity_id",
+          "threat_score",
+          "created_at"
+        ],
+        "title": "AlertModel"
+      },
+      "AuthorizeTargetRequest": {
+        "properties": {
+          "operator_passcode": {
+            "type": "string",
+            "title": "Operator Passcode"
+          },
+          "target_origin": {
+            "type": "string",
+            "title": "Target Origin"
+          },
+          "operator_name": {
+            "type": "string",
+            "title": "Operator Name",
+            "default": "Lab Administrator"
+          },
+          "purpose": {
+            "type": "string",
+            "title": "Purpose",
+            "default": "Classroom SOC Training"
+          },
+          "confirmed_ownership": {
+            "type": "boolean",
+            "title": "Confirmed Ownership",
+            "default": true
+          },
+          "max_quota": {
+            "type": "integer",
+            "title": "Max Quota",
+            "default": 50
+          }
+        },
+        "type": "object",
+        "required": [
+          "operator_passcode",
+          "target_origin"
+        ],
+        "title": "AuthorizeTargetRequest"
+      },
+      "ChainVerifyResponse": {
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "chain_valid": {
+            "type": "boolean",
+            "title": "Chain Valid"
+          },
+          "total_events": {
+            "type": "integer",
+            "title": "Total Events",
+            "default": 0
+          },
+          "chain_tail_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chain Tail Hash"
+          },
+          "latest_integrity_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Integrity Hash"
+          },
+          "verified_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified At"
+          },
+          "failed_at_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failed At Index"
+          },
+          "corrupted_at_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corrupted At Index"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valid",
+          "chain_valid"
+        ],
+        "title": "ChainVerifyResponse"
+      },
+      "ConsentRequest": {
+        "properties": {
+          "target_origin": {
+            "type": "string",
+            "title": "Target Origin",
+            "description": "Target origin e.g. http://127.0.0.1:8000/lab-target"
+          },
+          "operator_name": {
+            "type": "string",
+            "title": "Operator Name",
+            "default": "Lab Operator"
+          },
+          "confirmed_ownership": {
+            "type": "boolean",
+            "title": "Confirmed Ownership",
+            "description": "Must be true to certify ownership"
+          }
+        },
+        "type": "object",
+        "required": [
+          "target_origin",
+          "confirmed_ownership"
+        ],
+        "title": "ConsentRequest"
+      },
+      "ConsentResponse": {
+        "properties": {
+          "consent_token": {
+            "type": "string",
+            "title": "Consent Token"
+          },
+          "target_origin": {
+            "type": "string",
+            "title": "Target Origin"
+          },
+          "operator_name": {
+            "type": "string",
+            "title": "Operator Name"
+          },
+          "confirmed_ownership": {
+            "type": "boolean",
+            "title": "Confirmed Ownership"
+          },
+          "granted_at_iso": {
+            "type": "string",
+            "title": "Granted At Iso"
+          }
+        },
+        "type": "object",
+        "required": [
+          "consent_token",
+          "target_origin",
+          "operator_name",
+          "confirmed_ownership",
+          "granted_at_iso"
+        ],
+        "title": "ConsentResponse"
+      },
+      "CreateSessionRequest": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title",
+            "description": "Optional title or class description"
+          }
+        },
+        "type": "object",
+        "title": "CreateSessionRequest"
+      },
+      "DetectionStatusResponse": {
+        "properties": {
+          "threat_level": {
+            "type": "string",
+            "title": "Threat Level"
+          },
+          "active_detections": {
+            "type": "integer",
+            "title": "Active Detections"
+          },
+          "baseline_stats": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Baseline Stats"
+          },
+          "rules_registered": {
+            "type": "integer",
+            "title": "Rules Registered",
+            "default": 4
+          },
+          "engine_ready": {
+            "type": "boolean",
+            "title": "Engine Ready",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "threat_level",
+          "active_detections"
+        ],
+        "title": "DetectionStatusResponse"
+      },
+      "DispositionRequest": {
+        "properties": {
+          "disposition": {
+            "type": "string",
+            "title": "Disposition",
+            "description": "NEW, INVESTIGATING, CONFIRMED_MALICIOUS, FALSE_POSITIVE, RESOLVED"
+          },
+          "analyst_notes": {
+            "type": "string",
+            "title": "Analyst Notes",
+            "description": "Analyst triage commentary",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "disposition"
+        ],
+        "title": "DispositionRequest"
+      },
+      "EmergencyStopResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "emergency_stop": {
+            "type": "boolean",
+            "title": "Emergency Stop"
+          },
+          "emergency_stop_tripped": {
+            "type": "boolean",
+            "title": "Emergency Stop Tripped"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "stopped_runs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Stopped Runs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "emergency_stop",
+          "emergency_stop_tripped",
+          "message"
+        ],
+        "title": "EmergencyStopResponse"
+      },
+      "GrantConsentRequest": {
+        "properties": {
+          "target_origin": {
+            "type": "string",
+            "title": "Target Origin"
+          },
+          "operator_name": {
+            "type": "string",
+            "title": "Operator Name",
+            "default": "Operator"
+          },
+          "confirmed_ownership": {
+            "type": "boolean",
+            "title": "Confirmed Ownership",
+            "description": "Explicit confirmation that operator owns the target environment"
+          }
+        },
+        "type": "object",
+        "required": [
+          "target_origin",
+          "confirmed_ownership"
+        ],
+        "title": "GrantConsentRequest"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "LoginRequest": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "LoginRequest"
+      },
+      "OperatorLoginRequest": {
+        "properties": {
+          "passcode": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Passcode"
+          }
+        },
+        "type": "object",
+        "required": [
+          "passcode"
+        ],
+        "title": "OperatorLoginRequest"
+      },
+      "ParticipantModel": {
+        "properties": {
+          "device_id": {
+            "type": "string",
+            "title": "Device Id"
+          },
+          "alias": {
+            "type": "string",
+            "title": "Alias"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "default": "participant"
+          },
+          "joined_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Joined At"
+          },
+          "last_seen": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Seen"
+          },
+          "request_count": {
+            "type": "integer",
+            "title": "Request Count",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "device_id",
+          "alias"
+        ],
+        "title": "ParticipantModel"
+      },
+      "RegisterIdentityRequest": {
+        "properties": {
+          "alias": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Alias"
+          },
+          "device_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id"
+          },
+          "client_fingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Fingerprint"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "default": "participant"
+          },
+          "passcode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passcode"
+          }
+        },
+        "type": "object",
+        "required": [
+          "alias"
+        ],
+        "title": "RegisterIdentityRequest"
+      },
+      "SessionModel": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "join_code": {
+            "type": "string",
+            "title": "Join Code"
+          },
+          "phase": {
+            "type": "string",
+            "title": "Phase",
+            "default": "WAITING"
+          },
+          "created_at_utc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At Utc"
+          },
+          "controlled_target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Controlled Target"
+          },
+          "max_participants": {
+            "type": "integer",
+            "title": "Max Participants",
+            "default": 60
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "join_code"
+        ],
+        "title": "SessionModel"
+      },
+      "TargetEventPayload": {
+        "properties": {
+          "event_type": {
+            "type": "string",
+            "title": "Event Type",
+            "description": "E.g. auth_failed, auth_success, checkout, admin_access"
+          },
+          "identity_id": {
+            "type": "string",
+            "title": "Identity Id",
+            "description": "Sentinel Flow identity or target username",
+            "default": "unknown"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp",
+            "description": "Event epoch timestamp"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "Endpoint associated with event",
+            "default": "/"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "description": "HTTP status code if applicable",
+            "default": 200
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata",
+            "description": "Additional context from target app"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_type"
+        ],
+        "title": "TargetEventPayload",
+        "description": "Event sent from the target application via webhook."
+      },
+      "ValidateTokenRequest": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "title": "ValidateTokenRequest"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WsTicketRequest": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "operator",
+              "participant"
+            ],
+            "title": "Role",
+            "description": "Role requesting WebSocket ticket",
+            "default": "participant"
+          },
+          "identity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Identity Id",
+            "description": "Participant device/identity ID (required if role is participant)"
+          },
+          "passcode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passcode",
+            "description": "Operator passcode (required if role is operator)"
+          }
+        },
+        "type": "object",
+        "title": "WsTicketRequest"
+      },
+      "WsTicketResponse": {
+        "properties": {
+          "ticket": {
+            "type": "string",
+            "title": "Ticket"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "identity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Identity Id"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In",
+            "description": "Ticket TTL in seconds",
+            "default": 300
+          }
+        },
+        "type": "object",
+        "required": [
+          "ticket",
+          "role"
+        ],
+        "title": "WsTicketResponse"
+      },
+      "app__main__ActivityRequest": {
+        "properties": {
+          "device_id": {
+            "type": "string",
+            "title": "Device Id"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "is_burst": {
+            "type": "boolean",
+            "title": "Is Burst",
+            "default": false
+          },
+          "bytes_in": {
+            "type": "integer",
+            "title": "Bytes In",
+            "default": 128
+          },
+          "bytes_out": {
+            "type": "integer",
+            "title": "Bytes Out",
+            "default": 1024
+          }
+        },
+        "type": "object",
+        "required": [
+          "device_id",
+          "action"
+        ],
+        "title": "ActivityRequest"
+      },
+      "app__main__ControlledTargetRequest": {
+        "properties": {
+          "device_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id"
+          }
+        },
+        "type": "object",
+        "title": "ControlledTargetRequest"
+      },
+      "app__main__JoinSessionRequest": {
+        "properties": {
+          "join_code": {
+            "type": "string",
+            "maxLength": 12,
+            "minLength": 4,
+            "title": "Join Code"
+          },
+          "alias": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Alias"
+          }
+        },
+        "type": "object",
+        "required": [
+          "join_code",
+          "alias"
+        ],
+        "title": "JoinSessionRequest"
+      },
+      "app__orchestrator__routes__StartRunRequest": {
+        "properties": {
+          "scenario": {
+            "type": "string",
+            "title": "Scenario",
+            "description": "Scenario ID: credential_stuffing, port_scan, burst_dos, canary_probe, scraping"
+          },
+          "target_origin": {
+            "type": "string",
+            "title": "Target Origin",
+            "description": "Private lab target URL"
+          },
+          "accounts": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accounts"
+          },
+          "duration_seconds": {
+            "type": "integer",
+            "maximum": 30.0,
+            "minimum": 5.0,
+            "title": "Duration Seconds",
+            "default": 10
+          },
+          "requests_per_second": {
+            "type": "integer",
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Requests Per Second",
+            "default": 15
+          },
+          "account_count": {
+            "type": "integer",
+            "maximum": 25.0,
+            "minimum": 5.0,
+            "title": "Account Count",
+            "default": 10
+          },
+          "scraping_iterations": {
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Scraping Iterations",
+            "default": 2
+          },
+          "launched_by": {
+            "type": "string",
+            "title": "Launched By",
+            "description": "Participant alias or operator",
+            "default": "operator"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scenario",
+          "target_origin"
+        ],
+        "title": "StartRunRequest"
+      },
+      "app__schemas__orchestrator__StartRunRequest": {
+        "properties": {
+          "scenario": {
+            "type": "string",
+            "title": "Scenario",
+            "description": "Scenario: credential_stuffing, port_scan, burst_dos, canary_probe, scraping"
+          },
+          "target_origin": {
+            "type": "string",
+            "title": "Target Origin",
+            "description": "Target origin passing RFC1918 / loopback allowlist"
+          },
+          "duration_seconds": {
+            "type": "integer",
+            "maximum": 120.0,
+            "minimum": 1.0,
+            "title": "Duration Seconds",
+            "default": 20
+          },
+          "requests_per_second": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Requests Per Second",
+            "default": 15
+          },
+          "account_count": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Account Count",
+            "default": 25
+          },
+          "scraping_iterations": {
+            "type": "integer",
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Scraping Iterations",
+            "default": 3
+          },
+          "accounts": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accounts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scenario",
+          "target_origin"
+        ],
+        "title": "StartRunRequest"
+      },
+      "app__schemas__sessions__ActivityRequest": {
+        "properties": {
+          "device_id": {
+            "type": "string",
+            "title": "Device Id",
+            "description": "Participant unique device identifier"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action",
+            "description": "Simulated user activity action"
+          },
+          "is_burst": {
+            "type": "boolean",
+            "title": "Is Burst",
+            "description": "Flag indicating high-frequency synthetic burst",
+            "default": false
+          },
+          "bytes_in": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Bytes In",
+            "default": 128
+          },
+          "bytes_out": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Bytes Out",
+            "default": 1024
+          }
+        },
+        "type": "object",
+        "required": [
+          "device_id",
+          "action"
+        ],
+        "title": "ActivityRequest"
+      },
+      "app__schemas__sessions__ControlledTargetRequest": {
+        "properties": {
+          "device_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id",
+            "description": "Device ID to mark as controlled target, or None to clear"
+          }
+        },
+        "type": "object",
+        "title": "ControlledTargetRequest"
+      },
+      "app__schemas__sessions__JoinSessionRequest": {
+        "properties": {
+          "join_code": {
+            "type": "string",
+            "maxLength": 12,
+            "minLength": 4,
+            "title": "Join Code",
+            "description": "Session join code"
+          },
+          "alias": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Alias",
+            "description": "Display name / alias of participant"
+          }
+        },
+        "type": "object",
+        "required": [
+          "join_code",
+          "alias"
+        ],
+        "title": "JoinSessionRequest"
+      }
+    }
+  }
+}

@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 import asyncio
+import json
+import time
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from typing import Annotated, Any
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+from .api.v1 import v1_router
 from .config import (
     ALLOWED_ORIGINS,
     ARTIFACT_DIR,
@@ -18,8 +22,14 @@ from .config import (
     PROXY_TIMEOUT_SECONDS,
     TARGET_CONFIG_PATH,
     ensure_runtime_directories,
+    settings,
     validate_safety_configuration,
 )
+from .logging_config import setup_structured_logging
+from .middleware.request_context import register_error_handlers, request_id_middleware
+from .ws.connection_manager import WebSocketManager
+
+logger = setup_structured_logging(json_format=settings.is_production)
 from .database import EventStore
 from .detection.engine import DetectionEngine
 from .detection.routes import (
@@ -85,6 +95,7 @@ async def lifespan(app: FastAPI):
     validate_safety_configuration()
     ensure_runtime_directories()
     hub = ConnectionHub()
+    ws_manager = WebSocketManager()
     sessions = SessionService()
     academic = AcademicModelService(ARTIFACT_DIR)
     event_store = EventStore(DATABASE_PATH)
@@ -183,16 +194,33 @@ async def lifespan(app: FastAPI):
     # Wire Feature Pipeline -> Detection Engine -> WebSocket Hub & EventStore
     def on_feature_vector(vec):
         assessment = detection_engine.evaluate_vector(vec)
-        hub.broadcast_nowait({
-            "type": "assessment_update",
+        threat_level = detection_engine.get_global_threat_level()
+        data = {
             "identity_id": vec.identity_id,
             "assessment": assessment,
             "features": vec.to_dict(),
-            "threat_level": detection_engine.get_global_threat_level(),
+            "threat_level": threat_level,
+        }
+        ws_manager.broadcast(
+            event_type="assessment.updated",
+            channel="operator",
+            data=data,
+            provenance="live",
+        )
+        ws_manager.broadcast(
+            event_type="assessment.updated",
+            channel=f"participant:{vec.identity_id}",
+            data=data,
+            provenance="live",
+        )
+        hub.broadcast_nowait({
+            "type": "assessment_update",
+            **data,
         })
         if assessment.get("is_threat"):
             raised = assessment.get("raised_alert") or {
                 "id": f"alt_{vec.identity_id}_{int(vec.timestamp_epoch)}",
+                "alert_id": f"alt_{vec.identity_id}_{int(vec.timestamp_epoch)}",
                 "identity_id": vec.identity_id,
                 "threat_score": assessment.get("threat_score", 0.8),
                 "severity": assessment.get("threat_level", "HIGH"),
@@ -201,6 +229,12 @@ async def lifespan(app: FastAPI):
                 "evidence": assessment.get("rule_details", []),
             }
             event_store.save_alert(raised)
+            ws_manager.broadcast(
+                event_type="alert.raised",
+                channel="operator",
+                data={"alert": raised, "assessment": assessment},
+                provenance="live",
+            )
             hub.broadcast_nowait({
                 "type": "alert_raised",
                 "alert": raised,
@@ -225,6 +259,12 @@ async def lifespan(app: FastAPI):
                 "attack_run_id": record.attack_run_id,
             },
         )
+        ws_manager.broadcast(
+            event_type="causal.activity",
+            channel="operator",
+            data=ev_rec,
+            provenance="live",
+        )
         hub.broadcast_nowait({
             "type": "causal_activity",
             "event": ev_rec,
@@ -232,10 +272,34 @@ async def lifespan(app: FastAPI):
 
     traffic_logger.add_listener(on_raw_traffic)
 
-    # Wire Attack Orchestrator Progress -> WebSocket Hub
-    run_manager.add_listener(lambda data: hub.broadcast_nowait(data))
+    # Wire Attack Orchestrator Progress -> WebSocket Manager & Hub
+    def on_orchestrator_event(data):
+        ws_type = data.get("type", "attack.progress")
+        if ws_type == "attack_progress":
+            ev_type = "attack.progress"
+        elif ws_type == "attack_effect":
+            ev_type = "attack.effect"
+        elif ws_type == "attack_finished":
+            ev_type = "attack.finished"
+        elif ws_type == "emergency_stop":
+            ev_type = "emergency_stop.engaged"
+        elif ws_type == "emergency_stop_reset":
+            ev_type = "emergency_stop.reset"
+        else:
+            ev_type = ws_type
+
+        ws_manager.broadcast(
+            event_type=ev_type,
+            channel="public" if "emergency_stop" in ev_type else "operator",
+            data=data,
+            provenance="simulated" if "attack" in ev_type else "live",
+        )
+        hub.broadcast_nowait(data)
+
+    run_manager.add_listener(on_orchestrator_event)
 
     app.state.hub = hub
+    app.state.ws_manager = ws_manager
     app.state.sessions = sessions
     app.state.academic = academic
     app.state.allowlist = allowlist
@@ -258,12 +322,21 @@ async def lifespan(app: FastAPI):
                 snapshot = feature_pipeline.compute_network_snapshot()
                 det_status = detection_engine.get_status()
                 proxy_snap = traffic_logger.snapshot()
-                await hub.broadcast({
-                    "type": "telemetry_update",
+                payload = {
                     "telemetry": snapshot,
                     "proxy": proxy_snap,
                     "threat_level": det_status["threat_level"],
                     "active_detections": det_status["active_detections"],
+                }
+                ws_manager.broadcast(
+                    event_type="telemetry.tick",
+                    channel="public",
+                    data=payload,
+                    provenance="live",
+                )
+                await hub.broadcast({
+                    "type": "telemetry_update",
+                    **payload,
                 })
             except Exception:
                 pass
@@ -276,19 +349,27 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Sentinel Flow API",
-    version="2.0.0",
+    version="3.0.0",
     description="Real-Time Network Intrusion & Behavioural Anomaly Detection Platform",
     lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=False,
+    allow_origins=settings.get_cors_origins(),
+    allow_origin_regex=settings.get_cors_origin_regex(),
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+app.middleware("http")(request_id_middleware)
+register_error_handlers(app)
+
+# Canonical API v1
+app.include_router(v1_router)
+
+# Supporting & Legacy Domain Routers
 app.include_router(lab_target_router)
 app.include_router(proxy_router)
 app.include_router(webhook_router)
@@ -520,29 +601,119 @@ async def get_history() -> dict[str, Any]:
     return {"history": _sessions().get_history()}
 
 
-# WebSocket endpoint
+# WebSocket Protocol v1 Endpoint
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket) -> None:
-    hub = _hub()
-    await hub.connect(websocket)
+async def websocket_endpoint(
+    websocket: WebSocket,
+    ticket: str | None = Query(default=None),
+) -> None:
+    ws_mgr: WebSocketManager | None = getattr(app.state, "ws_manager", None)
+    if not ws_mgr:
+        await websocket.close(code=1011, reason="WebSocket manager not initialized")
+        return
+
+    client = await ws_mgr.authenticate_and_connect(websocket, ticket)
+    if not client:
+        return
+
+    # Prepare initial state snapshot
+    session = _sessions().get_current_session()
+    participants = _sessions().get_participants()
+    status = _detection_engine().get_status()
+    telemetry_snap = _feature_pipeline().compute_network_snapshot()
+    recent_events = _event_store().list_recent_events(limit=25)
+
+    initial_payload = {
+        "session": session,
+        "participants": participants,
+        "threat_level": status["threat_level"],
+        "baseline_stats": status["baseline_stats"],
+        "telemetry": telemetry_snap,
+        "recent_activity": recent_events,
+        "client_role": client.role,
+        "client_channels": list(client.channels),
+    }
+
+    # Asynchronous queue worker delivering outbound envelopes
+    async def outbound_sender():
+        try:
+            while client.is_active:
+                msg = await client.queue.get()
+                await websocket.send_json(msg)
+                client.queue.task_done()
+        except (WebSocketDisconnect, asyncio.CancelledError):
+            pass
+        except Exception:
+            pass
+
+    sender_task = asyncio.create_task(outbound_sender())
+
+    # Send initial state event
+    await client.enqueue_message({
+        "v": 1,
+        "type": "initial_state",
+        "channel": "public",
+        "seq": ws_mgr.seq,
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "provenance": "live",
+        "data": initial_payload,
+    }, high_priority=True)
+
+    # Inbound frame loop
     try:
-        session = _sessions().get_current_session()
-        participants = _sessions().get_participants()
-        status = _detection_engine().get_status()
-        telemetry_snap = _feature_pipeline().compute_network_snapshot()
-        recent_events = _event_store().list_recent_events(limit=25)
-        await websocket.send_json({
-            "type": "initial_state",
-            "session": session,
-            "participants": participants,
-            "threat_level": status["threat_level"],
-            "baseline_stats": status["baseline_stats"],
-            "telemetry": telemetry_snap,
-            "recent_activity": recent_events,
-        })
         while True:
-            await websocket.receive_text()
+            raw_text = await websocket.receive_text()
+            try:
+                msg_data = json.loads(raw_text)
+                msg_type = msg_data.get("type")
+                if msg_type == "ping":
+                    await client.enqueue_message({
+                        "v": 1,
+                        "type": "pong",
+                        "channel": "public",
+                        "seq": ws_mgr.seq,
+                        "ts": datetime.now(timezone.utc).isoformat(),
+                        "provenance": "live",
+                        "data": {"time": time.time()},
+                    }, high_priority=True)
+                elif msg_type == "resume":
+                    last_seq = int(msg_data.get("last_seq", 0))
+                    ws_mgr.resume(client, last_seq)
+                elif msg_type == "subscribe":
+                    channel = msg_data.get("channel")
+                    if channel:
+                        if client.can_access_channel(channel):
+                            client.channels.add(channel)
+                            await client.enqueue_message({
+                                "v": 1,
+                                "type": "subscription_success",
+                                "channel": channel,
+                                "seq": ws_mgr.seq,
+                                "ts": datetime.now(timezone.utc).isoformat(),
+                                "provenance": "live",
+                                "data": {"channel": channel, "status": "subscribed"},
+                            }, high_priority=True)
+                        else:
+                            await client.enqueue_message({
+                                "v": 1,
+                                "type": "subscription_denied",
+                                "channel": channel,
+                                "seq": ws_mgr.seq,
+                                "ts": datetime.now(timezone.utc).isoformat(),
+                                "provenance": "live",
+                                "data": {"channel": channel, "reason": "Unauthorized channel access"},
+                            }, high_priority=True)
+            except json.JSONDecodeError:
+                pass
     except WebSocketDisconnect:
-        hub.disconnect(websocket)
+        pass
     except Exception:
-        hub.disconnect(websocket)
+        pass
+    finally:
+        client.is_active = False
+        sender_task.cancel()
+        try:
+            await sender_task
+        except (asyncio.CancelledError, Exception):
+            pass
+        ws_mgr.disconnect(client)

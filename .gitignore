@@ -16,6 +16,7 @@ dist/
 
 # Runtime-only data and model artifacts. Rebuild with backend/train_model.py.
 backend/data/raw/
+backend/data/processed/*.jsonl
 backend/artifacts/*.joblib
 backend/artifacts/*.json
 backend/runtime/

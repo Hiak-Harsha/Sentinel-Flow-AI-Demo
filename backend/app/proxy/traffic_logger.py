@@ -84,13 +84,15 @@ class TrafficLogger:
         attack_run_id: str | None = None,
         target_origin: str = "",
         user_agent: str = "",
+        timestamp_epoch: float | None = None,
     ) -> TrafficRecord:
         """Create and store a traffic record.  Notifies all listeners."""
-        now = time.time()
+        epoch = timestamp_epoch if timestamp_epoch is not None else time.time()
+        iso = datetime.fromtimestamp(epoch, tz=timezone.utc).isoformat().replace("+00:00", "Z")
         record = TrafficRecord(
             identity_id=identity_id,
-            timestamp_epoch=now,
-            timestamp_iso=_iso_now(),
+            timestamp_epoch=epoch,
+            timestamp_iso=iso,
             method=method,
             path=path,
             query_string=query_string,

@@ -1,18 +1,28 @@
-"""Academic Supervised Model Service: Serves UNSW-NB15 model evaluation & benchmark comparison."""
+"""Academic Supervised Model Service: Serves verified ML model evaluations, benchmarks, and inference."""
 
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Any
+
 import joblib
 import pandas as pd
 
+from app.feature_schema import FEATURE_SCHEMA_VERSION, LIVE_FEATURE_NAMES, extract_live_feature_vector
+
+logger = logging.getLogger("sentinel_flow.services.academic_model")
+
 
 class AcademicModelService:
+    """Provides model metadata, benchmark evaluation comparisons, and calibrated predictions."""
+
     def __init__(self, artifact_dir: Path) -> None:
         self.artifact_dir = artifact_dir
-        self.model_path = artifact_dir / "rf_unsw_nb15.joblib"
+        self.prod_path = artifact_dir / "production_model.joblib"
+        self.legacy_path = artifact_dir / "rf_unsw_nb15.joblib"
+        self.model_path = self.prod_path if self.prod_path.exists() else self.legacy_path
         self.eval_path = artifact_dir / "evaluation.json"
         self.meta_path = artifact_dir / "model_metadata.json"
         self.comp_path = artifact_dir / "model_comparison.json"
@@ -20,10 +30,13 @@ class AcademicModelService:
         self.load()
 
     def load(self) -> None:
-        if self.model_path.exists():
+        target = self.prod_path if self.prod_path.exists() else self.legacy_path
+        if target.exists():
             try:
-                self.bundle = joblib.load(self.model_path)
-            except Exception:
+                self.bundle = joblib.load(target)
+                logger.info("AcademicModelService loaded model bundle from %s", target)
+            except Exception as e:
+                logger.error("AcademicModelService failed loading %s: %s", target, e)
                 self.bundle = None
 
     def get_status(self) -> dict[str, Any]:
@@ -50,43 +63,51 @@ class AcademicModelService:
                 pass
 
         is_ready = self.bundle is not None and bool(eval_data)
+        importances = []
+        if self.bundle and "feature_importance" in self.bundle:
+            importances = self.bundle["feature_importance"]
+        elif meta_data.get("top_features"):
+            importances = meta_data["top_features"]
 
         return {
             "ready": is_ready,
-            "algorithm": meta_data.get("algorithm", "Random Forest Classifier") if is_ready else None,
-            "dataset": meta_data.get("dataset", "UNSW-NB15") if is_ready else None,
-            "training_rows": meta_data.get("training_rows", 0),
-            "testing_rows": meta_data.get("testing_rows", 0),
-            "features": meta_data.get("features", []),
-            "metrics": eval_data if eval_data else None,
+            "name": meta_data.get("name", "sentinel-live-classifier") if is_ready else None,
+            "version": meta_data.get("version", "2.0.0") if is_ready else None,
+            "algorithm": meta_data.get("algorithm", "Calibrated RandomForestClassifier") if is_ready else None,
+            "dataset": meta_data.get("trained_on", "Sentinel-Live-Lab-Dataset") if is_ready else None,
+            "feature_schema_version": meta_data.get("feature_schema_version", FEATURE_SCHEMA_VERSION),
+            "training_rows": meta_data.get("training_rows", eval_data.get("dataset", {}).get("total_samples", 0)),
+            "testing_rows": meta_data.get("testing_rows", eval_data.get("dataset", {}).get("total_samples", 0)),
+            "features": meta_data.get("feature_names", LIVE_FEATURE_NAMES),
+            "metrics": eval_data.get("metrics") if eval_data else None,
             "candidate_comparison": comp_data if comp_data else [],
-            "feature_importance": meta_data.get("feature_importance", [
-                {"feature": "rate", "label": "Flow Rate", "importance": 28.4},
-                {"feature": "sload", "label": "Source Bit Rate", "importance": 22.1},
-                {"feature": "dload", "label": "Destination Bit Rate", "importance": 18.5},
-                {"feature": "dur", "label": "Duration", "importance": 11.2},
-                {"feature": "sbytes", "label": "Source Bytes", "importance": 9.4},
-                {"feature": "dbytes", "label": "Destination Bytes", "importance": 5.8},
-                {"feature": "spkts", "label": "Source Packets", "importance": 2.6},
-                {"feature": "dpkts", "label": "Destination Packets", "importance": 2.0},
-            ]) if is_ready else [],
+            "feature_importance": importances,
+            "latency": eval_data.get("latency"),
+            "confidence_intervals": eval_data.get("confidence_intervals_95"),
+            "unseen_generalization": eval_data.get("unseen_attack_generalization"),
         }
 
     def predict(self, feature_values: dict[str, float | int]) -> dict[str, Any]:
-        """Perform supervised prediction on an academic flow vector."""
+        """Perform calibrated prediction on input feature values."""
         if not self.bundle:
             raise ValueError("Supervised academic model bundle is not loaded or ready.")
 
+        pipeline = self.bundle.get("pipeline") or self.bundle.get("model")
+        if not pipeline:
+            raise ValueError("Model bundle missing pipeline/model.")
 
-        features = self.bundle.get("feature_names", ["dur", "spkts", "dpkts", "sbytes", "dbytes", "rate", "sload", "dload"])
+        features = self.bundle.get("feature_names", LIVE_FEATURE_NAMES)
         row = {f: float(feature_values.get(f, 0.0)) for f in features}
         df = pd.DataFrame([row])
-        pipeline = self.bundle["pipeline"]
+
         pred = int(pipeline.predict(df)[0])
         probs = pipeline.predict_proba(df)[0]
         class_pos = {int(label): i for i, label in enumerate(pipeline.classes_)}
-        sus_prob = float(probs[class_pos[1]])
-        norm_prob = float(probs[class_pos[0]])
+        sus_idx = class_pos.get(1, 1 if len(probs) > 1 else 0)
+        norm_idx = class_pos.get(0, 0)
+
+        sus_prob = float(probs[sus_idx])
+        norm_prob = float(probs[norm_idx])
         conf = sus_prob if pred == 1 else norm_prob
 
         return {

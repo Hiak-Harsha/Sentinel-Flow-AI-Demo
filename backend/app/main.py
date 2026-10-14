@@ -68,6 +68,7 @@ from .repositories import (
     OrchestratorRepository,
     SessionRepository,
 )
+from .ml.registry import ModelRegistry
 from .services.academic_model_service import AcademicModelService
 from .services.rollup_worker import start_rollup_worker, stop_rollup_worker
 from .services.session_service import SessionService
@@ -121,6 +122,8 @@ async def lifespan(app: FastAPI):
     sessions = SessionService(repo=session_repo)
     await sessions.load_from_db()
     academic = AcademicModelService(ARTIFACT_DIR)
+    model_registry = ModelRegistry(ARTIFACT_DIR)
+    await model_registry.sync_from_db()
     event_store = EventStore(EVIDENCE_LEDGER_PATH)
 
     # Initialize EventBus (Redis Streams with automatic In-Memory fallback)
@@ -166,6 +169,7 @@ async def lifespan(app: FastAPI):
     # 3. Initialize Multi-Layer Detection Engine
     detection_engine = DetectionEngine(repo=detection_repo)
     await detection_engine.load_from_db()
+    detection_engine.supervised.set_registry(model_registry)
     set_detection_engine(detection_engine)
     set_session_service(sessions)
     set_feature_store_for_detection(feature_store)
@@ -427,6 +431,8 @@ async def lifespan(app: FastAPI):
     app.state.feature_store = feature_store
     app.state.feature_pipeline = feature_pipeline
     app.state.detection_engine = detection_engine
+    app.state.academic = academic
+    app.state.model_registry = model_registry
     app.state.session_manager = session_manager
     app.state.identity_resolver = identity_resolver
     app.state.run_manager = run_manager

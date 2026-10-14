@@ -4,6 +4,46 @@
  */
 
 export interface paths {
+    "/api/v1/health/live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Liveness Probe
+         * @description Kubernetes / container liveness probe confirming process is responsive.
+         */
+        get: operations["liveness_probe_api_v1_health_live_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/health/ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Readiness Probe
+         * @description Readiness probe evaluating database, eventbus, models, and safety boundaries.
+         */
+        get: operations["readiness_probe_api_v1_health_ready_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health": {
         parameters: {
             query?: never;
@@ -81,6 +121,23 @@ export interface paths {
         };
         /** Bounded timeseries points for telemetry charts */
         get: operations["get_telemetry_timeseries_api_v1_telemetry_timeseries_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/telemetry/rollups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Aggregated time-bucket rollups (1m or 1h) */
+        get: operations["get_telemetry_rollups_api_v1_telemetry_rollups_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -361,6 +418,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all registered models across development, staging, and production stages */
+        get: operations["list_models_api_v1_models_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/models/active": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get active production model metadata, metrics, and feature importances */
+        get: operations["get_active_model_api_v1_models_active_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/models/benchmark": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get multi-classifier candidate benchmark comparison and held-out evaluation */
+        get: operations["get_benchmark_comparison_api_v1_models_benchmark_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/models/shadow/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get active shadow-mode evaluation status and agreement metrics */
+        get: operations["get_shadow_status_api_v1_models_shadow_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/models/predict": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Perform calibrated inference on input feature vector */
+        post: operations["predict_model_api_v1_models_predict_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/models/{model_id}/promote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Promote a candidate model to production or staging */
+        post: operations["promote_model_api_v1_models__model_id__promote_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/orchestrator/status": {
         parameters: {
             query?: never;
@@ -526,6 +685,146 @@ export interface paths {
         put?: never;
         /** Issue a short-lived ticket for WebSocket connection authentication */
         post: operations["issue_ws_ticket_api_v1_ws_ticket_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/replay/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Replay Status
+         * @description Retrieve status and available scenarios from the replay engine.
+         */
+        get: operations["get_replay_status_api_v1_replay_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/replay/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Replay
+         * @description Start or restart scenario playback streaming into the event bus.
+         */
+        post: operations["start_replay_api_v1_replay_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/replay/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Stop Replay
+         * @description Stop running scenario playback.
+         */
+        post: operations["stop_replay_api_v1_replay_stop_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/replay/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pause Replay
+         * @description Pause scenario playback.
+         */
+        post: operations["pause_replay_api_v1_replay_pause_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/replay/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resume Replay
+         * @description Resume scenario playback.
+         */
+        post: operations["resume_replay_api_v1_replay_resume_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sensor/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Sensor Status
+         * @description Retrieve host flow sensor status.
+         */
+        get: operations["get_sensor_status_api_v1_sensor_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sensor/sample": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sample Host Metrics
+         * @description Sample instantaneous local machine psutil counters (local boundary only).
+         */
+        post: operations["sample_host_metrics_api_v1_sensor_sample_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1927,6 +2226,15 @@ export interface components {
             /** Reason */
             reason?: string | null;
         };
+        /** ComponentHealth */
+        ComponentHealth: {
+            /** Status */
+            status: string;
+            /** Details */
+            details?: {
+                [key: string]: unknown;
+            };
+        };
         /** ConsentRequest */
         ConsentRequest: {
             /**
@@ -2034,12 +2342,42 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** LiveResponse */
+        LiveResponse: {
+            /**
+             * Status
+             * @default alive
+             */
+            status: string;
+            /** Timestamp */
+            timestamp?: string;
+            /**
+             * Version
+             * @default 3.0.0
+             */
+            version: string;
+        };
         /** LoginRequest */
         LoginRequest: {
             /** Username */
             username: string;
             /** Password */
             password: string;
+        };
+        /** ModelPromoteRequest */
+        ModelPromoteRequest: {
+            /**
+             * Stage
+             * @description Target deployment stage: production, staging, archived
+             * @default production
+             */
+            stage: string;
+            /**
+             * Notes
+             * @description Operator deployment reason / audit notes
+             * @default
+             */
+            notes: string;
         };
         /** OperatorLoginRequest */
         OperatorLoginRequest: {
@@ -2048,6 +2386,10 @@ export interface components {
         };
         /** ParticipantModel */
         ParticipantModel: {
+            /** Id */
+            id?: string | null;
+            /** Token */
+            token?: string | null;
             /** Device Id */
             device_id: string;
             /** Alias */
@@ -2066,6 +2408,53 @@ export interface components {
              * @default 0
              */
             request_count: number;
+        };
+        /** PredictRequest */
+        PredictRequest: {
+            /**
+             * Features
+             * @description Dictionary of observable live streaming features
+             */
+            features: {
+                [key: string]: number;
+            };
+        };
+        /** PredictResponse */
+        PredictResponse: {
+            /** Label */
+            label: string;
+            /** Predicted Class */
+            predicted_class: number;
+            /** Attack Probability */
+            attack_probability: number;
+            /** Confidence */
+            confidence: number;
+            /** Operating Threshold */
+            operating_threshold: number;
+            /** Conformal Status */
+            conformal_status: string;
+            /** Explanation */
+            explanation: {
+                [key: string]: unknown;
+            }[];
+            /** Latency Ms */
+            latency_ms: number;
+        };
+        /** ReadyResponse */
+        ReadyResponse: {
+            /** Status */
+            status: string;
+            /** Timestamp */
+            timestamp?: string;
+            /**
+             * Version
+             * @default 3.0.0
+             */
+            version: string;
+            /** Components */
+            components: {
+                [key: string]: components["schemas"]["ComponentHealth"];
+            };
         };
         /** RegisterIdentityRequest */
         RegisterIdentityRequest: {
@@ -2103,6 +2492,33 @@ export interface components {
              * @default 60
              */
             max_participants: number;
+        };
+        /** StartReplayRequest */
+        StartReplayRequest: {
+            /**
+             * Scenario
+             * @description Replay scenario name
+             * @default benign_baseline
+             */
+            scenario: string;
+            /**
+             * Speed Multiplier
+             * @description Playback speed factor
+             * @default 1
+             */
+            speed_multiplier: number;
+            /**
+             * Loop
+             * @description Whether to loop continuously
+             * @default true
+             */
+            loop: boolean;
+            /**
+             * Actor Identity
+             * @description Actor identity identifier
+             * @default replay:simulated_device_01
+             */
+            actor_identity: string;
         };
         /**
          * TargetEventPayload
@@ -2371,6 +2787,46 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    liveness_probe_api_v1_health_live_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LiveResponse"];
+                };
+            };
+        };
+    };
+    readiness_probe_api_v1_health_ready_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadyResponse"];
+                };
+            };
+        };
+    };
     health_api_v1_health_get: {
         parameters: {
             query?: never;
@@ -2473,6 +2929,40 @@ export interface operations {
     get_telemetry_timeseries_api_v1_telemetry_timeseries_get: {
         parameters: {
             query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_telemetry_rollups_api_v1_telemetry_rollups_get: {
+        parameters: {
+            query?: {
+                window_type?: string;
                 limit?: number;
             };
             header?: never;
@@ -2937,6 +3427,164 @@ export interface operations {
             };
         };
     };
+    list_models_api_v1_models_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    }[];
+                };
+            };
+        };
+    };
+    get_active_model_api_v1_models_active_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    get_benchmark_comparison_api_v1_models_benchmark_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    get_shadow_status_api_v1_models_shadow_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    predict_model_api_v1_models_predict_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PredictRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PredictResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    promote_model_api_v1_models__model_id__promote_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                model_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ModelPromoteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_orchestrator_status_api_v1_orchestrator_status_get: {
         parameters: {
             query?: never;
@@ -3230,6 +3878,173 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_replay_status_api_v1_replay_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    start_replay_api_v1_replay_start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartReplayRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stop_replay_api_v1_replay_stop_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    pause_replay_api_v1_replay_pause_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    resume_replay_api_v1_replay_resume_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    get_sensor_status_api_v1_sensor_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    sample_host_metrics_api_v1_sensor_sample_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };

@@ -6,6 +6,50 @@
     "version": "3.0.0"
   },
   "paths": {
+    "/api/v1/health/live": {
+      "get": {
+        "tags": [
+          "Health & Probes"
+        ],
+        "summary": "Liveness Probe",
+        "description": "Kubernetes / container liveness probe confirming process is responsive.",
+        "operationId": "liveness_probe_api_v1_health_live_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health/ready": {
+      "get": {
+        "tags": [
+          "Health & Probes"
+        ],
+        "summary": "Readiness Probe",
+        "description": "Readiness probe evaluating database, eventbus, models, and safety boundaries.",
+        "operationId": "readiness_probe_api_v1_health_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/health": {
       "get": {
         "tags": [
@@ -157,6 +201,64 @@
                   "type": "object",
                   "additionalProperties": true,
                   "title": "Response Get Telemetry Timeseries Api V1 Telemetry Timeseries Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/telemetry/rollups": {
+      "get": {
+        "tags": [
+          "Overview & Telemetry"
+        ],
+        "summary": "Aggregated time-bucket rollups (1m or 1h)",
+        "operationId": "get_telemetry_rollups_api_v1_telemetry_rollups_get",
+        "parameters": [
+          {
+            "name": "window_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(1m|1h)$",
+              "default": "1m",
+              "title": "Window Type"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 60,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Telemetry Rollups Api V1 Telemetry Rollups Get"
                 }
               }
             }
@@ -716,6 +818,196 @@
         }
       }
     },
+    "/api/v1/models": {
+      "get": {
+        "tags": [
+          "Model Registry & Evaluation"
+        ],
+        "summary": "List all registered models across development, staging, and production stages",
+        "operationId": "list_models_api_v1_models_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response List Models Api V1 Models Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/models/active": {
+      "get": {
+        "tags": [
+          "Model Registry & Evaluation"
+        ],
+        "summary": "Get active production model metadata, metrics, and feature importances",
+        "operationId": "get_active_model_api_v1_models_active_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Active Model Api V1 Models Active Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/models/benchmark": {
+      "get": {
+        "tags": [
+          "Model Registry & Evaluation"
+        ],
+        "summary": "Get multi-classifier candidate benchmark comparison and held-out evaluation",
+        "operationId": "get_benchmark_comparison_api_v1_models_benchmark_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Benchmark Comparison Api V1 Models Benchmark Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/models/shadow/status": {
+      "get": {
+        "tags": [
+          "Model Registry & Evaluation"
+        ],
+        "summary": "Get active shadow-mode evaluation status and agreement metrics",
+        "operationId": "get_shadow_status_api_v1_models_shadow_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Shadow Status Api V1 Models Shadow Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/models/predict": {
+      "post": {
+        "tags": [
+          "Model Registry & Evaluation"
+        ],
+        "summary": "Perform calibrated inference on input feature vector",
+        "operationId": "predict_model_api_v1_models_predict_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PredictRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PredictResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/models/{model_id}/promote": {
+      "post": {
+        "tags": [
+          "Model Registry & Evaluation"
+        ],
+        "summary": "Promote a candidate model to production or staging",
+        "operationId": "promote_model_api_v1_models__model_id__promote_post",
+        "parameters": [
+          {
+            "name": "model_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Model Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelPromoteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Promote Model Api V1 Models  Model Id  Promote Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/orchestrator/status": {
       "get": {
         "tags": [
@@ -1053,6 +1345,194 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/replay/status": {
+      "get": {
+        "tags": [
+          "Scenario Replay Engine"
+        ],
+        "summary": "Get Replay Status",
+        "description": "Retrieve status and available scenarios from the replay engine.",
+        "operationId": "get_replay_status_api_v1_replay_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Replay Status Api V1 Replay Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/replay/start": {
+      "post": {
+        "tags": [
+          "Scenario Replay Engine"
+        ],
+        "summary": "Start Replay",
+        "description": "Start or restart scenario playback streaming into the event bus.",
+        "operationId": "start_replay_api_v1_replay_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartReplayRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Start Replay Api V1 Replay Start Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/replay/stop": {
+      "post": {
+        "tags": [
+          "Scenario Replay Engine"
+        ],
+        "summary": "Stop Replay",
+        "description": "Stop running scenario playback.",
+        "operationId": "stop_replay_api_v1_replay_stop_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Stop Replay Api V1 Replay Stop Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/replay/pause": {
+      "post": {
+        "tags": [
+          "Scenario Replay Engine"
+        ],
+        "summary": "Pause Replay",
+        "description": "Pause scenario playback.",
+        "operationId": "pause_replay_api_v1_replay_pause_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Pause Replay Api V1 Replay Pause Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/replay/resume": {
+      "post": {
+        "tags": [
+          "Scenario Replay Engine"
+        ],
+        "summary": "Resume Replay",
+        "description": "Resume scenario playback.",
+        "operationId": "resume_replay_api_v1_replay_resume_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Resume Replay Api V1 Replay Resume Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sensor/status": {
+      "get": {
+        "tags": [
+          "Host Sensor"
+        ],
+        "summary": "Get Sensor Status",
+        "description": "Retrieve host flow sensor status.",
+        "operationId": "get_sensor_status_api_v1_sensor_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Sensor Status Api V1 Sensor Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sensor/sample": {
+      "post": {
+        "tags": [
+          "Host Sensor"
+        ],
+        "summary": "Sample Host Metrics",
+        "description": "Sample instantaneous local machine psutil counters (local boundary only).",
+        "operationId": "sample_host_metrics_api_v1_sensor_sample_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Sample Host Metrics Api V1 Sensor Sample Post"
                 }
               }
             }
@@ -3677,6 +4157,24 @@
         ],
         "title": "ChainVerifyResponse"
       },
+      "ComponentHealth": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "details": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Details"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "ComponentHealth"
+      },
       "ConsentRequest": {
         "properties": {
           "target_origin": {
@@ -3878,6 +4376,26 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "LiveResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "alive"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "default": "3.0.0"
+          }
+        },
+        "type": "object",
+        "title": "LiveResponse"
+      },
       "LoginRequest": {
         "properties": {
           "username": {
@@ -3900,6 +4418,24 @@
         ],
         "title": "LoginRequest"
       },
+      "ModelPromoteRequest": {
+        "properties": {
+          "stage": {
+            "type": "string",
+            "title": "Stage",
+            "description": "Target deployment stage: production, staging, archived",
+            "default": "production"
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes",
+            "description": "Operator deployment reason / audit notes",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "ModelPromoteRequest"
+      },
       "OperatorLoginRequest": {
         "properties": {
           "passcode": {
@@ -3916,6 +4452,28 @@
       },
       "ParticipantModel": {
         "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token"
+          },
           "device_id": {
             "type": "string",
             "title": "Device Id"
@@ -3963,6 +4521,105 @@
           "alias"
         ],
         "title": "ParticipantModel"
+      },
+      "PredictRequest": {
+        "properties": {
+          "features": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Features",
+            "description": "Dictionary of observable live streaming features"
+          }
+        },
+        "type": "object",
+        "required": [
+          "features"
+        ],
+        "title": "PredictRequest"
+      },
+      "PredictResponse": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "predicted_class": {
+            "type": "integer",
+            "title": "Predicted Class"
+          },
+          "attack_probability": {
+            "type": "number",
+            "title": "Attack Probability"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          },
+          "operating_threshold": {
+            "type": "number",
+            "title": "Operating Threshold"
+          },
+          "conformal_status": {
+            "type": "string",
+            "title": "Conformal Status"
+          },
+          "explanation": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Explanation"
+          },
+          "latency_ms": {
+            "type": "number",
+            "title": "Latency Ms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "predicted_class",
+          "attack_probability",
+          "confidence",
+          "operating_threshold",
+          "conformal_status",
+          "explanation",
+          "latency_ms"
+        ],
+        "title": "PredictResponse"
+      },
+      "ReadyResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "default": "3.0.0"
+          },
+          "components": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ComponentHealth"
+            },
+            "type": "object",
+            "title": "Components"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "components"
+        ],
+        "title": "ReadyResponse"
       },
       "RegisterIdentityRequest": {
         "properties": {
@@ -4066,6 +4723,38 @@
           "join_code"
         ],
         "title": "SessionModel"
+      },
+      "StartReplayRequest": {
+        "properties": {
+          "scenario": {
+            "type": "string",
+            "title": "Scenario",
+            "description": "Replay scenario name",
+            "default": "benign_baseline"
+          },
+          "speed_multiplier": {
+            "type": "number",
+            "maximum": 50.0,
+            "minimum": 0.1,
+            "title": "Speed Multiplier",
+            "description": "Playback speed factor",
+            "default": 1.0
+          },
+          "loop": {
+            "type": "boolean",
+            "title": "Loop",
+            "description": "Whether to loop continuously",
+            "default": true
+          },
+          "actor_identity": {
+            "type": "string",
+            "title": "Actor Identity",
+            "description": "Actor identity identifier",
+            "default": "replay:simulated_device_01"
+          }
+        },
+        "type": "object",
+        "title": "StartReplayRequest"
       },
       "TargetEventPayload": {
         "properties": {

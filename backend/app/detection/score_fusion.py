@@ -100,7 +100,18 @@ def fuse_signals(
     else:
         human_summary = "Normal operational traffic patterns."
 
-    explanation = unsupervised_res.get("contributions", [])
+    explanation = list(unsupervised_res.get("contributions", []))
+    if supervised_res.get("explanation"):
+        explanation.extend([
+            {
+                "feature": exp["feature"],
+                "value": exp.get("observed_value"),
+                "baseline": exp.get("baseline_median"),
+                "contribution": "high" if exp.get("relative_elevation", 0) > 3 else "medium",
+                "reason": exp.get("human_reason"),
+            }
+            for exp in supervised_res.get("explanation", [])
+        ])
 
     return {
         "identity_id": vector.identity_id,
@@ -124,6 +135,8 @@ def fuse_signals(
         "supervised_label": supervised_res.get("label", 0),
         "supervised_confidence": supervised_res.get("confidence", 0.0),
         "supervised_attack_prob": sup_prob,
+        "supervised_conformal_status": supervised_res.get("conformal_status", "NORMAL"),
+        "supervised_explanation": supervised_res.get("explanation", []),
         "unsupervised_score": unsup_score,
         "is_baseline_calibrated": is_calibrated,
         "explanation": explanation,

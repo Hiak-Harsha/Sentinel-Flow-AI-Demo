@@ -8,37 +8,21 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { api } from "@/lib/api";
 
 // Lazy load route screens for route-level code splitting (budget <= 250KB gzipped)
-const Landing = lazy(() =>
-  import("@/pages/Landing").then((m) => ({ default: m.Landing || m.default }))
-);
+const Landing = lazy(() => import("@/features/landing/LandingPage"));
 const DesignSystemPreview = lazy(() => import("@/pages/DesignSystemPreview"));
 
-const OverviewRoute = lazy(() =>
-  import("@/routes/pageWrappers").then((m) => ({ default: m.OverviewRoute }))
-);
-const AlertsRoute = lazy(() =>
-  import("@/routes/pageWrappers").then((m) => ({ default: m.AlertsRoute }))
-);
-const AttackConsoleRoute = lazy(() =>
-  import("@/routes/pageWrappers").then((m) => ({ default: m.AttackConsoleRoute }))
-);
-const ModelRoute = lazy(() =>
-  import("@/routes/pageWrappers").then((m) => ({ default: m.ModelRoute }))
-);
-const AnalyticsRoute = lazy(() =>
-  import("@/routes/pageWrappers").then((m) => ({ default: m.AnalyticsRoute }))
-);
-const DevicesRoute = lazy(() =>
-  import("@/routes/pageWrappers").then((m) => ({ default: m.DevicesRoute }))
-);
+const OverviewPage = lazy(() => import("@/features/overview/OverviewPage"));
+const AlertsPage = lazy(() => import("@/features/alerts/AlertsPage"));
+const AttackConsolePage = lazy(() => import("@/features/attack/AttackConsolePage"));
+const ModelsPage = lazy(() => import("@/features/models/ModelsPage"));
+const AnalyticsPage = lazy(() => import("@/features/analytics/AnalyticsPage"));
+const IdentityDrilldownPage = lazy(() => import("@/features/identities/IdentityDrilldownPage"));
+const SettingsPage = lazy(() => import("@/features/settings/SettingsPage"));
+const ParticipantPage = lazy(() => import("@/features/participant/ParticipantPage"));
+
+// Auxiliary routes for backwards compatibility
 const TopologyRoute = lazy(() =>
   import("@/routes/pageWrappers").then((m) => ({ default: m.TopologyRoute }))
-);
-const SettingsRoute = lazy(() =>
-  import("@/routes/pageWrappers").then((m) => ({ default: m.SettingsRoute }))
-);
-const ParticipantRoute = lazy(() =>
-  import("@/routes/pageWrappers").then((m) => ({ default: m.ParticipantRoute }))
 );
 const HistoryRoute = lazy(() =>
   import("@/routes/pageWrappers").then((m) => ({ default: m.HistoryRoute }))
@@ -64,37 +48,7 @@ const RouteLoadingFallback = () => (
 );
 
 function LandingRoute() {
-  const navigate = useNavigate();
-
-  const handleSelectRole = (selectedRole: string) => {
-    if (selectedRole === "participant") {
-      sessionStorage.setItem("sf_role", "participant");
-      navigate("/join");
-    } else {
-      sessionStorage.setItem("sf_role", "operator");
-      navigate("/overview");
-    }
-  };
-
-  const handleOperatorLogin = async (passcode: string) => {
-    const res = await api.loginOperator(passcode);
-    sessionStorage.setItem("sf_role", "operator");
-    if (res?.token) {
-      sessionStorage.setItem("sf_session_token", res.token);
-    }
-    navigate("/overview");
-  };
-
-  return (
-    <div className="min-h-screen bg-[#060b13] text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-white">
-      <main className="flex-1 flex items-center justify-center">
-        <Landing
-          onSelectRole={handleSelectRole}
-          onOperatorLogin={handleOperatorLogin}
-        />
-      </main>
-    </div>
-  );
+  return <Landing />;
 }
 
 // Redirects legacy hash urls (e.g. #/alerts or #alerts) to clean React Router paths
@@ -150,27 +104,28 @@ export default function App() {
               <Route path="/" element={<LandingRoute />} />
 
               {/* Participant Portal */}
-              <Route path="/join" element={<ParticipantRoute />} />
+              <Route path="/join" element={<ParticipantPage />} />
               <Route path="/participant" element={<Navigate to="/join" replace />} />
 
               {/* Main Operator Shell */}
               <Route element={<AppLayout />}>
-                <Route path="/overview" element={<OverviewRoute />} />
-                <Route path="/alerts" element={<AlertsRoute />} />
-                <Route path="/alerts/:id" element={<AlertsRoute />} />
-                <Route path="/attack-console" element={<AttackConsoleRoute />} />
+                <Route path="/overview" element={<OverviewPage />} />
+                <Route path="/alerts" element={<AlertsPage />} />
+                <Route path="/alerts/:id" element={<AlertsPage />} />
+                <Route path="/attack-console" element={<AttackConsolePage />} />
                 <Route path="/attack" element={<Navigate to="/attack-console" replace />} />
-                <Route path="/models" element={<ModelRoute />} />
+                <Route path="/models" element={<ModelsPage />} />
                 <Route path="/model" element={<Navigate to="/models" replace />} />
-                <Route path="/analytics" element={<AnalyticsRoute />} />
-                <Route path="/devices" element={<DevicesRoute />} />
-                <Route path="/devices/:id" element={<DevicesRoute />} />
+                <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/devices" element={<IdentityDrilldownPage />} />
+                <Route path="/devices/:id" element={<IdentityDrilldownPage />} />
                 <Route path="/identities" element={<Navigate to="/devices" replace />} />
-                <Route path="/identities/:id" element={<DevicesRoute />} />
+                <Route path="/identities/:id" element={<IdentityDrilldownPage />} />
                 <Route path="/topology" element={<TopologyRoute />} />
                 <Route path="/live" element={<LiveMonitorRoute />} />
                 <Route path="/history" element={<HistoryRoute />} />
-                <Route path="/settings" element={<SettingsRoute />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/targets" element={<Navigate to="/settings" replace />} />
                 <Route path="/design" element={<DesignSystemPreview />} />
               </Route>
 

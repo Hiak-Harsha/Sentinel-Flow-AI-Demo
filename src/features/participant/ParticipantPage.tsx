@@ -30,6 +30,19 @@ export default function ParticipantPage() {
     requestsCount: 18,
   });
 
+  // Fetch active classroom session code
+  const [activeJoinCode, setActiveJoinCode] = useState<string>("");
+
+  useEffect(() => {
+    api.getSession()
+      .then((data) => {
+        if (data?.session?.join_code) {
+          setActiveJoinCode(data.session.join_code);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Restore stored session if exists
   useEffect(() => {
     const token = sessionStorage.getItem("sf_session_token");
@@ -119,7 +132,7 @@ export default function ParticipantPage() {
       {/* Main Container */}
       <main className="flex-1 flex flex-col justify-center py-4">
         {!enrolled ? (
-          <JoinForm onJoin={handleJoin} />
+          <JoinForm onJoin={handleJoin} defaultJoinCode={activeJoinCode} />
         ) : (
           <div className="space-y-4">
             <PersonalAssessment

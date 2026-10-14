@@ -133,16 +133,27 @@ export default function LandingPage() {
             </div>
 
             <form onSubmit={handleOperatorLogin} className="space-y-4 text-xs font-mono">
-              <div className="space-y-1">
-                <label className="text-[var(--text-muted)]">Passcode</label>
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center">
+                  <label className="text-[var(--text-muted)]">Passcode</label>
+                  <button
+                    type="button"
+                    onClick={() => setPasscode("SF-OPERATOR-2026")}
+                    className="text-[10px] text-cyan-400 hover:text-cyan-300 font-sans cursor-pointer"
+                  >
+                    Use Demo Passcode
+                  </button>
+                </div>
                 <input
                   type="password"
-                  required
-                  placeholder="Enter operator passcode"
+                  placeholder="SF-OPERATOR-2026"
                   value={passcode}
                   onChange={(e) => setPasscode(e.target.value)}
                   className="w-full p-2.5 rounded-lg bg-slate-950 border border-slate-700 text-slate-100 text-xs focus:ring-1 focus:ring-cyan-500 focus:outline-none"
                 />
+                <div className="text-[10px] text-[var(--text-muted)] font-sans">
+                  Default operator passcode: <span className="font-mono text-cyan-300">SF-OPERATOR-2026</span>
+                </div>
               </div>
 
               <Button
@@ -152,7 +163,7 @@ export default function LandingPage() {
                 disabled={isSubmitting}
                 className="w-full justify-center"
               >
-                {isSubmitting ? "Verifying..." : "Authenticate"}
+                {isSubmitting ? "Verifying..." : "Authenticate as Operator"}
               </Button>
             </form>
           </div>

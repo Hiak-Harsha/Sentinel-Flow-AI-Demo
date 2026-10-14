@@ -4,6 +4,7 @@ import {
   Search,
   PowerOff,
   Clock,
+  Copy,
 } from "lucide-react";
 import { SeverityBadge } from "@/design/components/SeverityBadge";
 import { ConnectionIndicator } from "@/design/components/ConnectionIndicator";
@@ -37,6 +38,13 @@ export const TopBar: React.FC<TopBarProps> = ({
     },
   });
 
+  // Query session for join code
+  const { data: sessionData } = useQuery({
+    queryKey: queryKeys.session,
+    queryFn: () => api.getSession().catch(() => null),
+  });
+
+  const joinCode = sessionData?.session?.join_code;
   const threatLevel = telemetry?.threat_level || "LOW";
 
   const handleEmergencyStop = async () => {
@@ -77,8 +85,27 @@ export const TopBar: React.FC<TopBarProps> = ({
         </button>
       </div>
 
-      {/* Right: Threat Level, Time Range, Connection Status, Emergency Stop */}
+      {/* Right: Threat Level, Join Code, Time Range, Connection Status, Emergency Stop */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Active Classroom Join Code */}
+        {joinCode && (
+          <button
+            type="button"
+            onClick={() => {
+              if (navigator.clipboard) {
+                navigator.clipboard.writeText(joinCode);
+                showToast.info("Join Code Copied", `Share ${joinCode} with students.`);
+              }
+            }}
+            className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-950/50 border border-cyan-800/70 text-cyan-300 hover:bg-cyan-900/60 text-xs font-mono font-bold transition-colors cursor-pointer"
+            title="Click to copy participant join code"
+          >
+            <span className="text-[10px] text-cyan-400 font-sans font-normal uppercase">Room:</span>
+            <span>{joinCode}</span>
+            <Copy className="w-3 h-3 text-cyan-400" />
+          </button>
+        )}
+
         {/* Threat Level */}
         <SeverityBadge severity={threatLevel} size="md" />
 

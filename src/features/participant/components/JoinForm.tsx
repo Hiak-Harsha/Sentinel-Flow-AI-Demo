@@ -1,17 +1,29 @@
-import React, { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/design/components/Card";
+import React, { useState, useEffect } from "react";
+import { Card } from "@/design/components/Card";
 import { Button } from "@/design/components/Button";
-import { Laptop, ArrowRight, Shield } from "lucide-react";
+import { ArrowRight, Shield, Sparkles } from "lucide-react";
 
 export interface JoinFormProps {
   onJoin: (joinCode: string, alias: string) => Promise<void>;
   isJoining?: boolean;
+  defaultJoinCode?: string;
   className?: string;
 }
 
-export function JoinForm({ onJoin, isJoining = false, className = "" }: JoinFormProps) {
-  const [joinCode, setJoinCode] = useState("");
+export function JoinForm({
+  onJoin,
+  isJoining = false,
+  defaultJoinCode = "",
+  className = "",
+}: JoinFormProps) {
+  const [joinCode, setJoinCode] = useState(defaultJoinCode);
   const [alias, setAlias] = useState("");
+
+  useEffect(() => {
+    if (defaultJoinCode && !joinCode) {
+      setJoinCode(defaultJoinCode);
+    }
+  }, [defaultJoinCode, joinCode]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,17 +47,34 @@ export function JoinForm({ onJoin, isJoining = false, className = "" }: JoinForm
 
       <form onSubmit={handleSubmit} className="space-y-4 text-xs">
         <div className="space-y-1.5">
-          <label className="font-semibold text-[var(--text-secondary)]">
-            Classroom Join Code
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="font-semibold text-[var(--text-secondary)]">
+              Classroom Join Code
+            </label>
+            {defaultJoinCode && (
+              <button
+                type="button"
+                onClick={() => setJoinCode(defaultJoinCode)}
+                className="text-[11px] text-cyan-400 hover:text-cyan-300 font-mono inline-flex items-center gap-1 cursor-pointer"
+              >
+                <Sparkles className="w-3 h-3" />
+                Active: {defaultJoinCode}
+              </button>
+            )}
+          </div>
           <input
             type="text"
             required
-            placeholder="SF-XXXX"
+            placeholder={defaultJoinCode || "SF-XXXX"}
             value={joinCode}
             onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-            className="w-full px-3.5 py-2.5 rounded-lg bg-[var(--surface-1)] border border-[var(--border-subtle)] font-mono text-sm uppercase text-cyan-300 placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-cyan-500 tracking-wider text-center"
+            className="w-full px-3.5 py-2.5 rounded-lg bg-[var(--surface-1)] border border-[var(--border-subtle)] font-mono text-sm uppercase text-cyan-300 placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-cyan-500 tracking-wider text-center font-bold"
           />
+          {defaultJoinCode && (
+            <div className="text-[11px] text-[var(--text-muted)] font-mono text-center">
+              Current room code detected: <span className="text-cyan-400 font-bold">{defaultJoinCode}</span>
+            </div>
+          )}
         </div>
 
         <div className="space-y-1.5">
@@ -55,7 +84,7 @@ export function JoinForm({ onJoin, isJoining = false, className = "" }: JoinForm
           <input
             type="text"
             required
-            placeholder="e.g. Alice-Laptop"
+            placeholder="e.g. Alice-Laptop or User-01"
             value={alias}
             onChange={(e) => setAlias(e.target.value)}
             className="w-full px-3.5 py-2.5 rounded-lg bg-[var(--surface-1)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-cyan-500"

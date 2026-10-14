@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import random
+import secrets
 import string
 from datetime import datetime, timezone
 from typing import Any
@@ -23,8 +24,8 @@ def _timestamp() -> str:
 def _generate_join_code() -> str:
     chars = string.ascii_uppercase + string.digits
     chars = chars.replace("O", "").replace("0", "").replace("I", "").replace("1", "")
-    part1 = "".join(random.choices(chars, k=2))
-    part2 = "".join(random.choices(chars, k=2))
+    part1 = "".join(secrets.choice(chars) for _ in range(2))
+    part2 = "".join(secrets.choice(chars) for _ in range(2))
     return f"SF-{part1}{part2}"
 
 

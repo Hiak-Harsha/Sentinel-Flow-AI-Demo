@@ -11,15 +11,23 @@ from app.repositories.event_repo import EventRepository
 logger = logging.getLogger("sentinel_flow.services.rollup_worker")
 
 _worker_task: asyncio.Task | None = None
-_stop_event = asyncio.Event()
+_stop_event: asyncio.Event | None = None
+
+
+def _get_stop_event() -> asyncio.Event:
+    global _stop_event
+    if _stop_event is None:
+        _stop_event = asyncio.Event()
+    return _stop_event
 
 
 async def _rollup_loop(event_repo: EventRepository, retention_days: int = 7) -> None:
     """Periodic loop to calculate rollups and prune raw events."""
     logger.info("Started telemetry rollup and retention background worker")
     iteration = 0
+    stop_ev = _get_stop_event()
 
-    while not _stop_event.is_set():
+    while not stop_ev.is_set():
         try:
             # 1. Compute 1-minute rollup
             await event_repo.generate_rollup(window_type="1m")
@@ -40,7 +48,7 @@ async def _rollup_loop(event_repo: EventRepository, retention_days: int = 7) -> 
 
         try:
             # Sleep for 60 seconds or until stopped
-            await asyncio.wait_for(_stop_event.wait(), timeout=60.0)
+            await asyncio.wait_for(stop_ev.wait(), timeout=60.0)
         except asyncio.TimeoutError:
             pass
 
@@ -48,7 +56,7 @@ async def _rollup_loop(event_repo: EventRepository, retention_days: int = 7) -> 
 def start_rollup_worker(event_repo: EventRepository | None = None, retention_days: int = 7) -> asyncio.Task:
     """Launch the background rollup worker task."""
     global _worker_task, _stop_event
-    _stop_event.clear()
+    _stop_event = asyncio.Event()
     repo = event_repo or EventRepository()
     _worker_task = asyncio.create_task(_rollup_loop(repo, retention_days))
     return _worker_task
@@ -57,7 +65,8 @@ def start_rollup_worker(event_repo: EventRepository | None = None, retention_day
 async def stop_rollup_worker() -> None:
     """Signal background rollup worker to terminate and wait for exit."""
     global _worker_task, _stop_event
-    _stop_event.set()
+    if _stop_event is not None:
+        _stop_event.set()
     if _worker_task and not _worker_task.done():
         _worker_task.cancel()
         try:

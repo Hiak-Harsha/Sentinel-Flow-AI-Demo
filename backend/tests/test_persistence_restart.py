@@ -23,11 +23,18 @@ from app.db.session import close_db, get_engine, init_db
 @pytest.fixture(autouse=True)
 def setup_temp_db(monkeypatch, tmp_path):
     """Isolate database to a fresh temporary SQLite file per test run."""
+    import app.db.session as session_module
+    session_module._engine = None
+    session_module._session_factory = None
+
     db_file = tmp_path / "test_restart.db"
     db_url = f"sqlite+aiosqlite:///{db_file.as_posix()}"
     monkeypatch.setattr(settings, "db_url", db_url)
     monkeypatch.setenv("SENTINEL_ENV", "development")
     yield db_file
+
+    session_module._engine = None
+    session_module._session_factory = None
 
 
 @pytest.mark.asyncio

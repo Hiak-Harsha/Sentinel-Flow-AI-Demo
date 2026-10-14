@@ -69,6 +69,11 @@ class TargetAllowlist:
             ", ".join(f"{s}://{n}" for s, n in sorted(self._allowed)),
         )
 
+    @property
+    def allowed_origins(self) -> list[str]:
+        """Return list of canonical string origins in the allowlist."""
+        return [f"{s}://{n}" for s, n in sorted(self._allowed)]
+
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------

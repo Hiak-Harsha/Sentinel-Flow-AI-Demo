@@ -61,6 +61,20 @@ class IdentityFeatureVector:
     request_count_30s: int = 0
     request_count_5m: int = 0
 
+    # Phase 3 Real-Time Streaming Feature Extensions (Schema v2.0.0)
+    feature_schema_version: str = "2.0.0"
+    inter_request_interval_cv_30s: float = 0.0
+    fano_factor_30s: float = 0.0
+    unique_path_count_30s: int = 0
+    status_2xx_count_30s: int = 0
+    status_3xx_count_30s: int = 0
+    status_4xx_count_30s: int = 0
+    status_5xx_count_30s: int = 0
+    method_get_ratio_30s: float = 0.0
+    method_post_ratio_30s: float = 0.0
+    cross_identity_concurrent_paths_30s: int = 0
+    cross_identity_credential_reuse_count_30s: int = 0
+
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
@@ -72,6 +86,7 @@ class FeatureStore:
         self.repo = repo or EventRepository()
         self._identities: dict[str, IdentityFeatureVector] = {}
         self._history: deque[dict[str, Any]] = deque(maxlen=max_history)
+        self._last_persist: dict[str, float] = {}
         self._network_snapshot: dict[str, Any] = {
             "requests_per_sec": 0.0,
             "bytes_in_per_sec": 0.0,
@@ -106,8 +121,8 @@ class FeatureStore:
         except Exception:
             logger.exception("Failed loading feature windows from database")
 
-    def put_identity_features(self, vector: IdentityFeatureVector) -> None:
-        """Update or insert feature vector for an identity."""
+    def put_identity_features(self, vector: IdentityFeatureVector, force_persist: bool = False) -> None:
+        """Update or insert feature vector for an identity with debounced DB persistence."""
         self._identities[vector.identity_id] = vector
         self._history.append({
             "identity_id": vector.identity_id,
@@ -115,13 +130,17 @@ class FeatureStore:
             "features": vector.to_dict(),
         })
 
-        self._persist_async(
-            self.repo.save_feature_window(
-                identity_id=vector.identity_id,
-                feature_vector=vector.to_dict(),
-                window_size_seconds=30,
+        now = time.monotonic()
+        last_save = self._last_persist.get(vector.identity_id, 0.0)
+        if force_persist or (now - last_save >= 1.0):
+            self._last_persist[vector.identity_id] = now
+            self._persist_async(
+                self.repo.save_feature_window(
+                    identity_id=vector.identity_id,
+                    feature_vector=vector.to_dict(),
+                    window_size_seconds=30,
+                )
             )
-        )
 
     def get_identity_features(self, identity_id: str) -> IdentityFeatureVector | None:
         """Get latest computed feature vector for an identity."""

@@ -13,6 +13,7 @@ import numpy as np
 
 from app.pipeline.feature_store import FeatureStore, IdentityFeatureVector
 from app.proxy.traffic_logger import TrafficLogger, TrafficRecord
+from app.schemas.events import NormalizedEvent
 
 logger = logging.getLogger("sentinel_flow.pipeline.feature_pipeline")
 
@@ -50,6 +51,9 @@ class FeaturePipeline:
         # Global index for account churn: fingerprint_hash -> deque of (timestamp, identity_id)
         self._fingerprint_identities: dict[str, deque[tuple[float, str]]] = defaultdict(deque)
 
+        # Global index for cross-identity endpoint access: path -> deque of (timestamp, identity_id)
+        self._path_identities: dict[str, deque[tuple[float, str]]] = defaultdict(deque)
+
         # Listeners for feature vector updates (e.g. detection engine)
         self._listeners: list[Callable[[IdentityFeatureVector], None]] = []
 
@@ -60,6 +64,26 @@ class FeaturePipeline:
         """Register a callback invoked whenever a new feature vector is calculated."""
         self._listeners.append(callback)
 
+    def on_normalized_event(self, event: NormalizedEvent) -> None:
+        """Process a NormalizedEvent directly from the EventBus or streaming sources."""
+        now = event.ts.timestamp()
+        record = TrafficRecord(
+            identity_id=event.identity_id,
+            timestamp_epoch=now,
+            timestamp_iso=event.ts.isoformat(),
+            method=event.method,
+            path=event.path_template,
+            query_string="",
+            status_code=event.status_code,
+            request_size_bytes=event.bytes_in,
+            response_size_bytes=event.bytes_out,
+            latency_ms=event.latency_ms,
+            fingerprint_hash=event.client_fingerprint,
+            attack_run_id=event.metadata.get("attack_run_id") if isinstance(event.metadata, dict) else None,
+            user_agent=event.user_agent or "",
+        )
+        self.on_traffic_record(record)
+
     def on_traffic_record(self, record: TrafficRecord) -> None:
         """Callback invoked whenever the reverse proxy or lab target logs a request."""
         now = record.timestamp_epoch
@@ -69,9 +93,10 @@ class FeaturePipeline:
         q = self._windows_5m[identity_id]
         q.append(record)
 
-        # 2. Track fingerprint to identity mapping
+        # 2. Track fingerprint to identity mapping & path access
         fp = record.fingerprint_hash or f"ip_{record.user_agent[:16]}"
         self._fingerprint_identities[fp].append((now, identity_id))
+        self._path_identities[record.path].append((now, identity_id))
 
         # 3. Prune old events (> 300s)
         self._prune_identity(identity_id, now)
@@ -247,6 +272,39 @@ class FeaturePipeline:
             cohort_size = 1
             account_churn = 1
 
+        # CV of inter-request interval (30s)
+        cv_interval = round(std_interval / mean_interval, 4) if mean_interval > 0 else 0.0
+
+        # Fano factor over thirty 1-second bins in 30s window (burstiness index)
+        bin_counts = [0] * 30
+        for r in records_30s:
+            b_idx = min(29, max(0, int(now - r.timestamp_epoch)))
+            bin_counts[b_idx] += 1
+        mean_bin = sum(bin_counts) / 30.0
+        var_bin = sum((c - mean_bin) ** 2 for c in bin_counts) / 30.0
+        fano_factor = round(var_bin / mean_bin, 4) if mean_bin > 0 else 0.0
+
+        # Unique path count in 30s
+        unique_paths_30s = len(set(paths_30s))
+
+        # Status code histogram (30s)
+        st_2xx = sum(1 for r in records_30s if 200 <= r.status_code < 300)
+        st_3xx = sum(1 for r in records_30s if 300 <= r.status_code < 400)
+        st_4xx = sum(1 for r in records_30s if 400 <= r.status_code < 500)
+        st_5xx = sum(1 for r in records_30s if r.status_code >= 500)
+
+        # Method mix (30s)
+        get_ratio_30s = round(sum(1 for r in records_30s if r.method.upper() == "GET") / count_30s, 4) if count_30s > 0 else 0.0
+        post_ratio_30s = round(sum(1 for r in records_30s if r.method.upper() == "POST") / count_30s, 4) if count_30s > 0 else 0.0
+
+        # Cross-identity concurrent endpoint access (30s)
+        concurrent_other_identities = set()
+        for p in paths_30s:
+            for ts, other_id in self._path_identities.get(p, []):
+                if ts >= cutoff_30s and other_id != identity_id:
+                    concurrent_other_identities.add(other_id)
+        cross_concurrent = len(concurrent_other_identities)
+
         vector = IdentityFeatureVector(
             identity_id=identity_id,
             timestamp_epoch=now,
@@ -275,6 +333,18 @@ class FeaturePipeline:
             request_count_5s=count_5s,
             request_count_30s=count_30s,
             request_count_5m=count_5m,
+            feature_schema_version="2.0.0",
+            inter_request_interval_cv_30s=cv_interval,
+            fano_factor_30s=fano_factor,
+            unique_path_count_30s=unique_paths_30s,
+            status_2xx_count_30s=st_2xx,
+            status_3xx_count_30s=st_3xx,
+            status_4xx_count_30s=st_4xx,
+            status_5xx_count_30s=st_5xx,
+            method_get_ratio_30s=get_ratio_30s,
+            method_post_ratio_30s=post_ratio_30s,
+            cross_identity_concurrent_paths_30s=cross_concurrent,
+            cross_identity_credential_reuse_count_30s=account_churn,
         )
         return vector
 

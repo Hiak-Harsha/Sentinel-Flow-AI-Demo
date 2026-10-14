@@ -48,14 +48,18 @@ from .orchestrator.allowlist_enforcer import OrchestratorAllowlistEnforcer
 from .orchestrator.consent_gate import ConsentGate
 from .orchestrator.routes import router as orchestrator_router, set_run_manager
 from .orchestrator.run_manager import RunManager
+from .pipeline.event_bus import HybridEventBus
 from .pipeline.feature_pipeline import FeaturePipeline
 from .pipeline.feature_store import FeatureStore
+from .pipeline.replay import ReplayEngine
 from .pipeline.routes import router as pipeline_router, set_feature_pipeline
 from .proxy.allowlist import TargetAllowlist, load_allowlist_from_config
 from .proxy.reverse_proxy import get_proxy_handler, init_proxy_handler, proxy_router
 from .proxy.session_bridge import SessionBridge
 from .proxy.traffic_logger import TrafficLogger
 from .proxy.webhook_receiver import router as webhook_router, set_webhook_traffic_logger
+from .schemas.events import NormalizedEvent
+from .sensors.host_flow import HostFlowSensor
 from .db.session import close_db, init_db
 from .repositories import (
     DetectionRepository,
@@ -118,6 +122,23 @@ async def lifespan(app: FastAPI):
     await sessions.load_from_db()
     academic = AcademicModelService(ARTIFACT_DIR)
     event_store = EventStore(EVIDENCE_LEDGER_PATH)
+
+    # Initialize EventBus (Redis Streams with automatic In-Memory fallback)
+    event_bus = HybridEventBus(redis_url=settings.redis_url)
+    await event_bus.initialize()
+
+    # Initialize Scenario Replay Engine
+    replay_engine = ReplayEngine(
+        event_callback=lambda ev: asyncio.create_task(event_bus.publish(ev))
+    )
+
+    # Initialize Host Flow Sensor (local socket counters, strict opt-in)
+    host_sensor = HostFlowSensor(
+        enabled=settings.enable_host_sensor,
+        event_callback=lambda ev: asyncio.create_task(event_bus.publish(ev)),
+    )
+    if host_sensor.enabled:
+        host_sensor.start()
 
     # 1. Initialize Reverse Proxy & Safety Allowlist (Private Network Boundary)
     try:
@@ -208,6 +229,21 @@ async def lifespan(app: FastAPI):
             user_agent="SentinelFlow-DisposableTarget/1.0",
         )
 
+        norm_event = NormalizedEvent(
+            identity_id=actor,
+            method="LAB_EVENT",
+            path_template=path,
+            status_code=st_code,
+            bytes_in=len(str(meta)),
+            bytes_out=128,
+            latency_ms=1.5,
+            source="lab_target",
+            provenance="live",
+            session_id=curr_sess.get("id"),
+            metadata=meta,
+        )
+        asyncio.create_task(event_bus.publish(norm_event))
+
         hub.broadcast_nowait({
             "type": "causal_activity",
             "event": ev_rec,
@@ -283,6 +319,23 @@ async def lifespan(app: FastAPI):
                 "attack_run_id": record.attack_run_id,
             },
         )
+        norm_event = NormalizedEvent(
+            identity_id=record.identity_id,
+            method=record.method,
+            path_template=record.path,
+            status_code=record.status_code,
+            bytes_in=record.request_size_bytes,
+            bytes_out=record.response_size_bytes,
+            latency_ms=record.latency_ms,
+            source="reverse_proxy",
+            provenance="simulated" if record.attack_run_id else "live",
+            client_fingerprint=record.fingerprint_hash,
+            user_agent=record.user_agent,
+            session_id=curr_sess.get("id"),
+            metadata={"attack_run_id": record.attack_run_id} if record.attack_run_id else {},
+        )
+        asyncio.create_task(event_bus.publish(norm_event))
+
         ws_manager.broadcast(
             event_type="causal.activity",
             channel="operator",
@@ -322,6 +375,47 @@ async def lifespan(app: FastAPI):
 
     run_manager.add_listener(on_orchestrator_event)
 
+    # EventBus background consumer tasks
+    async def feature_builder_consumer():
+        async for event in event_bus.subscribe(consumer_group="feature-builder", consumer_name="worker-1"):
+            try:
+                if event.source != "reverse_proxy":
+                    feature_pipeline.on_normalized_event(event)
+            except Exception:
+                logger.exception("Error in feature_builder_consumer")
+
+    async def ws_fanout_consumer():
+        async for event in event_bus.subscribe(consumer_group="ws-fanout", consumer_name="worker-1"):
+            try:
+                if event.source in ("replay", "host_sensor"):
+                    ev_dict = {
+                        "id": event.id,
+                        "timestamp": event.ts.isoformat(),
+                        "source": event.source,
+                        "actor_principal": event.identity_id,
+                        "method": event.method,
+                        "path": event.path_template,
+                        "status_code": event.status_code,
+                        "bytes_in": event.bytes_in,
+                        "bytes_out": event.bytes_out,
+                        "latency_ms": event.latency_ms,
+                    }
+                    ws_manager.broadcast(
+                        event_type="causal.activity",
+                        channel="operator",
+                        data=ev_dict,
+                        provenance=event.provenance,
+                    )
+                    hub.broadcast_nowait({
+                        "type": "causal_activity",
+                        "event": ev_dict,
+                    })
+            except Exception:
+                logger.exception("Error in ws_fanout_consumer")
+
+    fb_consumer_task = asyncio.create_task(feature_builder_consumer())
+    ws_fanout_task = asyncio.create_task(ws_fanout_consumer())
+
     app.state.hub = hub
     app.state.ws_manager = ws_manager
     app.state.sessions = sessions
@@ -342,9 +436,15 @@ async def lifespan(app: FastAPI):
     app.state.event_repo = event_repo
     app.state.detection_repo = detection_repo
     app.state.orch_repo = orch_repo
+    app.state.event_bus = event_bus
+    app.state.host_sensor = host_sensor
+    app.state.replay_engine = replay_engine
 
     # Start periodic telemetry broadcaster background task
+    health_tick_counter = 0
+
     async def periodic_telemetry_broadcaster():
+        nonlocal health_tick_counter
         while True:
             await asyncio.sleep(1.0)
             try:
@@ -367,6 +467,22 @@ async def lifespan(app: FastAPI):
                     "type": "telemetry_update",
                     **payload,
                 })
+
+                health_tick_counter += 1
+                if health_tick_counter % 5 == 0:
+                    bus_metrics = await event_bus.get_metrics()
+                    ws_manager.broadcast(
+                        event_type="system.health",
+                        channel="operator",
+                        data={
+                            "status": "healthy",
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                            "event_bus": bus_metrics,
+                            "threat_level": det_status["threat_level"],
+                            "active_devices": snapshot["active_devices"],
+                        },
+                        provenance="live",
+                    )
             except Exception:
                 pass
 
@@ -375,11 +491,22 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    replay_engine.stop()
+    if host_sensor.enabled:
+        await host_sensor.stop()
+    fb_consumer_task.cancel()
+    ws_fanout_task.cancel()
     broadcaster_task.cancel()
     try:
-        await broadcaster_task
-    except asyncio.CancelledError:
+        await asyncio.gather(
+            fb_consumer_task,
+            ws_fanout_task,
+            broadcaster_task,
+            return_exceptions=True,
+        )
+    except Exception:
         pass
+    await event_bus.close()
     await stop_rollup_worker()
     await proxy_handler.close()
     await close_db()

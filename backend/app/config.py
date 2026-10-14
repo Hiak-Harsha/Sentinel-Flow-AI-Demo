@@ -53,6 +53,7 @@ class Settings(BaseSettings):
     webhook_secret: str = Field(default=DEFAULT_WEBHOOK_SECRET, alias="SENTINEL_WEBHOOK_SECRET")
     db_url: str | None = Field(default=None, alias="DATABASE_URL")
     redis_url: str = Field(default="redis://localhost:6379/0", alias="REDIS_URL")
+    enable_host_sensor: bool = Field(default=False, alias="SENTINEL_ENABLE_HOST_SENSOR")
 
     max_participants: int = 60
     max_devices_per_session: int = 60

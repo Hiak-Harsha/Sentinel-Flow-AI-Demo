@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sentinel-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sentinel
+      POSTGRES_PASSWORD: sentinel_secure_password_prod_123
+      POSTGRES_DB: sentinel_flow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sentinel -d sentinel_flow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: sentinel-redis
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sentinel-backend
+    restart: unless-stopped
+    environment:
+      SENTINEL_ENV: production
+      DATABASE_URL: postgresql+asyncpg://sentinel:sentinel_secure_password_prod_123@postgres:5432/sentinel_flow
+      REDIS_URL: redis://redis:6379/0
+      SENTINEL_OPERATOR_SECRET: sentinel-prod-operator-token-9876543210
+      SENTINEL_HMAC_SECRET: sentinel-prod-hmac-secret-signature-key-54321
+      SENTINEL_WEBHOOK_SECRET: sentinel-prod-webhook-signature-secret-67890
+      SENTINEL_ALLOWED_ORIGINS: http://localhost,http://localhost:80,http://127.0.0.1
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sentinel-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:

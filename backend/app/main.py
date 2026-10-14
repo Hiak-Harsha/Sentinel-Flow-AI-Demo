@@ -19,6 +19,7 @@ from .config import (
     ARTIFACT_DIR,
     DATABASE_PATH,
     DEFAULT_TARGET_URL,
+    EVIDENCE_LEDGER_PATH,
     PROXY_TIMEOUT_SECONDS,
     TARGET_CONFIG_PATH,
     ensure_runtime_directories,
@@ -55,7 +56,16 @@ from .proxy.reverse_proxy import get_proxy_handler, init_proxy_handler, proxy_ro
 from .proxy.session_bridge import SessionBridge
 from .proxy.traffic_logger import TrafficLogger
 from .proxy.webhook_receiver import router as webhook_router, set_webhook_traffic_logger
+from .db.session import close_db, init_db
+from .repositories import (
+    DetectionRepository,
+    EventRepository,
+    IdentityRepository,
+    OrchestratorRepository,
+    SessionRepository,
+)
 from .services.academic_model_service import AcademicModelService
+from .services.rollup_worker import start_rollup_worker, stop_rollup_worker
 from .services.session_service import SessionService
 
 
@@ -94,11 +104,20 @@ class ConnectionHub:
 async def lifespan(app: FastAPI):
     validate_safety_configuration()
     ensure_runtime_directories()
+    await init_db()
+
+    session_repo = SessionRepository()
+    identity_repo = IdentityRepository()
+    event_repo = EventRepository()
+    detection_repo = DetectionRepository()
+    orch_repo = OrchestratorRepository()
+
     hub = ConnectionHub()
     ws_manager = WebSocketManager()
-    sessions = SessionService()
+    sessions = SessionService(repo=session_repo)
+    await sessions.load_from_db()
     academic = AcademicModelService(ARTIFACT_DIR)
-    event_store = EventStore(DATABASE_PATH)
+    event_store = EventStore(EVIDENCE_LEDGER_PATH)
 
     # 1. Initialize Reverse Proxy & Safety Allowlist (Private Network Boundary)
     try:
@@ -118,19 +137,22 @@ async def lifespan(app: FastAPI):
     set_webhook_traffic_logger(traffic_logger)
 
     # 2. Initialize Streaming Feature Pipeline & Store
-    feature_store = FeatureStore()
+    feature_store = FeatureStore(repo=event_repo)
+    await feature_store.load_from_db()
     feature_pipeline = FeaturePipeline(traffic_logger=traffic_logger, feature_store=feature_store)
     set_feature_pipeline(feature_pipeline)
 
     # 3. Initialize Multi-Layer Detection Engine
-    detection_engine = DetectionEngine()
+    detection_engine = DetectionEngine(repo=detection_repo)
+    await detection_engine.load_from_db()
     set_detection_engine(detection_engine)
     set_session_service(sessions)
     set_feature_store_for_detection(feature_store)
     set_event_store_for_detection(event_store)
 
     # 4. Initialize Identity & Device Fingerprint Resolver
-    session_manager, identity_resolver = init_identity_system()
+    session_manager, identity_resolver = init_identity_system(repo=identity_repo)
+    await session_manager.load_from_db()
 
     # 5. Initialize Attack Orchestrator & Safety Gate
     orch_enforcer = OrchestratorAllowlistEnforcer(allowlist)
@@ -153,7 +175,9 @@ async def lifespan(app: FastAPI):
         )
 
     # Initialize active session
-    curr_sess = sessions.create_session()
+    if not sessions.active_session:
+        await sessions.create_session_async()
+    curr_sess = sessions.get_current_session()
 
     # Connect Built-In Disposable Lab Target Event Emitter
     def on_lab_event(event_dict: dict[str, Any]) -> None:
@@ -313,6 +337,11 @@ async def lifespan(app: FastAPI):
     app.state.identity_resolver = identity_resolver
     app.state.run_manager = run_manager
     app.state.event_store = event_store
+    app.state.session_repo = session_repo
+    app.state.identity_repo = identity_repo
+    app.state.event_repo = event_repo
+    app.state.detection_repo = detection_repo
+    app.state.orch_repo = orch_repo
 
     # Start periodic telemetry broadcaster background task
     async def periodic_telemetry_broadcaster():
@@ -342,9 +371,18 @@ async def lifespan(app: FastAPI):
                 pass
 
     broadcaster_task = asyncio.create_task(periodic_telemetry_broadcaster())
+    rollup_task = start_rollup_worker(event_repo=event_repo, retention_days=7)
+
     yield
+
     broadcaster_task.cancel()
+    try:
+        await broadcaster_task
+    except asyncio.CancelledError:
+        pass
+    await stop_rollup_worker()
     await proxy_handler.close()
+    await close_db()
 
 
 app = FastAPI(
@@ -459,7 +497,7 @@ async def get_overview() -> dict[str, Any]:
 # Session Management
 @app.post("/api/sessions")
 async def create_session() -> dict[str, Any]:
-    session = _sessions().create_session()
+    session = await _sessions().create_session_async()
     _hub().broadcast_nowait({"type": "session_created", "session": session})
     return session
 
@@ -488,7 +526,7 @@ async def get_current_session() -> dict[str, Any]:
 @app.post("/api/sessions/join")
 async def join_session(request: JoinSessionRequest) -> dict[str, Any]:
     try:
-        participant = _sessions().join_participant(request.join_code, request.alias)
+        participant = await _sessions().join_participant_async(request.join_code, request.alias)
         # Log join activity into traffic logger
         app.state.traffic_logger.log(
             identity_id=participant["device_id"],

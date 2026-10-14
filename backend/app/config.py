@@ -19,6 +19,7 @@ MODEL_PATH = ARTIFACT_DIR / "rf_unsw_nb15.joblib"
 METADATA_PATH = ARTIFACT_DIR / "model_metadata.json"
 METRICS_PATH = ARTIFACT_DIR / "evaluation.json"
 DATABASE_PATH = RUNTIME_DIR / "sentinel_flow.db"
+EVIDENCE_LEDGER_PATH = RUNTIME_DIR / "evidence_ledger.db"
 
 # Default fallback secrets for local development only
 DEFAULT_OPERATOR_PASSCODE = "SF-OPERATOR-2026"
@@ -50,6 +51,8 @@ class Settings(BaseSettings):
     operator_passcode: str = Field(default=DEFAULT_OPERATOR_PASSCODE, alias="SENTINEL_OPERATOR_PASSCODE")
     operator_secret: str = Field(default=DEFAULT_OPERATOR_SECRET, alias="SENTINEL_OPERATOR_SECRET")
     webhook_secret: str = Field(default=DEFAULT_WEBHOOK_SECRET, alias="SENTINEL_WEBHOOK_SECRET")
+    db_url: str | None = Field(default=None, alias="DATABASE_URL")
+    redis_url: str = Field(default="redis://localhost:6379/0", alias="REDIS_URL")
 
     max_participants: int = 60
     max_devices_per_session: int = 60

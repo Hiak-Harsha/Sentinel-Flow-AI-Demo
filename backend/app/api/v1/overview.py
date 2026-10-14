@@ -55,7 +55,60 @@ async def get_telemetry_stats(request: Request) -> dict[str, Any]:
 
 @router.get("/telemetry/timeseries", summary="Bounded timeseries points for telemetry charts")
 async def get_telemetry_timeseries(request: Request, limit: int = Query(default=50, ge=1, le=200)) -> dict[str, Any]:
-    return {"timeseries": request.app.state.feature_store.get_history(limit=limit)}
+    event_repo = getattr(request.app.state, "event_repo", None)
+    if event_repo:
+        rollups = await event_repo.get_rollups(window_type="1m", limit=limit)
+        if rollups:
+            return {
+                "timeseries": [
+                    {
+                        "timestamp": r.window_start.isoformat().replace("+00:00", "Z"),
+                        "requests_per_sec": round(r.total_requests / 60.0, 2),
+                        "total_requests": r.total_requests,
+                        "error_count": r.error_count,
+                        "avg_latency_ms": r.avg_latency_ms,
+                        "p95_latency_ms": r.p95_latency_ms,
+                        "unique_identities": r.unique_identities,
+                        "bytes_in": r.total_bytes_in,
+                        "bytes_out": r.total_bytes_out,
+                    }
+                    for r in rollups
+                ],
+                "source": "telemetry_rollups",
+            }
+    return {
+        "timeseries": request.app.state.feature_store.get_history(limit=limit),
+        "source": "sliding_window_cache",
+    }
+
+
+@router.get("/telemetry/rollups", summary="Aggregated time-bucket rollups (1m or 1h)")
+async def get_telemetry_rollups(
+    request: Request,
+    window_type: str = Query(default="1m", pattern="^(1m|1h)$"),
+    limit: int = Query(default=60, ge=1, le=500),
+) -> dict[str, Any]:
+    event_repo = getattr(request.app.state, "event_repo", None)
+    if not event_repo:
+        return {"rollups": []}
+    records = await event_repo.get_rollups(window_type=window_type, limit=limit)
+    return {
+        "window_type": window_type,
+        "rollups": [
+            {
+                "id": r.id,
+                "window_start": r.window_start.isoformat().replace("+00:00", "Z"),
+                "total_requests": r.total_requests,
+                "error_count": r.error_count,
+                "avg_latency_ms": r.avg_latency_ms,
+                "p95_latency_ms": r.p95_latency_ms,
+                "unique_identities": r.unique_identities,
+                "total_bytes_in": r.total_bytes_in,
+                "total_bytes_out": r.total_bytes_out,
+            }
+            for r in records
+        ],
+    }
 
 
 @router.get("/academic-model/status", summary="Academic supervised model (UNSW-NB15) status")

@@ -1,13 +1,16 @@
-"""Cryptographic session manager for Sentinel Flow participants."""
+"""Cryptographic session manager with database persistence for Sentinel Flow participants."""
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import secrets
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
+
+from app.repositories.identity_repo import IdentityRepository
 
 logger = logging.getLogger("sentinel_flow.identity.session_manager")
 
@@ -31,13 +34,46 @@ class ParticipantSession:
 
 
 class SessionManager:
-    """Issues and validates secure participant tokens."""
+    """Issues, validates, and persists secure participant tokens in database."""
 
-    def __init__(self) -> None:
-        # token -> ParticipantSession
+    def __init__(self, repo: IdentityRepository | None = None) -> None:
+        self.repo = repo or IdentityRepository()
         self._tokens: dict[str, ParticipantSession] = {}
-        # identity_id -> set of active tokens
         self._identity_tokens: dict[str, set[str]] = {}
+
+    def _persist_async(self, coro) -> None:
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(coro)
+        except RuntimeError:
+            try:
+                asyncio.run(coro)
+            except Exception as e:
+                logger.debug("Failed running sync persistence fallback in SessionManager: %s", e)
+
+    async def load_from_db(self) -> None:
+        """Hydrate unrevoked identities from database on startup."""
+        try:
+            identities = await self.repo.list_active_identities()
+            for id_record in identities:
+                token = id_record.token_hash or f"token_{id_record.id}"
+                session = ParticipantSession(
+                    token=token,
+                    identity_id=id_record.id,
+                    alias=id_record.alias,
+                    fingerprint_hash=id_record.device_id or "unknown",
+                    role=id_record.role,
+                    created_at_epoch=id_record.created_at.timestamp(),
+                    expires_at_epoch=id_record.expires_at.timestamp() if id_record.expires_at else time.time() + 86400,
+                    is_revoked=bool(id_record.revoked_at),
+                )
+                self._tokens[token] = session
+                if id_record.id not in self._identity_tokens:
+                    self._identity_tokens[id_record.id] = set()
+                self._identity_tokens[id_record.id].add(token)
+            logger.info("Restored %d active identities from database", len(identities))
+        except Exception:
+            logger.exception("Failed loading identities from database")
 
     def create_session(
         self,
@@ -48,9 +84,11 @@ class SessionManager:
         role: str = "participant",
         ttl_seconds: float = 86400.0,
     ) -> ParticipantSession:
-        """Issue a new secure token for an identity."""
+        """Issue a new secure token for an identity and persist to database."""
         token = f"sf_{secrets.token_urlsafe(24)}"
         now = time.time()
+        expires_at = datetime.fromtimestamp(now + ttl_seconds, tz=timezone.utc)
+
         session = ParticipantSession(
             token=token,
             identity_id=identity_id,
@@ -65,6 +103,17 @@ class SessionManager:
             self._identity_tokens[identity_id] = set()
         self._identity_tokens[identity_id].add(token)
 
+        self._persist_async(
+            self.repo.upsert_identity(
+                identity_id=identity_id,
+                alias=alias,
+                role=role,
+                token=token,
+                device_id=fingerprint_hash,
+                expires_at=expires_at,
+            )
+        )
+
         logger.info("Issued session token for %s (alias: %s, role: %s, fp: %s)", identity_id, alias, role, fingerprint_hash[:8])
         return session
 
@@ -78,10 +127,11 @@ class SessionManager:
         return None
 
     def revoke_token(self, token: str) -> bool:
-        """Revoke a token."""
+        """Revoke a token and persist revocation to database."""
         session = self._tokens.get(token)
         if session:
             session.is_revoked = True
+            self._persist_async(self.repo.revoke_identity(session.identity_id))
             logger.info("Revoked session token for %s", session.identity_id)
             return True
         return False

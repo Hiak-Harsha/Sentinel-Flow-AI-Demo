@@ -7,6 +7,7 @@ help:
 	@echo "  make lint            - Check code quality and style standards"
 	@echo "  make train           - Train academic ML detection models"
 	@echo "  make seed            - Seed database with replay fixtures"
+	@echo "  make migrate         - Apply database migrations with Alembic"
 	@echo "  make api-types       - Generate TypeScript definitions from FastAPI OpenAPI spec"
 	@echo "  make api-types-check - Verify src/api/schema.d.ts is not stale (CI check)"
 
@@ -24,6 +25,9 @@ train:
 
 seed:
 	python scripts/seed_demo_data.py
+
+migrate:
+	python -m alembic upgrade head
 
 api-types:
 	python scripts/generate_openapi_types.py

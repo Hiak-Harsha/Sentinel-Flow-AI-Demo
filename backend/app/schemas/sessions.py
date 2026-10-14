@@ -25,6 +25,8 @@ class JoinSessionRequest(BaseModel):
 
 
 class ParticipantModel(BaseModel):
+    id: str | None = None
+    token: str | None = None
     device_id: str
     alias: str
     role: str = "participant"

@@ -1,13 +1,16 @@
-"""Alert lifecycle management for Sentinel Flow v2."""
+"""Alert lifecycle management with database persistence for Sentinel Flow v2."""
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from collections import deque
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable
+
+from app.repositories.detection_repo import DetectionRepository
 
 logger = logging.getLogger("sentinel_flow.detection.alert_manager")
 
@@ -33,15 +36,56 @@ class AlertRecord:
 
 
 class AlertManager:
-    """Stores, deduplicates, and tracks lifecycle of security alerts."""
+    """Stores, deduplicates, and tracks lifecycle of security alerts with database backing."""
 
-    def __init__(self, debounce_seconds: float = 15.0, max_history: int = 500) -> None:
+    def __init__(
+        self,
+        debounce_seconds: float = 15.0,
+        max_history: int = 500,
+        repo: DetectionRepository | None = None,
+    ) -> None:
         self.debounce_seconds = debounce_seconds
+        self.repo = repo or DetectionRepository()
         self._history: deque[AlertRecord] = deque(maxlen=max_history)
         self._active_alerts: dict[str, AlertRecord] = {}
         # key (identity_id, rule_key) -> last_alert_time
         self._last_alert_times: dict[tuple[str, str], float] = {}
         self._listeners: list[Callable[[AlertRecord], None]] = []
+
+    def _persist_async(self, coro) -> None:
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(coro)
+        except RuntimeError:
+            try:
+                asyncio.run(coro)
+            except Exception as e:
+                logger.debug("Failed running sync persistence fallback in AlertManager: %s", e)
+
+    async def load_from_db(self) -> None:
+        """Hydrate alerts from database on startup."""
+        try:
+            alerts = await self.repo.get_alerts(limit=100)
+            for a in reversed(alerts):
+                rec = AlertRecord(
+                    alert_id=a.alert_id,
+                    identity_id=a.identity_id,
+                    threat_level=a.severity,
+                    threat_score=a.threat_score,
+                    matched_rules=[a.rule_id],
+                    title=a.name,
+                    summary=a.name,
+                    evidence=a.evidence_json if isinstance(a.evidence_json, list) else [],
+                    created_at_epoch=a.created_at.timestamp(),
+                    created_at_iso=a.created_at.isoformat().replace("+00:00", "Z"),
+                    status="ACTIVE" if a.status in ("open", "acknowledged", "investigating") else "RESOLVED",
+                )
+                self._history.append(rec)
+                if rec.status == "ACTIVE":
+                    self._active_alerts[rec.alert_id] = rec
+            logger.info("Restored %d alerts (%d active) from database", len(alerts), len(self._active_alerts))
+        except Exception:
+            logger.exception("Failed loading alerts from database")
 
     def add_listener(self, callback: Callable[[AlertRecord], None]) -> None:
         self._listeners.append(callback)
@@ -59,13 +103,16 @@ class AlertManager:
         now = time.time()
         last_time = self._last_alert_times.get(dedup_key, 0.0)
         if now - last_time < self.debounce_seconds:
-            # Debounced
             return None
 
         self._last_alert_times[dedup_key] = now
 
         alert_id = f"alt_{int(now * 1000)}_{identity_id[:8]}"
-        title = assessment.get("rule_details", [{}])[0].get("name", "Anomalous Behaviour Detected") if assessment.get("rule_details") else "Behavioural Anomaly Detected"
+        title = (
+            assessment.get("rule_details", [{}])[0].get("name", "Anomalous Behaviour Detected")
+            if assessment.get("rule_details")
+            else "Behavioural Anomaly Detected"
+        )
 
         alert = AlertRecord(
             alert_id=alert_id,
@@ -89,6 +136,19 @@ class AlertManager:
             alert.threat_score,
         )
 
+        self._persist_async(
+            self.repo.save_alert(
+                alert_id=alert_id,
+                identity_id=identity_id,
+                rule_id=matched_rules[0] if matched_rules else "ANOMALY",
+                name=title,
+                severity=alert.threat_level,
+                threat_score=alert.threat_score,
+                status="open",
+                evidence_json=alert.evidence,
+            )
+        )
+
         for listener in self._listeners:
             try:
                 listener(alert)
@@ -104,9 +164,17 @@ class AlertManager:
         items = list(self._history)
         return [a.to_dict() for a in reversed(items[-limit:])]
 
-    def resolve_alert(self, alert_id: str) -> bool:
+    def resolve_alert(self, alert_id: str, analyst: str = "operator", notes: str | None = None) -> bool:
         alert = self._active_alerts.get(alert_id)
         if alert:
             alert.status = "RESOLVED"
+            self._persist_async(
+                self.repo.transition_alert_status(
+                    alert_id=alert_id,
+                    to_status="resolved",
+                    analyst=analyst,
+                    notes=notes or "Resolved by analyst",
+                )
+            )
             return True
         return False

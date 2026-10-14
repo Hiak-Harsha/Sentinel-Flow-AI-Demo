@@ -20,7 +20,7 @@ router = APIRouter(tags=["Sessions"])
 @router.post("/sessions", response_model=SessionModel, summary="Create a new classroom session")
 async def create_session(request: Request, body: CreateSessionRequest | None = None) -> dict[str, Any]:
     sessions = request.app.state.sessions
-    session = sessions.create_session()
+    session = await sessions.create_session_async()
     ws_mgr = getattr(request.app.state, "ws_manager", None)
     if ws_mgr:
         ws_mgr.broadcast(event_type="session.created", channel="public", data=session)
@@ -60,7 +60,7 @@ async def join_session(request: Request, body: JoinSessionRequest) -> dict[str, 
     ws_mgr = getattr(request.app.state, "ws_manager", None)
 
     try:
-        participant = sessions.join_participant(body.join_code, body.alias)
+        participant = await sessions.join_participant_async(body.join_code, body.alias)
         traffic_logger.log(
             identity_id=participant["device_id"],
             method="POST",

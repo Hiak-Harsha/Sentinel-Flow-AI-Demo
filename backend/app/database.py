@@ -7,6 +7,7 @@ import json
 import sqlite3
 import time
 import uuid
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -21,15 +22,20 @@ class EventStore:
         self.database_path = str(database_path)
         self._shared_conn: sqlite3.Connection | None = None
         if self.database_path == ":memory:":
-            self._shared_conn = sqlite3.connect(":memory:", check_same_thread=False)
+            self._shared_conn = sqlite3.connect(":memory:", check_same_thread=False, timeout=30.0)
             self._shared_conn.row_factory = sqlite3.Row
         self._initialize()
 
     def _connect(self) -> sqlite3.Connection:
         if self._shared_conn is not None:
             return self._shared_conn
-        connection = sqlite3.connect(self.database_path, check_same_thread=False)
+        connection = sqlite3.connect(self.database_path, check_same_thread=False, timeout=30.0)
         connection.row_factory = sqlite3.Row
+        try:
+            connection.execute("PRAGMA journal_mode = WAL;")
+            connection.execute("PRAGMA busy_timeout = 30000;")
+        except Exception:
+            pass
         return connection
 
     def _initialize(self) -> None:

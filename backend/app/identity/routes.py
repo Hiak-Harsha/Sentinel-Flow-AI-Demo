@@ -17,9 +17,9 @@ _session_manager: SessionManager | None = None
 _identity_resolver: IdentityResolver | None = None
 
 
-def init_identity_system() -> tuple[SessionManager, IdentityResolver]:
+def init_identity_system(repo: Any | None = None) -> tuple[SessionManager, IdentityResolver]:
     global _session_manager, _identity_resolver
-    _session_manager = SessionManager()
+    _session_manager = SessionManager(repo=repo)
     _identity_resolver = IdentityResolver(_session_manager)
     return _session_manager, _identity_resolver
 

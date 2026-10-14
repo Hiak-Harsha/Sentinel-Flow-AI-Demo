@@ -1,17 +1,16 @@
-"""In-memory feature store for streaming behavioural telemetry.
-
-Holds the latest computed feature vectors, baseline distributions, and historical
-sliding snapshots per identity and across the global network.
-"""
+"""Feature store for streaming behavioural telemetry with database persistence."""
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from collections import deque
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from typing import Any
+
+from app.repositories.event_repo import EventRepository
 
 logger = logging.getLogger("sentinel_flow.pipeline.feature_store")
 
@@ -67,9 +66,10 @@ class IdentityFeatureVector:
 
 
 class FeatureStore:
-    """Thread-safe store for computed features and sliding history."""
+    """Thread-safe store for computed features and sliding history backed by database."""
 
-    def __init__(self, max_history: int = 1000) -> None:
+    def __init__(self, max_history: int = 1000, repo: EventRepository | None = None) -> None:
+        self.repo = repo or EventRepository()
         self._identities: dict[str, IdentityFeatureVector] = {}
         self._history: deque[dict[str, Any]] = deque(maxlen=max_history)
         self._network_snapshot: dict[str, Any] = {
@@ -82,6 +82,30 @@ class FeatureStore:
             "timestamp": time.time(),
         }
 
+    def _persist_async(self, coro) -> None:
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(coro)
+        except RuntimeError:
+            try:
+                asyncio.run(coro)
+            except Exception as e:
+                logger.debug("Failed running sync persistence fallback in FeatureStore: %s", e)
+
+    async def load_from_db(self) -> None:
+        """Hydrate feature windows from database on startup."""
+        try:
+            windows = await self.repo.get_feature_windows(limit=200)
+            for w in reversed(windows):
+                self._history.append({
+                    "identity_id": w.identity_id,
+                    "timestamp": w.window_start.timestamp(),
+                    "features": w.feature_vector_json,
+                })
+            logger.info("Restored %d feature windows from database", len(windows))
+        except Exception:
+            logger.exception("Failed loading feature windows from database")
+
     def put_identity_features(self, vector: IdentityFeatureVector) -> None:
         """Update or insert feature vector for an identity."""
         self._identities[vector.identity_id] = vector
@@ -90,6 +114,14 @@ class FeatureStore:
             "timestamp": vector.timestamp_epoch,
             "features": vector.to_dict(),
         })
+
+        self._persist_async(
+            self.repo.save_feature_window(
+                identity_id=vector.identity_id,
+                feature_vector=vector.to_dict(),
+                window_size_seconds=30,
+            )
+        )
 
     def get_identity_features(self, identity_id: str) -> IdentityFeatureVector | None:
         """Get latest computed feature vector for an identity."""

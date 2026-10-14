@@ -37,15 +37,17 @@ class DetectionEngine:
         # identity_id -> latest fused assessment dict
         self._latest_assessments: dict[str, dict[str, Any]] = {}
 
+    @property
+    def unsupervised_detector(self) -> OnlineAnomalyDetector:
+        """Alias for backward compatibility with older route references."""
+        return self.unsupervised
+
     def _persist_async(self, coro) -> None:
         try:
             loop = asyncio.get_running_loop()
             loop.create_task(coro)
         except RuntimeError:
-            try:
-                asyncio.run(coro)
-            except Exception as e:
-                logger.debug("Failed running sync persistence fallback in DetectionEngine: %s", e)
+            coro.close()
 
     async def load_from_db(self) -> None:
         """Hydrate latest assessments and alerts from database on startup."""
@@ -107,6 +109,7 @@ class DetectionEngine:
                 ml_score=assessment.get("ml_score", 0.0),
                 flow_score=assessment.get("flow_score", 0.0),
                 fused_score=assessment.get("fused_score", 0.0),
+                model_version=assessment.get("model_version", "2.0.0"),
                 matched_rules=assessment.get("matched_rules"),
                 explanation_json=assessment.get("explanation"),
             )
@@ -133,11 +136,14 @@ class DetectionEngine:
 
     def get_status(self) -> dict[str, Any]:
         """High-level detection subsystem status for dashboard."""
+        base_stats = self.unsupervised.get_stats()
         return {
             "threat_level": self.get_global_threat_level(),
             "active_detections": len(self.alerts.get_active_alerts()),
             "monitored_identities": len(self._latest_assessments),
             "supervised_ready": self.supervised.is_ready,
             "baseline_calibrated": self.unsupervised.is_calibrated,
-            "baseline_stats": self.unsupervised.get_stats(),
+            "average_baseline_maturity": base_stats.get("average_baseline_maturity", 0.0),
+            "tracked_identities": base_stats.get("tracked_identities", 0),
+            "baseline_stats": base_stats,
         }

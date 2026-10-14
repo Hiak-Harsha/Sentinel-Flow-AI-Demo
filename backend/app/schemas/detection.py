@@ -31,8 +31,10 @@ class DetectionStatusResponse(BaseModel):
     threat_level: str
     active_detections: int
     baseline_stats: dict[str, Any] = Field(default_factory=dict)
-    rules_registered: int = 4
+    rules_registered: int = 7
     engine_ready: bool = True
+    average_baseline_maturity: float = 0.0
+    tracked_identities: int = 0
 
 
 class ChainVerifyResponse(BaseModel):

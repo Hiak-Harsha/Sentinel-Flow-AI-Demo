@@ -31,10 +31,10 @@ export function DriftAndShadowView({
     <div className={`grid grid-cols-1 md:grid-cols-2 gap-5 ${className}`}>
       {/* 1. Drift Monitor */}
       <Card>
-        <CardHeader className="pb-3 border-b border-[var(--border-subtle)] flex flex-row items-center justify-between">
+        <CardHeader className="pb-3 border-b border-[rgba(255,255,255,0.07)] flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
-            <Activity className="w-4 h-4 text-cyan-400" />
-            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
+            <Activity className="w-4 h-4 text-[#fe9a00]" />
+            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-[#9aa0a6]">
               Feature & Score Drift Monitor
             </CardTitle>
           </div>
@@ -44,19 +44,19 @@ export function DriftAndShadowView({
         </CardHeader>
 
         <CardContent className="pt-3 space-y-3 font-mono text-xs">
-          <div className="flex justify-between py-1.5 border-b border-[var(--border-subtle)]">
-            <span className="text-[var(--text-muted)]">Max Feature PSI</span>
-            <span className="text-emerald-400 font-bold">0.04 (&lt; 0.10 Stable)</span>
+          <div className="flex justify-between py-1.5 border-b border-[rgba(255,255,255,0.06)]">
+            <span className="text-[#9aa0a6]">Max Feature PSI</span>
+            <span className="text-[#3ddc97] font-bold">0.04 (&lt; 0.10 Stable)</span>
           </div>
 
-          <div className="flex justify-between py-1.5 border-b border-[var(--border-subtle)]">
-            <span className="text-[var(--text-muted)]">Kolmogorov-Smirnov Test (p-val)</span>
-            <span className="text-[var(--text-primary)]">p = 0.82 (No shift)</span>
+          <div className="flex justify-between py-1.5 border-b border-[rgba(255,255,255,0.06)]">
+            <span className="text-[#9aa0a6]">Kolmogorov-Smirnov Test (p-val)</span>
+            <span className="text-[#f0f2f5]">p = 0.82 (No shift)</span>
           </div>
 
-          <div className="flex justify-between py-1.5 border-b border-[var(--border-subtle)]">
-            <span className="text-[var(--text-muted)]">ADWIN Streaming Detector</span>
-            <span className="text-emerald-400 font-semibold">Zero Change-Points</span>
+          <div className="flex justify-between py-1.5 border-b border-[rgba(255,255,255,0.06)]">
+            <span className="text-[#9aa0a6]">ADWIN Streaming Detector</span>
+            <span className="text-[#3ddc97] font-semibold">Zero Change-Points</span>
           </div>
 
           <div className="flex justify-between py-1.5">

@@ -35,7 +35,7 @@ export function TopologyView({
             </p>
           </div>
           <div className="text-right text-xs font-mono text-slate-400">
-            <span className="text-cyan-400 font-semibold">{identities.length}</span> Nodes Monitored
+            <span className="text-[var(--accent)] font-semibold">{identities.length}</span> Nodes Monitored
           </div>
         </div>
 
@@ -51,9 +51,9 @@ export function TopologyView({
       {/* Grid: Active Threats & Topology Nodes */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Active Threats Column */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+        <div className="bg-[var(--surface-1)] border border-[var(--border)] rounded-xl p-5 space-y-4 shadow-xl">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-sans font-bold uppercase text-slate-300 tracking-wider">
+            <h3 className="text-sm font-sans font-bold uppercase text-[var(--text-secondary)] tracking-wider">
               Active Security Threats ({activeAlerts.length})
             </h3>
             <span className="text-[11px] font-mono text-rose-400">Auto-Correlated</span>
@@ -76,12 +76,12 @@ export function TopologyView({
         </div>
 
         {/* Node Roster Column */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+        <div className="bg-[var(--surface-1)] border border-[var(--border)] rounded-xl p-5 space-y-4 shadow-xl">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-sans font-bold uppercase text-slate-300 tracking-wider">
+            <h3 className="text-sm font-sans font-bold uppercase text-[var(--text-secondary)] tracking-wider">
               Monitored Device Nodes
             </h3>
-            <span className="text-[11px] font-mono text-cyan-400">Click node to inspect</span>
+            <span className="text-[11px] font-mono text-[var(--text-muted)]">Click node to inspect</span>
           </div>
 
           <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
@@ -103,12 +103,12 @@ export function TopologyView({
                   <div
                     key={id}
                     onClick={() => setSelectedNodeId(id)}
-                    className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition ${
+                    className={`p-3 rounded-lg border flex items-center justify-between cursor-pointer transition ${
                       isSelected
-                        ? "bg-cyan-950/40 border-cyan-500 shadow-md"
+                        ? "bg-[var(--surface-2)] border-[var(--accent)] shadow-md"
                         : hasAlert
-                        ? "bg-rose-950/30 border-rose-500/50 hover:border-rose-400"
-                        : "bg-slate-950/60 border-slate-800 hover:border-slate-700"
+                        ? "bg-rose-950/20 border-rose-500/40 hover:border-rose-400"
+                        : "bg-[var(--surface-2)] border-[var(--border-subtle)] hover:border-[var(--border)]"
                     }`}
                   >
                     <div className="flex items-center space-x-3">

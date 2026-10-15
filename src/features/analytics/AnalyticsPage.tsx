@@ -6,6 +6,7 @@ import { TimeRangePicker, TimeRangeValue } from "./components/TimeRangePicker";
 import { RollupMetrics, RollupRecord } from "./components/RollupMetrics";
 import { SecuritySummaryTable } from "./components/SecuritySummaryTable";
 import { ExportCsvButton } from "./components/ExportCsvButton";
+import { ExplainabilityView } from "./components/ExplainabilityView";
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState<TimeRangeValue>("1h");
@@ -82,6 +83,9 @@ export default function AnalyticsPage() {
         rollups={normalizedRollups}
         windowType={windowType}
       />
+
+      {/* SHAP Feature Attribution & EWMA Drift Calibration */}
+      <ExplainabilityView />
 
       {/* Security Summary & Tactic Breakdown */}
       <SecuritySummaryTable alerts={Array.isArray(alerts) ? alerts : []} />

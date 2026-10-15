@@ -19,7 +19,7 @@ export function ThresholdSettings() {
     <Card>
       <CardHeader className="pb-3 border-b border-[var(--border-subtle)] flex flex-row items-center justify-between">
         <div className="flex items-center gap-2">
-          <Sliders className="w-4 h-4 text-cyan-400" />
+          <Sliders className="w-4 h-4 text-[var(--accent)]" />
           <CardTitle className="text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
             Detection Thresholds & FP Budget
           </CardTitle>
@@ -43,7 +43,7 @@ export function ThresholdSettings() {
                 onClick={() => setFpBudget(b)}
                 className={`px-3 py-1.5 rounded-md font-mono text-xs transition-colors cursor-pointer ${
                   fpBudget === b
-                    ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
+                    ? "bg-[var(--accent-wash)] text-[var(--accent)] border border-[var(--border)] font-bold"
                     : "bg-[var(--surface-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)] border border-[var(--border-subtle)]"
                 }`}
               >
@@ -60,7 +60,7 @@ export function ThresholdSettings() {
         <div className="space-y-1.5 font-sans pt-2 border-t border-[var(--border-subtle)]">
           <div className="flex justify-between">
             <span className="font-semibold text-[var(--text-secondary)]">Decision Cutoff Score</span>
-            <span className="font-mono text-cyan-400 font-bold">{threshold.toFixed(2)}</span>
+            <span className="font-mono text-[var(--accent)] font-bold">{threshold.toFixed(2)}</span>
           </div>
           <input
             type="range"
@@ -69,7 +69,7 @@ export function ThresholdSettings() {
             step={0.05}
             value={threshold}
             onChange={(e) => setThreshold(Number(e.target.value))}
-            className="w-full accent-cyan-500 cursor-pointer"
+            className="w-full accent-[#fe9a00] cursor-pointer"
           />
         </div>
 

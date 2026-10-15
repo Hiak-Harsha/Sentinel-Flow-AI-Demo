@@ -283,7 +283,7 @@ export function IncidentDrawer({
             {/* MITRE ATT&CK Mapping */}
             <div className="p-3.5 rounded-lg bg-[var(--surface-1)] border border-[var(--border-subtle)] space-y-2">
               <div className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-cyan-400" />
+                <Layers className="w-3.5 h-3.5 text-[#ffb454]" />
                 MITRE ATT&CK Matrix Alignment
               </div>
               <div className="flex items-center gap-2 flex-wrap">
@@ -291,7 +291,7 @@ export function IncidentDrawer({
                   techniques.map((t) => (
                     <span
                       key={t}
-                      className="px-2.5 py-1 rounded bg-slate-800 text-cyan-300 font-mono text-xs border border-cyan-500/30 flex items-center gap-1"
+                      className="px-2.5 py-1 rounded bg-[#2d1f0b] text-[#ffb454] font-mono text-xs border border-[#fe9a00]/30 flex items-center gap-1"
                     >
                       <span className="font-bold">{t}</span>
                     </span>
@@ -307,7 +307,7 @@ export function IncidentDrawer({
             {/* Plain-Language Reason / SHAP Explanations */}
             <div className="p-3.5 rounded-lg bg-[var(--surface-1)] border border-[var(--border-subtle)] space-y-3">
               <div className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] flex items-center gap-1.5">
-                <Cpu className="w-3.5 h-3.5 text-purple-400" />
+                <Cpu className="w-3.5 h-3.5 text-[#fe9a00]" />
                 SHAP Feature Attribution (TreeExplainer)
               </div>
               <div className="space-y-2">
@@ -340,7 +340,7 @@ export function IncidentDrawer({
                 placeholder="Document containment action, compromised credentials, or benign business justification..."
                 value={analystNotes}
                 onChange={(e) => setAnalystNotes(e.target.value)}
-                className="w-full p-2.5 rounded-md bg-[var(--surface-1)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                className="w-full p-2.5 rounded-md bg-[var(--surface-1)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[#fe9a00] focus:border-[#fe9a00]"
               />
             </div>
           </div>
@@ -365,7 +365,7 @@ export function IncidentDrawer({
                 <span className="font-mono font-bold text-[var(--text-primary)]">0.88 (Anomalous)</span>
               </div>
               <div className="w-full bg-[var(--surface-3)] h-2 rounded-full overflow-hidden">
-                <div className="bg-purple-500 h-full rounded-full" style={{ width: "88%" }} />
+                <div className="bg-[#ff7a45] h-full rounded-full" style={{ width: "88%" }} />
               </div>
             </div>
 

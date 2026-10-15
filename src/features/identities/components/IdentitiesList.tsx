@@ -60,11 +60,11 @@ export function IdentitiesList({
                 key={p.device_id}
                 onClick={() => onSelectId(p.device_id)}
                 className={`p-3.5 hover:bg-[var(--surface-2)] transition-colors cursor-pointer flex items-center justify-between gap-3 ${
-                  isSelected ? "bg-[var(--surface-2)] border-l-2 border-cyan-400" : ""
+                  isSelected ? "bg-[var(--surface-2)] border-l-2 border-[var(--accent)]" : ""
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className={`p-2 rounded-lg ${isTarget ? "bg-rose-500/20 text-rose-400" : "bg-[var(--surface-3)] text-cyan-400"}`}>
+                  <div className={`p-2 rounded-lg ${isTarget ? "bg-rose-500/20 text-rose-400" : "bg-[var(--surface-3)] text-[var(--accent)]"}`}>
                     {isMobile ? <Smartphone className="w-4 h-4" /> : <Laptop className="w-4 h-4" />}
                   </div>
 

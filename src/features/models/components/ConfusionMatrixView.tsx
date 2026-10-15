@@ -60,13 +60,13 @@ export function ConfusionMatrixView({ className = "" }: { className?: string }) 
           </div>
 
           {/* True Positive */}
-          <div className="p-3.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 space-y-1">
-            <div className="flex justify-between items-center text-cyan-400">
+          <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 space-y-1">
+            <div className="flex justify-between items-center text-emerald-400">
               <span className="font-semibold font-sans">True Positive (TP)</span>
               <ShieldCheck className="w-3.5 h-3.5" />
             </div>
             <div className="text-xl font-bold text-slate-100">978</div>
-            <div className="text-[11px] text-cyan-300/80 font-sans">
+            <div className="text-[11px] text-emerald-300/80 font-sans">
               Adversarial attacks flagged (97.8%)
             </div>
           </div>
@@ -78,7 +78,7 @@ export function ConfusionMatrixView({ className = "" }: { className?: string }) 
             Testing Protocol:
           </div>
           <div>
-            Group k-fold split by <code className="font-mono text-cyan-400">run_id</code> and time sequence. Held-out scenario evaluation eliminates data leakage. Conformal prediction non-conformity score quantile: 0.95.
+            Group k-fold split by <code className="font-mono text-[var(--accent)]">run_id</code> and time sequence. Held-out scenario evaluation eliminates data leakage. Conformal prediction non-conformity score quantile: 0.95.
           </div>
         </div>
       </CardContent>

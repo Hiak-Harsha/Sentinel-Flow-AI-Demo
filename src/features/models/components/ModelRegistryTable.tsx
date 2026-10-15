@@ -52,7 +52,7 @@ export function ModelRegistryTable({
     <Card className={className}>
       <CardHeader className="pb-3 border-b border-[var(--border-subtle)] flex flex-row items-center justify-between">
         <div className="flex items-center gap-2">
-          <Cpu className="w-4 h-4 text-cyan-400" />
+          <Cpu className="w-4 h-4 text-[var(--accent)]" />
           <CardTitle className="text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
             Model Registry & Deployment Stages
           </CardTitle>
@@ -110,7 +110,7 @@ export function ModelRegistryTable({
                       </Badge>
                     </td>
 
-                    <td className="py-3 px-3 font-bold text-cyan-400">
+                    <td className="py-3 px-3 font-bold text-emerald-400">
                       {typeof prAuc === "number" && !isNaN(prAuc) ? (prAuc * 100).toFixed(1) + "%" : "99.1%"}
                     </td>
 
@@ -175,7 +175,7 @@ export function ModelRegistryTable({
             rows={3}
             value={auditNotes}
             onChange={(e) => setAuditNotes(e.target.value)}
-            className="w-full p-2.5 rounded-md bg-[var(--surface-1)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-cyan-500 font-mono"
+            className="w-full p-2.5 rounded-md bg-[var(--surface-1)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] font-mono"
           />
         </div>
       </Dialog>

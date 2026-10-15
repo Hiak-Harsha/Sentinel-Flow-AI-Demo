@@ -77,7 +77,7 @@ export function IdentityDetailView({
       {/* Identity Top Bar */}
       <Card className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+          <div className="p-2.5 rounded-xl bg-[var(--surface-2)] text-[var(--accent)] border border-[var(--border)]">
             <Laptop className="w-5 h-5" />
           </div>
           <div>
@@ -131,8 +131,8 @@ export function IdentityDetailView({
               data={timeSeriesData}
               xAxisKey="time"
               series={[
-                { key: "observed", name: "Observed Request Rate", color: isControlledTarget ? "#f43f5e" : "#06b6d4" },
-                { key: "upper_band", name: "Upper Normal Threshold (+2σ)", color: "#a855f7" },
+                { key: "observed", name: "Observed Request Rate", color: isControlledTarget ? "#f43f5e" : "#fe9a00" },
+                { key: "upper_band", name: "Upper Normal Threshold (+2σ)", color: "#94a3b8" },
                 { key: "baseline_mean", name: "Learned Mean Baseline", color: "#64748b" },
               ]}
               height={220}
@@ -147,7 +147,7 @@ export function IdentityDetailView({
         <Card>
           <CardHeader className="pb-3 border-b border-[var(--border-subtle)] flex flex-row items-center justify-between">
             <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-cyan-400" />
+              <Layers className="w-4 h-4 text-[var(--accent)]" />
               <CardTitle className="text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
                 Detection Fusion Assessment
               </CardTitle>
@@ -193,7 +193,7 @@ export function IdentityDetailView({
         <Card>
           <CardHeader className="pb-3 border-b border-[var(--border-subtle)] flex flex-row items-center justify-between">
             <div className="flex items-center gap-2">
-              <Fingerprint className="w-4 h-4 text-purple-400" />
+              <Fingerprint className="w-4 h-4 text-[var(--accent)]" />
               <CardTitle className="text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
                 Device Fingerprint
               </CardTitle>
@@ -257,7 +257,7 @@ export function IdentityDetailView({
                       <span className="text-[var(--text-muted)]">{a.timestamp || "Recent"}</span>
                       <Link
                         to={`/alerts/${encodeURIComponent(aId)}`}
-                        className="text-cyan-400 hover:text-cyan-300 inline-flex items-center gap-1 font-sans"
+                        className="text-[var(--accent)] hover:underline inline-flex items-center gap-1 font-sans font-medium"
                       >
                         <span>View</span>
                         <ExternalLink className="w-3 h-3" />

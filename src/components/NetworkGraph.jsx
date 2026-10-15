@@ -44,7 +44,7 @@ export function NetworkGraph({
       vx: 0,
       vy: 0,
       radius: 28,
-      color: "#22d3ee",
+      color: "#fe9a00",
     };
 
     // Alert lookup
@@ -119,7 +119,7 @@ export function NetworkGraph({
           ctx.strokeStyle = "rgba(244, 63, 94, 0.35)";
           ctx.lineWidth = 2;
         } else {
-          ctx.strokeStyle = "rgba(34, 211, 238, 0.15)";
+          ctx.strokeStyle = "rgba(255, 180, 84, 0.15)";
           ctx.lineWidth = 1;
         }
         ctx.stroke();
@@ -130,7 +130,7 @@ export function NetworkGraph({
         const py = node.y + (centerNode.y - node.y) * t;
         ctx.beginPath();
         ctx.arc(px, py, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = node.hasAlert ? "#f43f5e" : "#22d3ee";
+        ctx.fillStyle = node.hasAlert ? "#f43f5e" : "#ffb454";
         ctx.fill();
       });
 
@@ -215,10 +215,10 @@ export function NetworkGraph({
   };
 
   return (
-    <div className="relative w-full h-95 bg-[#03060c] border border-cyan-500/20 rounded-xl overflow-hidden shadow-2xl">
+    <div className="relative w-full h-95 bg-[var(--bg)] border border-[var(--border)] rounded-xl overflow-hidden shadow-2xl">
       <div className="absolute top-3 left-4 z-10 flex items-center space-x-3 text-xs">
-        <span className="flex items-center text-cyan-400 font-mono font-semibold">
-          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping mr-2"></span>
+        <span className="flex items-center text-[var(--accent)] font-mono font-semibold">
+          <span className="w-2 h-2 rounded-full bg-[var(--accent)] animate-ping mr-2"></span>
           TOPOLOGY RADAR
         </span>
         <span className="text-slate-500 font-mono">|</span>

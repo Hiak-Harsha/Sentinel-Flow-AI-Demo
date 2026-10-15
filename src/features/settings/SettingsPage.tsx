@@ -4,6 +4,7 @@ import { ThresholdSettings } from "./components/ThresholdSettings";
 import { HostSensorToggle } from "./components/HostSensorToggle";
 import { TargetInventoryManager } from "./components/TargetInventoryManager";
 import { ConsentAuditViewer } from "./components/ConsentAuditViewer";
+import { ClassroomSessionControls } from "./components/ClassroomSessionControls";
 
 export default function SettingsPage() {
   return (
@@ -12,6 +13,9 @@ export default function SettingsPage() {
         title="System Configuration & Safety Governance"
         description="False-positive budgets, local host sensor consent, target allowlists, and tamper-evident audit ledgers"
       />
+
+      {/* Classroom Session & Quota Controls */}
+      <ClassroomSessionControls />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ThresholdSettings />

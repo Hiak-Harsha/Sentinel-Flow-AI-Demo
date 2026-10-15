@@ -84,7 +84,7 @@ export function BenchmarkComparison({
             Evaluated on held-out scenario test splits (seed: 42, 35 live features)
           </p>
         </div>
-        <span className="text-xs font-mono text-cyan-400">
+        <span className="text-xs font-mono text-[#ffb454]">
           Source: evaluation.json
         </span>
       </CardHeader>

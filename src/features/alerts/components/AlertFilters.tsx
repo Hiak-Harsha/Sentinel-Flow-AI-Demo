@@ -35,16 +35,16 @@ export function AlertFilters() {
   const hasActiveFilters = severity !== "ALL" || status !== "ALL" || query !== "" || scenario !== "ALL";
 
   return (
-    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-lg bg-[var(--surface-1)] border border-[var(--border-subtle)] text-xs">
+    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-xl bg-[#0f1013] border border-[rgba(255,255,255,0.07)] text-xs">
       {/* Search Bar */}
-      <div className="relative flex-1 min-w-[200px]">
-        <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+      <div className="relative flex-1 min-w-[220px]">
+        <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
         <input
           type="text"
           placeholder="Filter by identity, technique, or rule..."
           value={query}
           onChange={(e) => updateParam("q", e.target.value)}
-          className="w-full pl-8 pr-3 py-1.5 rounded-md bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-cyan-500"
+          className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-[#111417] border border-[rgba(255,255,255,0.08)] text-xs text-[#f0f2f5] placeholder-[#5f6368] focus:outline-none focus:border-[#fe9a00] focus:ring-1 focus:ring-[#fe9a00]"
         />
       </div>
 
@@ -54,25 +54,26 @@ export function AlertFilters() {
         <select
           value={severity}
           onChange={(e) => updateParam("severity", e.target.value)}
-          className="px-2.5 py-1.5 rounded-md bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-cyan-500 cursor-pointer"
+          className="px-2.5 py-1.5 rounded-lg bg-[#111417] border border-[rgba(255,255,255,0.08)] text-xs text-[#f0f2f5] focus:outline-none focus:border-[#fe9a00] focus:ring-1 focus:ring-[#fe9a00] cursor-pointer"
         >
           <option value="ALL">All Severities</option>
           <option value="CRITICAL">Critical</option>
           <option value="HIGH">High</option>
           <option value="ELEVATED">Elevated</option>
           <option value="LOW">Low</option>
+          <option value="INFO">Info</option>
         </select>
 
-        {/* Status */}
+        {/* Status / Disposition */}
         <select
           value={status}
           onChange={(e) => updateParam("status", e.target.value)}
-          className="px-2.5 py-1.5 rounded-md bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-cyan-500 cursor-pointer"
+          className="px-2.5 py-1.5 rounded-lg bg-[#111417] border border-[rgba(255,255,255,0.08)] text-xs text-[#f0f2f5] focus:outline-none focus:border-[#fe9a00] focus:ring-1 focus:ring-[#fe9a00] cursor-pointer"
         >
-          <option value="ALL">All Statuses</option>
-          <option value="OPEN">Open</option>
+          <option value="ALL">All Dispositions</option>
+          <option value="OPEN">Open (New)</option>
           <option value="INVESTIGATING">Investigating</option>
-          <option value="RESOLVED">Resolved</option>
+          <option value="RESOLVED">Resolved / Contained</option>
           <option value="FALSE_POSITIVE">False Positive</option>
         </select>
 
@@ -80,19 +81,24 @@ export function AlertFilters() {
         <select
           value={scenario}
           onChange={(e) => updateParam("scenario", e.target.value)}
-          className="px-2.5 py-1.5 rounded-md bg-[var(--surface-2)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-cyan-500 cursor-pointer"
+          className="px-2.5 py-1.5 rounded-lg bg-[#111417] border border-[rgba(255,255,255,0.08)] text-xs text-[#f0f2f5] focus:outline-none focus:border-[#fe9a00] focus:ring-1 focus:ring-[#fe9a00] cursor-pointer"
         >
           <option value="ALL">All Scenarios</option>
-          <option value="brute_force">Brute Force (T1110)</option>
-          <option value="credential_stuffing">Credential Stuffing (T1110.004)</option>
-          <option value="slow_loris">Slow Loris (T1498)</option>
-          <option value="data_exfil">Data Exfiltration (T1048)</option>
+          <option value="credential_stuffing">Brute Force (T1110)</option>
+          <option value="port_scan">Port Scan (T1046)</option>
+          <option value="burst_dos">Burst DoS (T1499)</option>
+          <option value="canary_probe">Canary Probe (T1190)</option>
         </select>
 
         {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={clearAll} className="text-xs h-7 px-2">
-            <X className="w-3 h-3 mr-1" />
-            Reset
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearAll}
+            className="text-[11px] text-[#9aa0a6] hover:text-[#f4526b] flex items-center gap-1"
+          >
+            <X className="w-3.5 h-3.5" />
+            <span>Reset</span>
           </Button>
         )}
       </div>

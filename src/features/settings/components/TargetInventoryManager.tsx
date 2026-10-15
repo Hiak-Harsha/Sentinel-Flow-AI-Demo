@@ -49,7 +49,7 @@ export function TargetInventoryManager() {
     <Card>
       <CardHeader className="pb-3 border-b border-[var(--border-subtle)] flex flex-row items-center justify-between">
         <div className="flex items-center gap-2">
-          <Target className="w-4 h-4 text-cyan-400" />
+          <Target className="w-4 h-4 text-[var(--accent)]" />
           <CardTitle className="text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
             Authorized Target Boundary (Allowlist)
           </CardTitle>

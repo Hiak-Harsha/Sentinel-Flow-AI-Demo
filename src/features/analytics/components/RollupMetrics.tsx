@@ -35,7 +35,7 @@ export function RollupMetrics({ rollups, windowType, className = "" }: RollupMet
     <Card className={className}>
       <CardHeader className="pb-3 border-b border-[var(--border-subtle)] flex flex-row items-center justify-between">
         <div className="flex items-center gap-2">
-          <Activity className="w-4 h-4 text-cyan-400" />
+          <Activity className="w-4 h-4 text-[var(--accent)]" />
           <CardTitle className="text-sm font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
             Aggregated Telemetry Rollups ({windowType} Buckets)
           </CardTitle>
@@ -52,9 +52,9 @@ export function RollupMetrics({ rollups, windowType, className = "" }: RollupMet
             data={chartData}
             xAxisKey="time"
             series={[
-              { key: "throughput", name: "Requests / sec", color: "#06b6d4", area: true },
+              { key: "throughput", name: "Requests / sec", color: "#fe9a00", area: true },
               { key: "errors", name: "4xx/5xx Errors", color: "#f43f5e" },
-              { key: "p95_latency", name: "p95 Latency (ms)", color: "#a855f7" },
+              { key: "p95_latency", name: "p95 Latency (ms)", color: "#38bdf8" },
             ]}
             height={250}
           />
@@ -87,7 +87,7 @@ export function RollupMetrics({ rollups, windowType, className = "" }: RollupMet
 
           <div className="p-2 rounded bg-[var(--surface-1)]">
             <span className="text-[var(--text-muted)] text-[11px] block">p95 Latency Baseline</span>
-            <span className="text-sm font-bold text-purple-400">
+            <span className="text-sm font-bold text-sky-400">
               {rollups.length > 0
                 ? (rollups.reduce((acc, r) => acc + r.p95_latency_ms, 0) / rollups.length).toFixed(1)
                 : 0}{" "}

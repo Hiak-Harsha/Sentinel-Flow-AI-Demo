@@ -79,10 +79,10 @@ export function SecuritySummaryTable({ alerts = [], className = "" }: SecuritySu
             <div key={item.technique} className="space-y-1">
               <div className="flex justify-between text-[11px]">
                 <span className="text-[var(--text-secondary)] font-sans">{item.technique}</span>
-                <span className="text-cyan-400 font-bold">{item.count} events ({item.pct}%)</span>
+                <span className="text-[var(--text-primary)] font-bold">{item.count} events ({item.pct}%)</span>
               </div>
               <div className="w-full bg-[var(--surface-3)] h-1.5 rounded-full overflow-hidden">
-                <div className="bg-cyan-500 h-full rounded-full" style={{ width: `${item.pct}%` }} />
+                <div className="bg-[var(--accent)] h-full rounded-full" style={{ width: `${item.pct}%` }} />
               </div>
             </div>
           ))}

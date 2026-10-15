@@ -3,277 +3,373 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/design/components/Button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/design/components/Card";
+import { Tag } from "@/design/components/Tag";
+import { StatusDot } from "@/design/components/StatusDot";
 import { showToast } from "@/design/components/Toast";
-import { Octagon, ShieldAlert, FileText, RotateCcw } from "lucide-react";
-import { ConsentGateBanner } from "./components/ConsentGateBanner";
-import { ScenarioSelector } from "./components/ScenarioSelector";
-import { LiveEffectTimeline, EffectItem } from "./components/LiveEffectTimeline";
-import { RunReportModal, RunReportData } from "./components/RunReportModal";
+import {
+  Swords,
+  PowerOff,
+  RotateCcw,
+  Users,
+  ShieldAlert,
+  Terminal,
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
+  Lock,
+  PauseCircle,
+  PlayCircle,
+  Sliders,
+} from "lucide-react";
 import { useRealtimeEvent } from "@/realtime/useRealtime";
 
 export default function AttackConsolePage() {
   const queryClient = useQueryClient();
-  const [activeRunStatus, setActiveRunStatus] = useState<any>(null);
-  const [effects, setEffects] = useState<EffectItem[]>([]);
-  const [lastReport, setLastReport] = useState<RunReportData | null>(null);
-  const [isReportOpen, setIsReportOpen] = useState(false);
-  const [isConsented, setIsConsented] = useState(true); // default true for verified local loopback
-  const [targetOrigin, setTargetOrigin] = useState("http://127.0.0.1:8000");
+  const [effectLogs, setEffectLogs] = useState<string[]>([]);
 
-  const role = typeof sessionStorage !== "undefined"
-    ? (sessionStorage.getItem("sf_role") || "operator")
-    : "operator";
-  const isOperator = role === "operator" || role === "admin";
-
-  // 1. Fetch Orchestrator Status
-  const { data: statusData } = useQuery({
-    queryKey: ["orchestrator_status"],
-    queryFn: () => api.orchestrator.listRuns().catch(() => ({ runs: [] })),
+  // 1. Fetch Session & Operator Authorization
+  const { data: sessionData, refetch: refetchSession } = useQuery({
+    queryKey: ["session", "operator"],
+    queryFn: () => api.getSession().catch(() => null),
+    refetchInterval: 3000,
   });
 
-  // 2. Realtime WebSocket Events
+  // 2. Fetch Active Runs
+  const { data: runsData = [], refetch: refetchRuns } = useQuery({
+    queryKey: ["operator_runs"],
+    queryFn: () => api.operator.listRuns().catch(() => []),
+    refetchInterval: 2000,
+  });
+
+  // 3. WebSocket Realtime Events
   useRealtimeEvent("attack.progress", (env) => {
     if (env.data) {
-      setActiveRunStatus(env.data);
-    }
-  });
-
-  useRealtimeEvent("attack.effect", (env) => {
-    if (env.data) {
-      setEffects((prev) => [env.data, ...prev].slice(0, 50));
+      setEffectLogs((prev) => [
+        `[${new Date().toLocaleTimeString()}] ATTACK PROGRESS: ${env.data.scenario} (${env.data.participant_identity_id || "participant"}) - ${env.data.progress_percent || 0}%`,
+        ...prev.slice(0, 49),
+      ]);
     }
   });
 
   useRealtimeEvent("attack.finished", (env) => {
-    setActiveRunStatus(null);
-    const rep: RunReportData = {
-      runId: env.data?.run_id || `run_${Date.now().toString().slice(-6)}`,
-      scenario: env.data?.scenario || "brute_force",
-      targetOrigin: targetOrigin,
-      durationSeconds: env.data?.duration_seconds || 15,
-      requestsSent: env.data?.requests_sent || 120,
-      errorCount: env.data?.error_count || 112,
-      timeToDetectSeconds: 1.8,
-      detectionsCount: 1,
-      missedWindowsCount: 0,
-      conformalCoveragePct: 99.2,
-      generatedAt: new Date().toISOString(),
-    };
-    setLastReport(rep);
-    setIsReportOpen(true);
-    showToast.success("Scenario Complete", `Report generated for ${rep.scenario}.`);
+    refetchRuns();
+    setEffectLogs((prev) => [
+      `[${new Date().toLocaleTimeString()}] ATTACK HALTED: ${env.data?.scenario} (status: ${env.data?.status || "COMPLETED"})`,
+      ...prev.slice(0, 49),
+    ]);
   });
 
   useRealtimeEvent("emergency_stop.engaged", () => {
-    setActiveRunStatus(null);
-    showToast.error("Emergency Stop Tripped", "Circuit breaker halted all ongoing attack scenarios.");
+    refetchSession();
+    refetchRuns();
+    showToast.error("Emergency Stop Active", "Operator engaged kill switch across all runs.");
   });
 
-  // 3. Actions
-  const startRunMutation = useMutation({
-    mutationFn: async ({ scenario, duration, rps }: { scenario: string; duration: number; rps: number }) => {
-      return api.orchestrator.startRun({
-        scenario,
-        target_origin: targetOrigin,
-        duration_seconds: duration,
-        requests_per_second: rps,
-      });
-    },
-    onSuccess: (res) => {
-      showToast.info("Scenario Dispatched", `Execution started on ${targetOrigin}`);
-      setActiveRunStatus({ scenario: res.scenario, status: "RUNNING", duration_seconds: 15, elapsed_seconds: 0 });
-    },
-    onError: (err: any) => {
-      showToast.error("Simulation Denied", err?.message);
-    },
-  });
+  // Circuit Breaker Actions
+  const handleTripEmergencyStop = async () => {
+    try {
+      await api.operator.tripCircuitBreaker();
+      showToast.error("Emergency Stop Engaged", "All active participant scenarios halted.");
+      refetchSession();
+      refetchRuns();
+    } catch (err: any) {
+      showToast.error("Emergency Stop Error", err?.message);
+    }
+  };
 
-  const emergencyStopMutation = useMutation({
-    mutationFn: () => api.orchestrator.emergencyStop(),
-    onSuccess: () => {
-      setActiveRunStatus(null);
-      showToast.error("Emergency Stop Engaged", "All attack runs killed within 2s safety invariant.");
-    },
-  });
+  const handleResetEmergencyStop = async () => {
+    try {
+      await api.operator.resetCircuitBreaker();
+      showToast.success("Circuit Breaker Reset", "Normal exercise execution resumed.");
+      refetchSession();
+      refetchRuns();
+    } catch (err: any) {
+      showToast.error("Reset Error", err?.message);
+    }
+  };
 
-  const resetStopMutation = useMutation({
-    mutationFn: () => api.orchestrator.resetEmergencyStop(),
-    onSuccess: () => {
-      showToast.success("Circuit Breaker Reset", "Orchestrator ready for authorized scenarios.");
-    },
-  });
+  const handleSetPhase = async (phase: string) => {
+    try {
+      await api.operator.setPhase(phase);
+      showToast.success("Phase Changed", `Exercise transitioned to ${phase}`);
+      refetchSession();
+    } catch (err: any) {
+      showToast.error("Phase Transition Failed", err?.message);
+    }
+  };
 
-  const isRunning = Boolean(activeRunStatus && activeRunStatus.status === "RUNNING");
+  const handleSuspendParticipant = async (participantId: string) => {
+    try {
+      await api.operator.suspendParticipant(participantId);
+      showToast.warning("Participant Suspended", `Identity ${participantId} has been revoked.`);
+      refetchSession();
+    } catch (err: any) {
+      showToast.error("Suspend Error", err?.message);
+    }
+  };
+
+  const session = sessionData?.session;
+  const currentPhase = session?.current_phase || "EXERCISE_OPEN";
+  const participants = sessionData?.participants || [];
+  const isCircuitBreakerTripped = Boolean(sessionData?.circuit_breaker?.tripped);
+  const activeRuns = Array.isArray(runsData) ? runsData : [];
 
   return (
-    <div className="space-y-5">
-      {/* 1. STICKY EMERGENCY STOP BAR (Always prominent, never behind scroll) */}
-      <div className="sticky top-2 z-30 p-3 rounded-xl bg-[var(--surface-3)]/90 backdrop-blur-md border border-rose-500/40 shadow-xl flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2.5">
-          <Octagon className="w-5 h-5 text-rose-500 fill-rose-500/20 shrink-0" />
-          <div>
-            <div className="text-xs font-bold text-rose-400 tracking-wide uppercase">
-              Emergency Kill Switch Circuit Breaker
-            </div>
-            <div className="text-[11px] text-[var(--text-muted)] font-mono">
-              Halts all scenario threads &ge; 2s safety invariant
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {lastReport && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsReportOpen(true)}
-              className="text-xs hidden sm:flex"
-            >
-              <FileText className="w-3.5 h-3.5 mr-1" />
-              View Run Report
-            </Button>
-          )}
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => resetStopMutation.mutate()}
-            className="text-xs text-[var(--text-muted)] hover:text-white"
-            title="Reset circuit breaker latch"
-          >
-            <RotateCcw className="w-3 h-3 mr-1" />
-            Reset
-          </Button>
-
-          <Button
-            variant="danger"
-            size="md"
-            onClick={() => emergencyStopMutation.mutate()}
-            className="font-bold tracking-wide"
-          >
-            <Octagon className="w-4 h-4 mr-1.5 fill-current" />
-            EMERGENCY STOP
-          </Button>
-        </div>
-      </div>
-
+    <div className="space-y-6 pb-12">
+      {/* Page Header */}
       <PageHeader
-        title={isOperator ? "Red Team Live Activity & Defense Monitor" : "Participant Red Team Lab Scenarios"}
-        description={
-          isOperator
-            ? "Live defensive observation of participant-initiated attack scenarios and telemetry effects. Operator console is strictly defensive."
-            : "Authorized bounded attack scenarios against instrumented lab target for intrusion detection validation."
+        title="Red Team Activity Monitor"
+        description="Defensive participant supervision, real-time exercise control, and emergency circuit breaker."
+        badge={<Tag variant="amber" size="sm">DEFENSIVE CONSOLE</Tag>}
+        actions={
+          <div className="flex items-center gap-2">
+            {isCircuitBreakerTripped ? (
+              <Button
+                variant="primary"
+                size="sm"
+                icon={<RotateCcw className="w-4 h-4" />}
+                onClick={handleResetEmergencyStop}
+              >
+                Reset Emergency Stop
+              </Button>
+            ) : (
+              <Button
+                variant="destructive"
+                size="sm"
+                icon={<PowerOff className="w-4 h-4" />}
+                onClick={handleTripEmergencyStop}
+              >
+                Emergency Kill Switch
+              </Button>
+            )}
+          </div>
         }
       />
 
-      {/* 2. Consent Gate Banner (Only for participants or settings) */}
-      {!isOperator && (
-        <ConsentGateBanner
-          isConsented={isConsented}
-          targetOrigin={targetOrigin}
-          onGrantConsent={async (op) => {
-            await api.orchestrator.confirmConsent(targetOrigin, op);
-            setIsConsented(true);
-            showToast.success("Consent Recorded", "Target authorized for bounded testing.");
-          }}
-        />
-      )}
-
-      {/* 3. Main Console Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {isOperator ? (
-          <div className="p-5 rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)] space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
-              <div className="flex items-center gap-2">
-                <ShieldAlert className="w-5 h-5 text-cyan-400" />
-                <h3 className="font-semibold text-sm text-[var(--text-primary)]">
-                  Operator Defensive Posture
-                </h3>
-              </div>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-medium">
-                Defensive Only
-              </span>
-            </div>
-
-            <div className="p-3.5 rounded-lg bg-[var(--surface-2)] text-xs text-[var(--text-secondary)] space-y-2 leading-relaxed">
-              <p className="font-medium text-[var(--text-primary)]">
-                Classroom Participant-Attacks Model
-              </p>
-              <p>
-                In Sentinel Flow v2, operators maintain strictly defensive roles (observe, correlate, attribute, mitigate). All intrusion scenarios must be initiated by authorized classroom participants via the Participant Red Team Portal.
-              </p>
-              <p className="text-[11px] text-[var(--text-muted)] font-mono">
-                Target: {targetOrigin} • Bounded Quotas Active
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-                Recorded Red Team Runs
-              </div>
-              {statusData?.runs && statusData.runs.length > 0 ? (
-                <div className="space-y-1.5 max-h-56 overflow-y-auto font-mono text-xs">
-                  {statusData.runs.map((r: any) => (
-                    <div
-                      key={r.run_id}
-                      className="p-2 rounded bg-[var(--surface-2)] border border-[var(--border-subtle)] flex items-center justify-between"
-                    >
-                      <div>
-                        <span className="font-semibold text-slate-200">{r.scenario}</span>
-                        <span className="text-[11px] text-cyan-400 ml-2">
-                          {r.participant_identity_id || "participant"}
-                        </span>
-                      </div>
-                      <span className={`text-[11px] px-1.5 py-0.5 rounded ${
-                        r.status === "RUNNING"
-                          ? "bg-rose-500/20 text-rose-300 animate-pulse"
-                          : "bg-slate-700/50 text-slate-400"
-                      }`}>
-                        {r.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+      {/* 1. Circuit Breaker & Exercise FSM Status Card */}
+      <Card className={isCircuitBreakerTripped ? "border-[#f4526b]/50 bg-[#2b1218]/20" : ""}>
+        <CardContent className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono font-bold uppercase text-[#9aa0a6]">CIRCUIT BREAKER:</span>
+              {isCircuitBreakerTripped ? (
+                <span className="text-xs font-mono font-bold text-[#f4526b] flex items-center gap-1">
+                  <AlertTriangle className="w-3.5 h-3.5" /> STOP ENGAGED (ALL ATTACKS BLOCKED)
+                </span>
               ) : (
-                <div className="text-xs text-[var(--text-muted)] py-4 text-center">
-                  No participant attack runs recorded in this session.
-                </div>
+                <span className="text-xs font-mono font-bold text-[#3ddc97] flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> NOMINAL (ATTACKS AUTHORIZED IN EXERCISE_OPEN)
+                </span>
               )}
             </div>
-
-            <div className="pt-2 flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.open("/join", "_blank")}
-                className="text-xs"
-              >
-                Open Participant Red Portal
-              </Button>
-            </div>
+            <p className="text-xs text-[#9aa0a6]">
+              Target: <span className="text-[#f0f2f5] font-mono">http://127.0.0.1:8000/lab-target</span> · Room Code: <strong className="text-[#ffb454] font-mono">{session?.join_code || "HAK-4921"}</strong>
+            </p>
           </div>
-        ) : (
-          <ScenarioSelector
-            onStartScenario={async (scen, dur, rps) => {
-              await startRunMutation.mutateAsync({ scenario: scen, duration: dur, rps });
-            }}
-            isRunning={isRunning}
-            disabled={!isConsented}
-          />
-        )}
 
-        <LiveEffectTimeline
-          runStatus={activeRunStatus}
-          effects={effects}
-        />
+          {/* Phase Control Buttons */}
+          <div className="flex items-center gap-1 p-1 rounded-lg bg-[#090c10] border border-[rgba(255,255,255,0.08)]">
+            {["LOBBY", "WARMUP", "EXERCISE_OPEN", "DEBRIEF"].map((phase) => (
+              <button
+                key={phase}
+                type="button"
+                onClick={() => handleSetPhase(phase)}
+                className={`px-2.5 py-1 rounded text-xs font-mono transition-all cursor-pointer ${
+                  currentPhase === phase
+                    ? "bg-[#2d1f0b] text-[#ffb454] font-bold border border-[#fe9a00]/40"
+                    : "text-[#9aa0a6] hover:text-[#f0f2f5]"
+                }`}
+              >
+                {phase}
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 2. Active Participant Attack Runs Table */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Swords className="w-4 h-4 text-[#ff7a45]" />
+              <span>Active Participant Attacks</span>
+            </CardTitle>
+            <Tag variant="neutral" size="sm">{activeRuns.length} TOTAL RUNS</Tag>
+          </div>
+          <CardDescription>
+            Live intrusion scenarios initiated by authenticated red team participants
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {activeRuns.length === 0 ? (
+            <div className="py-12 text-center text-xs font-mono text-[#5f6368]">
+              No active participant scenarios currently running.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs font-mono text-left">
+                <thead>
+                  <tr className="border-b border-[rgba(255,255,255,0.07)] text-[#5f6368] uppercase">
+                    <th className="py-2.5 px-3">RUN ID</th>
+                    <th className="py-2.5 px-3">PARTICIPANT</th>
+                    <th className="py-2.5 px-3">SCENARIO</th>
+                    <th className="py-2.5 px-3">TARGET</th>
+                    <th className="py-2.5 px-3">STATUS</th>
+                    <th className="py-2.5 px-3">PROGRESS</th>
+                    <th className="py-2.5 px-3 text-right">ACTION</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[rgba(255,255,255,0.04)]">
+                  {activeRuns.map((r: any) => (
+                    <tr key={r.run_id} className="hover:bg-[#111417]">
+                      <td className="py-2.5 px-3 text-[#ffb454] font-semibold">{r.run_id}</td>
+                      <td className="py-2.5 px-3 text-[#f0f2f5]">{r.participant_identity_id || "participant"}</td>
+                      <td className="py-2.5 px-3 text-[#f0f2f5]">{r.scenario}</td>
+                      <td className="py-2.5 px-3 text-[#9aa0a6]">{r.target_origin}</td>
+                      <td className="py-2.5 px-3">
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            r.status === "RUNNING"
+                              ? "bg-[#2d1f0b] text-[#ffb454] border border-[#fe9a00]/40"
+                              : r.status === "COMPLETED"
+                              ? "bg-[#0d281e] text-[#3ddc97]"
+                              : "bg-[#2b1218] text-[#f4526b]"
+                          }`}
+                        >
+                          {r.status}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 w-36">
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 bg-[#16181c] h-1.5 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-[#fe9a00]"
+                              style={{ width: `${r.progress_percent || 0}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] text-[#9aa0a6]">{r.progress_percent || 0}%</span>
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3 text-right">
+                        {r.status === "RUNNING" && (
+                          <button
+                            type="button"
+                            onClick={() => api.red.stopRun(r.run_id).then(() => refetchRuns())}
+                            className="text-xs text-[#f4526b] hover:underline"
+                          >
+                            Halt Run
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 3. Connected Participant Roster & Quota Matrix */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <Card className="lg:col-span-3">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-[#fe9a00]" />
+                <span>Participant Roster & Quota Limits</span>
+              </CardTitle>
+              <Tag variant="neutral" size="sm">{participants.length} CONNECTED</Tag>
+            </div>
+            <CardDescription>
+              Supervise individual participant activity, quotas, and suspension status
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {participants.length === 0 ? (
+              <div className="py-8 text-center text-xs font-mono text-[#5f6368]">
+                No participants joined room {session?.join_code || "HAK-4921"} yet.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs font-mono text-left">
+                  <thead>
+                    <tr className="border-b border-[rgba(255,255,255,0.07)] text-[#5f6368] uppercase">
+                      <th className="py-2 px-3">ALIAS</th>
+                      <th className="py-2 px-3">DEVICE ID</th>
+                      <th className="py-2 px-3">THREAT SCORE</th>
+                      <th className="py-2 px-3">STATUS</th>
+                      <th className="py-2 px-3 text-right">CONTROL</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[rgba(255,255,255,0.04)]">
+                    {participants.map((p: any) => (
+                      <tr key={p.device_id || p.id} className="hover:bg-[#111417]">
+                        <td className="py-2.5 px-3 font-semibold text-[#f0f2f5]">{p.alias || "Participant"}</td>
+                        <td className="py-2.5 px-3 text-[#9aa0a6]">{p.device_id || p.id}</td>
+                        <td className="py-2.5 px-3 text-[#ffb454] font-bold">
+                          {p.threat_score ? `${(p.threat_score * 100).toFixed(0)}%` : "4%"}
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                              p.status === "SUSPENDED"
+                                ? "bg-[#2b1218] text-[#f4526b]"
+                                : "bg-[#0d281e] text-[#3ddc97]"
+                            }`}
+                          >
+                            {p.status || "ACTIVE"}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleSuspendParticipant(p.device_id || p.id)}
+                            className="text-xs text-[#f4526b] hover:underline"
+                          >
+                            {p.status === "SUSPENDED" ? "Re-activate" : "Suspend"}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* 4. Live Telemetry Event Stream */}
+        <Card className="lg:col-span-2 flex flex-col justify-between">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Terminal className="w-4 h-4 text-[#fe9a00]" />
+                <span>Execution Activity Log</span>
+              </CardTitle>
+              <StatusDot status="live" label="STREAM" />
+            </div>
+            <CardDescription className="text-xs">
+              Live progression emitted from active participant load drivers
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1 p-3 bg-[#06080b] font-mono text-[11px] text-[#9aa0a6] overflow-y-auto space-y-1 h-64 sf-tabular rounded-b-xl border-t border-[rgba(255,255,255,0.06)]">
+            {effectLogs.length === 0 ? (
+              <div className="text-center py-10 text-[#5f6368] italic">
+                Awaiting participant activity events...
+              </div>
+            ) : (
+              effectLogs.map((log, idx) => (
+                <div key={idx} className="leading-tight">
+                  {log}
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
       </div>
-
-      {/* 4. Exportable Run Report Modal */}
-      <RunReportModal
-        report={lastReport}
-        isOpen={isReportOpen}
-        onClose={() => setIsReportOpen(false)}
-      />
     </div>
   );
 }

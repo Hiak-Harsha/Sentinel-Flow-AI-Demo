@@ -28,10 +28,21 @@ from app.main import app
 from app.auth.security import create_access_token
 
 
+@pytest.fixture(autouse=True)
+def clean_run_manager():
+    from app.orchestrator.routes import get_run_manager
+    try:
+        rm = get_run_manager()
+        rm._runs.clear()
+    except Exception:
+        pass
+    yield
+
+
 @pytest.fixture
 def participant_token() -> str:
     return create_access_token(
-        identity_id="pt_maya_01",
+        identity_id="pt_role_matrix_maya",
         alias="Maya",
         role="participant",
         extra_claims={"session_id": "session_test_01"},
@@ -95,7 +106,7 @@ def test_participant_can_launch_scenario_when_exercise_open(participant_token: s
         )
         data = resp.json()
         assert "run_id" in data
-        assert data.get("participant_identity_id") == "pt_maya_01"
+        assert data.get("participant_identity_id") == "pt_role_matrix_maya"
 
 
 def test_participant_cannot_launch_attacks_when_phase_locked(participant_token: str):

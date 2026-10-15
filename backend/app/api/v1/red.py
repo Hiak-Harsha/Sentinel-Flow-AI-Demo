@@ -74,6 +74,14 @@ async def start_participant_run(
     """
     session_service, run_manager = _resolve_services(request)
 
+    # 0. Enforce Emergency Stop Kill Switch
+    if getattr(run_manager, "emergency_stop_tripped", False):
+        logger.warning("Participant %s attempted attack while emergency stop active", actor.identity_id)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Emergency stop circuit breaker active. All attack executions halted by operator.",
+        )
+
     # 1. Enforce Exercise Phase FSM (Must be EXERCISE_OPEN)
     curr_sess = session_service.get_current_session()
     current_phase = curr_sess.get("phase", "LOBBY")

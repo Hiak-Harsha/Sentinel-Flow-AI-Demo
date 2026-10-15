@@ -180,18 +180,26 @@ async def test_zap_driver_execution_flows():
 
 def test_orchestrator_routes_full_lifecycle():
     """Verify orchestrator API route coverage under TestClient lifespan."""
+    from app.config import OPERATOR_SECRET_KEY
+
     with TestClient(app) as client:
+        # Authenticate as operator
+        login_res = client.post("/api/identity/operator-login", json={"passcode": OPERATOR_SECRET_KEY})
+        assert login_res.status_code == 200
+        op_headers = {"Authorization": f"Bearer {login_res.json()['token']}"}
+
         # 1. Status and scenarios
-        res_status = client.get("/api/orchestrator/status")
+        res_status = client.get("/api/orchestrator/status", headers=op_headers)
         assert res_status.status_code == 200
 
-        res_scenarios = client.get("/api/orchestrator/scenarios")
+        res_scenarios = client.get("/api/orchestrator/scenarios", headers=op_headers)
         assert res_scenarios.status_code == 200
         assert len(res_scenarios.json()) >= 4
 
         # 2. Grant operator consent
         res_consent = client.post(
             "/api/orchestrator/consent",
+            headers=op_headers,
             json={
                 "target_origin": "http://127.0.0.1:8000/lab-target",
                 "operator_name": "Lab Instructor",
@@ -202,39 +210,33 @@ def test_orchestrator_routes_full_lifecycle():
         assert res_consent.json()["status"] == "granted"
 
         # 3. View consent audit
-        res_audit = client.get("/api/orchestrator/consent/audit")
+        res_audit = client.get("/api/orchestrator/consent/audit", headers=op_headers)
         assert res_audit.status_code == 200
         assert len(res_audit.json()) >= 1
 
-        # 4. Start port scan scenario run
+        # 4. Operator attempting to launch attack via POST /api/orchestrator/runs is strictly forbidden (Phase 3 invariant)
         res_run = client.post(
             "/api/orchestrator/runs",
+            headers=op_headers,
             json={
                 "scenario": "port_scan",
                 "target_origin": "http://127.0.0.1:8000/lab-target",
                 "launched_by": "test_instructor",
             },
         )
-        assert res_run.status_code == 200
-        run_id = res_run.json()["run"]["run_id"]
+        assert res_run.status_code == 403
+        assert "participant" in res_run.json()["detail"].lower()
 
-        # 5. Query run status, effect timeline, and list runs
-        res_query = client.get(f"/api/orchestrator/run/{run_id}")
-        assert res_query.status_code == 200
-
-        res_effects = client.get(f"/api/orchestrator/run/{run_id}/effect-timeline")
-        assert res_effects.status_code == 200
-
-        res_runs = client.get("/api/orchestrator/runs")
+        # 5. List runs
+        res_runs = client.get("/api/orchestrator/runs", headers=op_headers)
         assert res_runs.status_code == 200
 
-        # 6. Stop run & Emergency stop cycle
-        client.post(f"/api/orchestrator/run/{run_id}/stop")
-        res_estop = client.post("/api/orchestrator/emergency-stop")
+        # 6. Emergency stop cycle
+        res_estop = client.post("/api/orchestrator/emergency-stop", headers=op_headers)
         assert res_estop.status_code == 200
         assert res_estop.json()["emergency_stop"] is True
 
-        res_reset = client.post("/api/orchestrator/emergency-stop/reset")
+        res_reset = client.post("/api/orchestrator/emergency-stop/reset", headers=op_headers)
         assert res_reset.status_code == 200
         assert res_reset.json()["emergency_stop"] is False
 

@@ -1,171 +1,103 @@
 /**
- * Sentinel Flow Design System - Design Tokens
- * Conforming to WCAG AA contrast standards (minimum 4.5:1 for normal text).
- * Spacing on 4/8px scale, 12/13/14/16/20/24/32 type scale, tabular numerals.
+ * Sentinel Flow v2 Design System - Tokens (Graphite & Amber Instrument Panel)
+ * Authoritative visual reference: BharatSR reference specifications
+ * All contrast ratios verified for WCAG AA (minimum 4.5:1 for body text, 3:1 for large text / UI elements).
  */
 
 :root {
-  /* Surface Tokens (Dark theme default) */
-  --sf-surface-0: #060b13;
-  --sf-surface-1: #0c1322;
-  --sf-surface-2: #141d32;
-  --sf-surface-3: #1c2844;
-  --sf-surface-glass: rgba(12, 19, 34, 0.75);
+  /* Surfaces — graphite, measured from the references */
+  --bg:            #090c10;
+  --surface-1:     #0f1013;   /* cards */
+  --surface-2:     #111417;   /* raised / inputs */
+  --surface-3:     #16181c;   /* hover, table header */
+  --border:        rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.14);
 
-  /* Border Tokens */
-  --sf-border-subtle: rgba(255, 255, 255, 0.07);
-  --sf-border-default: rgba(255, 255, 255, 0.12);
-  --sf-border-strong: rgba(255, 255, 255, 0.22);
-  --sf-border-focus: #22d3ee;
+  /* Brand — warm amber */
+  --accent:        #ffb454;   /* landing / text accents */
+  --accent-solid:  #fe9a00;   /* primary buttons, active states */
+  --accent-wash:   #2d1f0b;   /* active nav fill, tinted tiles */
+  --accent-ink:    #1a1203;   /* text on amber solid button */
 
-  /* Typography / Text Tokens (Verified WCAG AA on dark surfaces) */
-  --sf-text-primary: #f1f5f9;     /* 17.5:1 on surface-0 */
-  --sf-text-secondary: #94a3b8;   /* 7.4:1 on surface-0 */
-  --sf-text-muted: #64748b;       /* 4.5:1 on surface-0 */
-  --sf-text-inverted: #020617;
+  /* Text hierarchy */
+  --text:          #e9edf2;
+  --text-muted:    #9aa4b2;
+  --text-faint:    #5f6975;
 
-  /* Accent Tokens */
-  --sf-accent-primary: #06b6d4;
-  --sf-accent-hover: #22d3ee;
-  --sf-accent-muted: rgba(6, 182, 212, 0.15);
-  --sf-accent-glow: rgba(34, 211, 238, 0.35);
+  /* Supporting accents */
+  --cool:          #14b8a6;   /* teal used for eyebrows */
+  --index:         #6366f1;   /* indigo used for numbered section labels */
 
-  /* Functional Status Tokens */
-  --sf-color-success: #10b981;
-  --sf-color-success-bg: rgba(16, 185, 129, 0.14);
-  --sf-color-success-border: rgba(16, 185, 129, 0.35);
-  --sf-color-success-text: #34d399;
+  /* Severity scale (separate scale, never amber) */
+  --sev-critical:  #f4526b;
+  --sev-high:      #ff7a45;
+  --sev-elevated:  #e9c46a;
+  --sev-low:       #3ddc97;
+  --sev-info:      #5aa9ff;
 
-  --sf-color-warning: #f59e0b;
-  --sf-color-warning-bg: rgba(245, 158, 11, 0.14);
-  --sf-color-warning-border: rgba(245, 158, 11, 0.35);
-  --sf-color-warning-text: #fbbf24;
+  /* Provenance tags */
+  --provenance-live:      #3ddc97;
+  --provenance-replay:    #a78bfa;
+  --provenance-simulated: #5aa9ff;
 
-  --sf-color-danger: #f43f5e;
-  --sf-color-danger-bg: rgba(244, 63, 94, 0.14);
-  --sf-color-danger-border: rgba(244, 63, 94, 0.35);
-  --sf-color-danger-text: #fb7185;
-
-  --sf-color-info: #0284c7;
-  --sf-color-info-bg: rgba(2, 132, 199, 0.14);
-  --sf-color-info-border: rgba(2, 132, 199, 0.35);
-  --sf-color-info-text: #38bdf8;
-
-  /* Incident / Alert Severity Scale */
-  --sf-severity-critical: #f43f5e;
-  --sf-severity-critical-bg: rgba(244, 63, 94, 0.16);
-  --sf-severity-critical-border: rgba(244, 63, 94, 0.4);
-  --sf-severity-critical-text: #fb7185;
-
-  --sf-severity-high: #f97316;
-  --sf-severity-high-bg: rgba(249, 115, 22, 0.16);
-  --sf-severity-high-border: rgba(249, 115, 22, 0.4);
-  --sf-severity-high-text: #fb923c;
-
-  --sf-severity-elevated: #eab308;
-  --sf-severity-elevated-bg: rgba(234, 179, 8, 0.16);
-  --sf-severity-elevated-border: rgba(234, 179, 8, 0.4);
-  --sf-severity-elevated-text: #fde047;
-
-  --sf-severity-low: #10b981;
-  --sf-severity-low-bg: rgba(16, 185, 129, 0.14);
-  --sf-severity-low-border: rgba(16, 185, 129, 0.35);
-  --sf-severity-low-text: #34d399;
-
-  /* Provenance Tag Tokens */
-  --sf-provenance-live: #10b981;
-  --sf-provenance-live-bg: rgba(16, 185, 129, 0.14);
-  --sf-provenance-replay: #a855f7;
-  --sf-provenance-replay-bg: rgba(168, 85, 247, 0.14);
-  --sf-provenance-simulated: #38bdf8;
-  --sf-provenance-simulated-bg: rgba(56, 189, 248, 0.14);
-
-  /* Spacing Scale (4/8px base) */
-  --sf-space-1: 0.25rem;  /* 4px */
-  --sf-space-2: 0.5rem;   /* 8px */
-  --sf-space-3: 0.75rem;  /* 12px */
-  --sf-space-4: 1.0rem;   /* 16px */
-  --sf-space-5: 1.25rem;  /* 20px */
-  --sf-space-6: 1.5rem;   /* 24px */
-  --sf-space-8: 2.0rem;   /* 32px */
-  --sf-space-10: 2.5rem;  /* 40px */
-  --sf-space-12: 3.0rem;  /* 48px */
-
-  /* Type Scale */
-  --sf-text-xs: 0.75rem;    /* 12px */
-  --sf-text-sm: 0.8125rem;  /* 13px */
-  --sf-text-base: 0.875rem; /* 14px */
-  --sf-text-md: 1.0rem;     /* 16px */
-  --sf-text-lg: 1.25rem;    /* 20px */
-  --sf-text-xl: 1.5rem;     /* 24px */
-  --sf-text-2xl: 2.0rem;    /* 32px */
+  /* Spacing Scale (4/8/12/16/24/32/48/64) */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-12: 48px;
+  --space-16: 64px;
 
   /* Radii */
-  --sf-radius-sm: 0.375rem; /* 6px */
-  --sf-radius-md: 0.5rem;   /* 8px */
-  --sf-radius-lg: 0.75rem;  /* 12px */
-  --sf-radius-xl: 1.0rem;   /* 16px */
-  --sf-radius-full: 9999px;
+  --radius-input:  8px;
+  --radius-btn:    8px;
+  --radius-card:   12px;
+  --radius-hero:   20px;
+  --radius-pill:   9999px;
 
-  /* Shadows */
-  --sf-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --sf-shadow-md: 0 4px 12px 0 rgba(0, 0, 0, 0.4);
-  --sf-shadow-lg: 0 12px 28px -4px rgba(0, 0, 0, 0.5);
-  --sf-shadow-glow: 0 0 20px rgba(6, 182, 212, 0.25);
-  --sf-shadow-critical: 0 0 24px rgba(244, 63, 94, 0.35);
+  /* Backward Compatibility Aliases */
+  --sf-surface-0: var(--bg);
+  --sf-surface-1: var(--surface-1);
+  --sf-surface-2: var(--surface-2);
+  --sf-surface-3: var(--surface-3);
+  --sf-border-subtle: var(--border);
+  --sf-border-default: var(--border);
+  --sf-border-strong: var(--border-strong);
+  --sf-border-focus: var(--accent-solid);
+  --sf-text-primary: var(--text);
+  --sf-text-secondary: var(--text-muted);
+  --sf-text-muted: var(--text-faint);
+  --sf-accent-primary: var(--accent-solid);
+  --sf-accent-hover: var(--accent);
+  --sf-accent-muted: var(--accent-wash);
+  --sf-accent-glow: rgba(254, 154, 0, 0.22);
 
-  /* Fonts with Tabular Numbers */
-  --sf-font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --sf-font-mono: 'JetBrains Mono', ui-monospace, monospace;
-}
+  --sf-severity-critical: var(--sev-critical);
+  --sf-severity-critical-bg: rgba(244, 82, 107, 0.14);
+  --sf-severity-critical-border: rgba(244, 82, 107, 0.35);
+  --sf-severity-critical-text: #ff7f92;
 
-/* Light Theme Variables */
-[data-theme="light"],
-.theme-light {
-  --sf-surface-0: #f8fafc;
-  --sf-surface-1: #ffffff;
-  --sf-surface-2: #f1f5f9;
-  --sf-surface-3: #e2e8f0;
-  --sf-surface-glass: rgba(255, 255, 255, 0.85);
+  --sf-severity-high: var(--sev-high);
+  --sf-severity-high-bg: rgba(255, 122, 69, 0.14);
+  --sf-severity-high-border: rgba(255, 122, 69, 0.35);
+  --sf-severity-high-text: #ff9b73;
 
-  --sf-border-subtle: rgba(0, 0, 0, 0.06);
-  --sf-border-default: rgba(0, 0, 0, 0.12);
-  --sf-border-strong: rgba(0, 0, 0, 0.2);
+  --sf-severity-elevated: var(--sev-elevated);
+  --sf-severity-elevated-bg: rgba(233, 196, 106, 0.14);
+  --sf-severity-elevated-border: rgba(233, 196, 106, 0.35);
+  --sf-severity-elevated-text: #f0d084;
 
-  --sf-text-primary: #0f172a;
-  --sf-text-secondary: #475569;
-  --sf-text-muted: #64748b;
-  --sf-text-inverted: #f8fafc;
+  --sf-severity-low: var(--sev-low);
+  --sf-severity-low-bg: rgba(61, 220, 151, 0.14);
+  --sf-severity-low-border: rgba(61, 220, 151, 0.35);
+  --sf-severity-low-text: #6ee7b7;
 
-  --sf-accent-primary: #0284c7;
-  --sf-accent-hover: #0369a1;
-  --sf-accent-muted: rgba(2, 132, 199, 0.1);
-  --sf-accent-glow: rgba(2, 132, 199, 0.2);
-
-  --sf-severity-critical: #e11d48;
-  --sf-severity-critical-bg: #ffe4e6;
-  --sf-severity-critical-border: #fca5a5;
-  --sf-severity-critical-text: #be123c;
-
-  --sf-severity-high: #ea580c;
-  --sf-severity-high-bg: #ffedd5;
-  --sf-severity-high-border: #fdba74;
-  --sf-severity-high-text: #c2410c;
-
-  --sf-severity-elevated: #d97706;
-  --sf-severity-elevated-bg: #fef3c7;
-  --sf-severity-elevated-border: #fcd34d;
-  --sf-severity-elevated-text: #b45309;
-
-  --sf-severity-low: #059669;
-  --sf-severity-low-bg: #d1fae5;
-  --sf-severity-low-border: #6ee7b7;
-  --sf-severity-low-text: #047857;
-}
-
-/* Tabular Numerals Class for all metrics */
-.tabular-nums,
-.sf-tabular {
-  font-feature-settings: "tnum" 1, "cv02" 1, "cv03" 1, "cv04" 1;
-  font-variant-numeric: tabular-nums;
+  --sf-provenance-live: var(--provenance-live);
+  --sf-provenance-live-bg: rgba(61, 220, 151, 0.12);
+  --sf-provenance-replay: var(--provenance-replay);
+  --sf-provenance-replay-bg: rgba(167, 139, 250, 0.12);
+  --sf-provenance-simulated: var(--provenance-simulated);
+  --sf-provenance-simulated-bg: rgba(90, 169, 255, 0.12);
 }

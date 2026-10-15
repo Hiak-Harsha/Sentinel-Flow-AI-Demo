@@ -126,8 +126,13 @@ def test_webhook_hmac_signature_and_replay_protection():
 def test_emergency_stop_kill_switch():
     """Verify that emergency stop halts execution immediately and sets kill switch flag."""
     with TestClient(app) as client:
+        # Authenticate as operator
+        login_res = client.post("/api/identity/operator-login", json={"passcode": OPERATOR_SECRET_KEY})
+        assert login_res.status_code == 200
+        op_headers = {"Authorization": f"Bearer {login_res.json()['token']}"}
+
         # Trip emergency stop
-        stop_res = client.post("/api/orchestrator/emergency-stop")
+        stop_res = client.post("/api/orchestrator/emergency-stop", headers=op_headers)
         assert stop_res.status_code == 200
         stop_data = stop_res.json()
         assert stop_data["emergency_stop"] is True
@@ -135,6 +140,7 @@ def test_emergency_stop_kill_switch():
         # Attempt to start scenario while emergency stop active -> rejected with 403
         run_res = client.post(
             "/api/orchestrator/runs",
+            headers=op_headers,
             json={
                 "scenario": "credential_stuffing",
                 "target_origin": "http://127.0.0.1:8000/lab-target",
@@ -144,7 +150,7 @@ def test_emergency_stop_kill_switch():
         assert "Emergency stop" in run_res.json()["detail"]
 
         # Reset emergency stop
-        reset_res = client.post("/api/orchestrator/emergency-stop/reset")
+        reset_res = client.post("/api/orchestrator/emergency-stop/reset", headers=op_headers)
         assert reset_res.status_code == 200
         assert reset_res.json()["emergency_stop"] is False
 

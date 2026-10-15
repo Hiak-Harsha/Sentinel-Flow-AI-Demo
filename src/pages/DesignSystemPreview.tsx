@@ -10,7 +10,7 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter,
+  HeroCard,
   Stat,
   Skeleton,
   EmptyState,
@@ -27,6 +27,14 @@ import {
   CodeBlock,
   showToast,
   ConnectionIndicator,
+  Tag,
+  StatusDot,
+  KpiCard,
+  StepCard,
+  Input,
+  Select,
+  Kbd,
+  Pill,
 } from "@/design/components";
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
@@ -40,13 +48,22 @@ import {
   Terminal,
   Server,
   Zap,
+  CheckCircle2,
+  Lock,
+  Swords,
+  TrendingUp,
+  Cpu,
+  Shield,
+  Search,
 } from "lucide-react";
 
 export default function DesignSystemPreview() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [buttonLoading, setButtonLoading] = useState(false);
-  const [gaugeValue, setGaugeValue] = useState(78);
+  const [gaugeValue, setGaugeValue] = useState(68);
+  const [textInputVal, setTextInputVal] = useState("");
+  const [selectVal, setSelectVal] = useState("auto");
 
   const sampleTableData = [
     { id: "inc_01", identity: "usr_alice", rule: "T1110 Brute Force", severity: "CRITICAL", score: 0.94, prov: "live" },
@@ -68,7 +85,7 @@ export default function DesignSystemPreview() {
       accessorKey: "score",
       header: "Threat Score",
       cell: ({ row }: any) => (
-        <span className="font-mono font-bold text-cyan-400">
+        <span className="font-mono font-bold text-[#ffb454] sf-tabular">
           {(row.original.score * 100).toFixed(0)}%
         </span>
       ),
@@ -90,50 +107,140 @@ export default function DesignSystemPreview() {
   ];
 
   return (
-    <div className="space-y-10 pb-16">
+    <div className="space-y-12 pb-20">
+      {/* Page Header with Authoritative Tokens */}
       <PageHeader
         title="Design System & Component Library"
-        description="Core design tokens and accessible component primitives verified against WCAG AA contrast standards."
-        badge={<Badge variant="cyan" dot>v3.0 Tokens</Badge>}
+        description="Graphite & Amber design tokens, accessible components, and strict WCAG AA contrast standards."
+        badge={<Tag variant="amber" size="sm">GRAPHITE & AMBER v2.0</Tag>}
         actions={
           <div className="flex gap-2">
             <Button
-              variant="accent"
+              variant="primary"
               size="sm"
               icon={<Sparkles className="w-4 h-4" />}
-              onClick={() => showToast.success("Tokens verified", "WCAG AA contrast ≥ 4.5:1 compliant.")}
+              onClick={() => showToast.success("Design System Validated", "Tokens, components, and WCAG AA contrast verified.")}
             >
-              Verify System
+              Verify Tokens
             </Button>
           </div>
         }
       />
 
-      {/* 1. Buttons & IconButtons */}
+      {/* 0. Palette & Typography Foundations */}
       <section className="space-y-4">
-        <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-          <Zap className="w-5 h-5 text-cyan-400" /> Buttons & Controls
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-mono font-semibold uppercase tracking-wider text-[#9aa0a6] flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#fe9a00]" />
+            Foundations: Palette & Typography
+          </h2>
+          <span className="text-xs font-mono text-[#5f6368]">Authoritative Visual Reference</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Graphite Surfaces */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Graphite Surfaces & Borders</CardTitle>
+              <CardDescription>Pure neutral dark hierarchy. No cyan/indigo tint, no glassmorphism.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
+                <div className="p-3 rounded-lg bg-[#090c10] border border-[rgba(255,255,255,0.07)]">
+                  <div className="text-[#9aa0a6] text-[10px]">--bg</div>
+                  <div className="text-[#f0f2f5] font-semibold mt-1">#090c10</div>
+                </div>
+                <div className="p-3 rounded-lg bg-[#0f1013] border border-[rgba(255,255,255,0.07)]">
+                  <div className="text-[#9aa0a6] text-[10px]">--surface-1</div>
+                  <div className="text-[#f0f2f5] font-semibold mt-1">#0f1013</div>
+                </div>
+                <div className="p-3 rounded-lg bg-[#111417] border border-[rgba(255,255,255,0.07)]">
+                  <div className="text-[#9aa0a6] text-[10px]">--surface-2</div>
+                  <div className="text-[#f0f2f5] font-semibold mt-1">#111417</div>
+                </div>
+                <div className="p-3 rounded-lg bg-[#16181c] border border-[rgba(255,255,255,0.07)]">
+                  <div className="text-[#9aa0a6] text-[10px]">--surface-3</div>
+                  <div className="text-[#f0f2f5] font-semibold mt-1">#16181c</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Brand Amber vs Severity */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Brand Amber & Strict Severity Spectrum</CardTitle>
+              <CardDescription>
+                Rule: Amber is brand only (never severity). Severity badges show icon + label.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {/* Brand Amber */}
+              <div>
+                <span className="text-[11px] font-mono text-[#9aa0a6] block mb-1">BRAND AMBER</span>
+                <div className="grid grid-cols-3 gap-2 text-xs font-mono">
+                  <div className="p-2 rounded bg-[#fe9a00] text-[#1a1203] font-bold text-center">
+                    #fe9a00 (solid)
+                  </div>
+                  <div className="p-2 rounded bg-[#ffb454] text-[#1a1203] font-bold text-center">
+                    #ffb454 (accent)
+                  </div>
+                  <div className="p-2 rounded bg-[#2d1f0b] text-[#ffb454] border border-[#fe9a00]/30 font-semibold text-center">
+                    #2d1f0b (wash)
+                  </div>
+                </div>
+              </div>
+
+              {/* Severity Colors */}
+              <div>
+                <span className="text-[11px] font-mono text-[#9aa0a6] block mb-1">SEVERITY TOKENS (NEVER AMBER)</span>
+                <div className="grid grid-cols-5 gap-1.5 text-[10px] font-mono text-center">
+                  <div className="p-1.5 rounded bg-[#2b1218] border border-[#f4526b]/40 text-[#f4526b] font-semibold">
+                    #f4526b CRIT
+                  </div>
+                  <div className="p-1.5 rounded bg-[#2b170c] border border-[#ff7a45]/40 text-[#ff7a45] font-semibold">
+                    #ff7a45 HIGH
+                  </div>
+                  <div className="p-1.5 rounded bg-[#2b2513] border border-[#e9c46a]/40 text-[#e9c46a] font-semibold">
+                    #e9c46a ELEV
+                  </div>
+                  <div className="p-1.5 rounded bg-[#0d281e] border border-[#3ddc97]/40 text-[#3ddc97] font-semibold">
+                    #3ddc97 LOW
+                  </div>
+                  <div className="p-1.5 rounded bg-[#0f1f38] border border-[#5aa9ff]/40 text-[#5aa9ff] font-semibold">
+                    #5aa9ff INFO
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* 1. Buttons & Controls */}
+      <section className="space-y-4">
+        <h2 className="text-sm font-mono font-semibold uppercase tracking-wider text-[#9aa0a6] flex items-center gap-2">
+          <Zap className="w-4 h-4 text-[#fe9a00]" /> Buttons, Inputs & Controls
         </h2>
-        <Card variant="default">
-          <CardContent className="space-y-6">
+        <Card>
+          <CardContent className="space-y-6 pt-6">
             <div>
-              <div className="text-xs text-slate-400 uppercase font-semibold mb-3">Variants</div>
+              <div className="text-xs text-[#9aa0a6] font-mono uppercase mb-3">Button Variants (8px radius)</div>
               <div className="flex flex-wrap gap-3">
-                <Button variant="primary">Primary Cyan</Button>
-                <Button variant="accent">Accent Gradient</Button>
-                <Button variant="secondary">Secondary Slate</Button>
+                <Button variant="primary">Primary Brand Amber</Button>
+                <Button variant="secondary">Secondary Graphite</Button>
                 <Button variant="outline">Outline</Button>
                 <Button variant="ghost">Ghost</Button>
-                <Button variant="destructive">Destructive Rose</Button>
+                <Button variant="destructive">Destructive Non-Amber</Button>
               </div>
             </div>
 
             <div>
-              <div className="text-xs text-slate-400 uppercase font-semibold mb-3">Sizes & States</div>
+              <div className="text-xs text-[#9aa0a6] font-mono uppercase mb-3">Sizes, Loading & Disabled States</div>
               <div className="flex flex-wrap items-center gap-3">
-                <Button size="sm" variant="secondary">Small (sm)</Button>
-                <Button size="md" variant="secondary">Medium (md)</Button>
-                <Button size="lg" variant="secondary">Large (lg)</Button>
+                <Button size="sm" variant="primary">Small (sm)</Button>
+                <Button size="md" variant="primary">Medium (md)</Button>
+                <Button size="lg" variant="primary">Large (lg)</Button>
                 <Button
                   loading={buttonLoading}
                   variant="primary"
@@ -142,24 +249,67 @@ export default function DesignSystemPreview() {
                     setTimeout(() => setButtonLoading(false), 2000);
                   }}
                 >
-                  {buttonLoading ? "Simulating..." : "Click to Test Loading"}
+                  {buttonLoading ? "Executing Task..." : "Click to Test Loading"}
                 </Button>
-                <Button disabled variant="primary">Disabled</Button>
+                <Button disabled variant="primary">Disabled Solid</Button>
+                <Button disabled variant="secondary">Disabled Secondary</Button>
+              </div>
+            </div>
+
+            {/* Inputs & Selects */}
+            <div>
+              <div className="text-xs text-[#9aa0a6] font-mono uppercase mb-3">Form Primitives (Input, Select, Kbd)</div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl">
+                <Input
+                  label="Search Target"
+                  placeholder="e.g. prod-api-cluster"
+                  value={textInputVal}
+                  onChange={(e) => setTextInputVal(e.target.value)}
+                  leftAdornment={<Search className="w-4 h-4" />}
+                />
+                <Select
+                  label="Execution Strategy"
+                  value={selectVal}
+                  onChange={(e) => setSelectVal(e.target.value)}
+                  options={[
+                    { value: "auto", label: "Auto-calibrated" },
+                    { value: "dry-run", label: "Dry Run Simulation" },
+                    { value: "shadow", label: "Shadow Enforcement" },
+                  ]}
+                />
+                <Input
+                  label="Quota Token"
+                  mono
+                  defaultValue="0x9A4B...F1"
+                  helperText="Tabular mono input"
+                />
               </div>
             </div>
 
             <div>
-              <div className="text-xs text-slate-400 uppercase font-semibold mb-3">Icon Buttons & Tooltips</div>
-              <div className="flex items-center gap-3">
-                <Tooltip content="Launch attack scenario">
-                  <IconButton icon={<Play className="w-4 h-4 text-cyan-400" />} aria-label="Launch attack" />
-                </Tooltip>
-                <Tooltip content="Reset simulation state">
-                  <IconButton icon={<RotateCcw className="w-4 h-4 text-amber-400" />} aria-label="Reset simulation" />
-                </Tooltip>
-                <Tooltip content="Information details">
-                  <IconButton icon={<Info className="w-4 h-4 text-slate-400" />} aria-label="Information" />
-                </Tooltip>
+              <div className="text-xs text-[#9aa0a6] font-mono uppercase mb-3">Icon Buttons & Tags</div>
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Tooltip content="Launch attack scenario">
+                    <IconButton icon={<Play className="w-4 h-4 text-[#fe9a00]" />} aria-label="Launch attack" />
+                  </Tooltip>
+                  <Tooltip content="Reset simulation state">
+                    <IconButton icon={<RotateCcw className="w-4 h-4 text-[#9aa0a6]" />} aria-label="Reset simulation" />
+                  </Tooltip>
+                  <Tooltip content="System information">
+                    <IconButton icon={<Info className="w-4 h-4 text-[#5f6368]" />} aria-label="Information" />
+                  </Tooltip>
+                </div>
+
+                <div className="h-5 w-px bg-[rgba(255,255,255,0.1)]" />
+
+                <div className="flex items-center gap-2">
+                  <Tag variant="amber">MISSION CONSOLE</Tag>
+                  <Tag variant="neutral">OPERATOR</Tag>
+                  <Tag variant="neutral">STEP 01</Tag>
+                  <StatusDot status="live" label="FEED ACTIVE" />
+                  <StatusDot status="offline" label="STANDBY" />
+                </div>
               </div>
             </div>
           </CardContent>
@@ -168,13 +318,15 @@ export default function DesignSystemPreview() {
 
       {/* 2. Badges, Severity & Provenance */}
       <section className="space-y-4">
-        <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-          <ShieldAlert className="w-5 h-5 text-rose-400" /> Badges & Status Indicators
+        <h2 className="text-sm font-mono font-semibold uppercase tracking-wider text-[#9aa0a6] flex items-center gap-2">
+          <ShieldAlert className="w-4 h-4 text-[#f4526b]" /> Badges & Status Indicators
         </h2>
         <Card>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 pt-6">
             <div>
-              <div className="text-xs text-slate-400 uppercase font-semibold mb-3">Incident Severity Badges (WCAG AA)</div>
+              <div className="text-xs text-[#9aa0a6] font-mono uppercase mb-3">
+                Incident Severity Badges (Icon + Label, Never Amber)
+              </div>
               <div className="flex flex-wrap items-center gap-3">
                 <SeverityBadge severity="CRITICAL" />
                 <SeverityBadge severity="HIGH" />
@@ -186,7 +338,7 @@ export default function DesignSystemPreview() {
             </div>
 
             <div>
-              <div className="text-xs text-slate-400 uppercase font-semibold mb-3">Provenance Badges</div>
+              <div className="text-xs text-[#9aa0a6] font-mono uppercase mb-3">Provenance Badges</div>
               <div className="flex flex-wrap items-center gap-3">
                 <ProvenanceBadge provenance="live" />
                 <ProvenanceBadge provenance="replay" />
@@ -195,109 +347,159 @@ export default function DesignSystemPreview() {
             </div>
 
             <div>
-              <div className="text-xs text-slate-400 uppercase font-semibold mb-3">Connection Status Indicators</div>
+              <div className="text-xs text-[#9aa0a6] font-mono uppercase mb-3">Pills & Connection Indicators</div>
               <div className="flex flex-wrap items-center gap-4">
                 <ConnectionIndicator status="connected" lastSeq={142} latencyMs={8.4} />
                 <ConnectionIndicator status="reconnecting" lastSeq={140} />
                 <ConnectionIndicator status="stale" latencyMs={45.2} />
                 <ConnectionIndicator status="disconnected" />
+                <Pill label="SESSION" value="SF-01" variant="brand" />
+                <Pill label="ROOM" value="HAK-4921" variant="default" />
               </div>
             </div>
           </CardContent>
         </Card>
       </section>
 
-      {/* 3. KPI Stats & Gauges */}
+      {/* 3. HeroCard, KpiCard & StepCard Showcase */}
       <section className="space-y-4">
-        <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-          <Activity className="w-5 h-5 text-emerald-400" /> KPI Stats & Visual Gauges
+        <h2 className="text-sm font-mono font-semibold uppercase tracking-wider text-[#9aa0a6] flex items-center gap-2">
+          <Activity className="w-4 h-4 text-[#fe9a00]" /> KPI Cards, Step Cards & Hero Cards
         </h2>
+
+        {/* Hero Card */}
+        <HeroCard>
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Tag variant="amber">MISSION CONSOLE</Tag>
+                <StatusDot status="live" label="CALIBRATED" />
+              </div>
+              <h3 className="font-display text-2xl font-bold tracking-tight text-[#f0f2f5]">
+                Production Cluster Threat Monitoring
+              </h3>
+              <p className="text-sm text-[#9aa0a6] max-w-2xl">
+                Dual-layer detection running live EWMA thresholding and LightGBM inference at &lt;10ms SLA.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button variant="secondary" size="md">Audit Logs</Button>
+              <Button variant="primary" size="md" icon={<Shield className="w-4 h-4" />}>
+                Defense Active
+              </Button>
+            </div>
+          </div>
+        </HeroCard>
+
+        {/* KPI Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Stat
-            label="Throughput"
+          <KpiCard
+            label="THROUGHPUT"
             value="1,271"
-            subtext="events / second"
-            change={14.8}
-            sparkline={<Sparkline data={[20, 35, 45, 60, 55, 75, 90]} color="#22d3ee" />}
+            subtext="sustained peak load"
+            trend={{ value: "+14.8%", positive: true }}
+            icon={<Activity className="w-4 h-4 text-[#fe9a00]" />}
           />
-          <Stat
-            label="Active Incidents"
+          <KpiCard
+            label="ACTIVE INCIDENTS"
             value="3"
-            subtext="2 Critical, 1 High"
-            change={-25.0}
-            variant="critical"
-            sparkline={<Sparkline data={[5, 4, 4, 3, 3, 2, 3]} color="#f43f5e" />}
+            subtext="2 critical, 1 elevated"
+            trend={{ value: "-25.0%", positive: true }}
+            icon={<ShieldAlert className="w-4 h-4 text-[#f4526b]" />}
           />
-          <Stat
-            label="p95 Pipeline Latency"
+          <KpiCard
+            label="PIPELINE LATENCY"
             value="9.01 ms"
-            subtext="Sustained load SLA < 500ms"
-            change={-4.2}
-            variant="success"
-            sparkline={<Sparkline data={[12, 11, 10, 9.5, 9.1, 9.01]} color="#10b981" />}
+            subtext="SLA &lt; 500 ms"
+            trend={{ value: "-4.2%", positive: true }}
+            icon={<Cpu className="w-4 h-4 text-[#3ddc97]" />}
           />
-          <Stat
-            label="Model Brier Score"
+          <KpiCard
+            label="BRIER SCORE"
             value="0.041"
-            subtext="Platt calibrated (OOF)"
-            variant="cyan"
-            sparkline={<Sparkline data={[0.08, 0.06, 0.05, 0.045, 0.041]} color="#06b6d4" />}
+            subtext="calibrated confidence"
+            icon={<TrendingUp className="w-4 h-4 text-[#ffb454]" />}
           />
         </div>
 
-        {/* Gauge Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Threat Level Gauge</CardTitle>
-            <CardDescription>Real-time threat level gauge with 240° arc and color bands</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col sm:flex-row items-center justify-around gap-6">
-            <Gauge value={25} label="Low Risk" />
-            <Gauge value={52} label="Elevated" />
-            <Gauge value={gaugeValue} label="High Threat" />
-            <div className="flex flex-col items-center gap-2">
-              <span className="text-xs text-slate-400">Interactive Test</span>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={gaugeValue}
-                onChange={(e) => setGaugeValue(Number(e.target.value))}
-                className="w-36 accent-cyan-400"
-              />
-            </div>
-          </CardContent>
-        </Card>
+        {/* Guided Workflow Step Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <StepCard
+            stepNumber="01"
+            title="Baseline Profiling"
+            description="Extract historical request patterns and compute per-identity EWMA mean and variance."
+            status="completed"
+          />
+          <StepCard
+            stepNumber="02"
+            title="Red Team Attack Execution"
+            description="Inject participant attack vectors against targeted API endpoints with quota limits."
+            status="active"
+            actionLabel="View Scenarios"
+            onAction={() => showToast.info("Step 02 Action", "Navigating to attack scenarios...")}
+          />
+          <StepCard
+            stepNumber="03"
+            title="Operator Incident Triage"
+            description="Examine calibrated alerts, verify cryptographic hashes, and execute response mitigations."
+            status="pending"
+          />
+        </div>
       </section>
 
-      {/* 4. Charts & Visualizations */}
+      {/* 4. Visualizations: Gauge & Time Series */}
       <section className="space-y-4">
-        <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-          <Layers className="w-5 h-5 text-indigo-400" /> Time Series Visualization
+        <h2 className="text-sm font-mono font-semibold uppercase tracking-wider text-[#9aa0a6] flex items-center gap-2">
+          <Layers className="w-4 h-4 text-[#fe9a00]" /> Visualizations & Charts
         </h2>
-        <Card>
-          <CardHeader>
-            <CardTitle>Event Rate vs. Baseline Band</CardTitle>
-            <CardDescription>Multi-series responsive area chart with dark styling and custom tooltips</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <TimeSeriesChart
-              data={sampleTimeSeriesData}
-              series={[
-                { key: "requests", name: "Observed Requests/s", color: "#22d3ee", fillOpacity: 0.35 },
-                { key: "baseline", name: "Adaptive Baseline", color: "#6366f1", fillOpacity: 0.15 },
-              ]}
-              height={220}
-              yUnit="req/s"
-            />
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Gauge Card */}
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle>Threat Level Gauge</CardTitle>
+              <CardDescription>240° arc with calibrated threshold bands</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center justify-center gap-4">
+              <Gauge value={gaugeValue} label="Overall Threat" />
+              <div className="w-full max-w-xs flex flex-col items-center gap-1.5">
+                <span className="text-xs font-mono text-[#9aa0a6]">Interactive Value: {gaugeValue}%</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={gaugeValue}
+                  onChange={(e) => setGaugeValue(Number(e.target.value))}
+                  className="w-full accent-[#fe9a00] cursor-pointer"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Time Series Chart */}
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Event Rate vs. Adaptive Baseline</CardTitle>
+              <CardDescription>Multi-series responsive area chart with dark graphite styling</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TimeSeriesChart
+                data={sampleTimeSeriesData}
+                series={[
+                  { key: "requests", name: "Observed Requests/s", color: "#fe9a00", fillOpacity: 0.25 },
+                  { key: "baseline", name: "Adaptive Baseline", color: "#5aa9ff", fillOpacity: 0.12 },
+                ]}
+                height={220}
+                yUnit="req/s"
+              />
+            </CardContent>
+          </Card>
+        </div>
       </section>
 
       {/* 5. Virtualized Data Table */}
       <section className="space-y-4">
-        <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-          <Server className="w-5 h-5 text-cyan-400" /> Virtualized Data Table
+        <h2 className="text-sm font-mono font-semibold uppercase tracking-wider text-[#9aa0a6] flex items-center gap-2">
+          <Server className="w-4 h-4 text-[#fe9a00]" /> Virtualized Data Table
         </h2>
         <DataTable
           data={sampleTableData}
@@ -306,10 +508,10 @@ export default function DesignSystemPreview() {
         />
       </section>
 
-      {/* 6. Tabs, Modals, Drawers, CodeBlock */}
+      {/* 6. Tabs, Dialogs, Drawers & CodeBlock */}
       <section className="space-y-4">
-        <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-          <Terminal className="w-5 h-5 text-amber-400" /> Layout & Interactive Primitives
+        <h2 className="text-sm font-mono font-semibold uppercase tracking-wider text-[#9aa0a6] flex items-center gap-2">
+          <Terminal className="w-4 h-4 text-[#fe9a00]" /> Interactive Modals & Drawers
         </h2>
         <Tabs
           items={[
@@ -319,8 +521,8 @@ export default function DesignSystemPreview() {
               content: (
                 <Card>
                   <CardContent className="space-y-4 pt-4">
-                    <p className="text-sm text-slate-400">
-                      Accessible Radix UI Dialogs and slide-out Drawers for incident response and inspections.
+                    <p className="text-sm text-[#9aa0a6]">
+                      Accessible Dialogs and slide-out Drawers styled with graphite `#111417` and hairline borders.
                     </p>
                     <div className="flex gap-3">
                       <Button onClick={() => setDialogOpen(true)}>Open Modal Dialog</Button>
@@ -386,8 +588,8 @@ export default function DesignSystemPreview() {
                     description="All observed traffic is within the per-identity EWMA baseline tolerance."
                   />
                   <ErrorState
-                    title="Redis Stream Disconnected"
-                    message="Degraded to in-process memory queue. Falling back gracefully."
+                    title="Stream Disconnected"
+                    message="Degraded to local buffer. Reconnecting automatically."
                     onRetry={() => showToast.info("Retrying connection...")}
                   />
                 </div>

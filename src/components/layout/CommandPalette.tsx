@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { showToast } from "@/design/components/Toast";
+import { Kbd } from "@/design/components/Kbd";
 
 export interface CommandPaletteProps {
   open: boolean;
@@ -67,109 +68,108 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto p-4 sm:p-6 md:p-20 flex items-start justify-center">
+      {/* Dimmed backdrop without blur */}
       <div
-        className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-[#090c10]/80 transition-opacity"
         onClick={() => onOpenChange(false)}
       />
 
-      <div className="relative w-full max-w-xl rounded-2xl bg-slate-900 border border-slate-700/80 shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95">
+      <div className="relative w-full max-w-xl rounded-xl bg-[#111417] border border-[rgba(255,255,255,0.12)] shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95">
         <Command label="Global Command Menu" className="w-full">
-          <div className="flex items-center px-4 border-b border-slate-800">
-            <Search className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
+          <div className="flex items-center px-4 border-b border-[rgba(255,255,255,0.08)] bg-[#0f1013]">
+            <Search className="w-4 h-4 text-[#5f6368] mr-2 shrink-0" />
             <Command.Input
-              placeholder="Type a command or search pages..."
-              className="w-full h-12 bg-transparent text-slate-100 text-sm placeholder:text-slate-500 focus:outline-none"
+              placeholder="Type a command or jump to page..."
+              className="w-full h-12 bg-transparent text-[#f0f2f5] text-sm placeholder:text-[#5f6368] focus:outline-none"
             />
-            <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-slate-800 border border-slate-700 rounded">
-              ESC
-            </kbd>
+            <Kbd>ESC</Kbd>
           </div>
 
           <Command.List className="max-h-80 overflow-y-auto p-2 text-xs">
-            <Command.Empty className="py-6 text-center text-slate-400">
+            <Command.Empty className="py-6 text-center text-[#5f6368]">
               No matching commands or pages found.
             </Command.Empty>
 
-            <Command.Group heading="Navigation" className="text-slate-500 font-semibold px-2 py-1.5 uppercase text-[10px] tracking-wider">
+            <Command.Group heading="Navigation" className="text-[#5f6368] font-mono font-medium px-2 py-1.5 uppercase text-[10px] tracking-wider">
               <Command.Item
                 onSelect={() => runCommand(() => navigate("/overview"))}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white cursor-pointer select-none"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[#f0f2f5] hover:bg-[#16181c] hover:text-[#ffb454] cursor-pointer select-none transition-colors"
               >
-                <LayoutDashboard className="w-4 h-4 text-cyan-400" />
+                <LayoutDashboard className="w-4 h-4 text-[#ffb454]" />
                 <span>Overview Dashboard</span>
               </Command.Item>
 
               <Command.Item
                 onSelect={() => runCommand(() => navigate("/alerts"))}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white cursor-pointer select-none"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[#f0f2f5] hover:bg-[#16181c] hover:text-[#ffb454] cursor-pointer select-none transition-colors"
               >
-                <ShieldAlert className="w-4 h-4 text-rose-400" />
+                <ShieldAlert className="w-4 h-4 text-[#f4526b]" />
                 <span>Alerts Workbench</span>
               </Command.Item>
 
               <Command.Item
                 onSelect={() => runCommand(() => navigate("/attack-console"))}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white cursor-pointer select-none"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[#f0f2f5] hover:bg-[#16181c] hover:text-[#ffb454] cursor-pointer select-none transition-colors"
               >
-                <Swords className="w-4 h-4 text-amber-400" />
-                <span>Attack Console</span>
+                <Swords className="w-4 h-4 text-[#ff7a45]" />
+                <span>Red Team Activity</span>
               </Command.Item>
 
               <Command.Item
                 onSelect={() => runCommand(() => navigate("/models"))}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white cursor-pointer select-none"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[#f0f2f5] hover:bg-[#16181c] hover:text-[#ffb454] cursor-pointer select-none transition-colors"
               >
-                <Cpu className="w-4 h-4 text-indigo-400" />
+                <Cpu className="w-4 h-4 text-[#5aa9ff]" />
                 <span>Model Registry & Shadow Mode</span>
               </Command.Item>
 
               <Command.Item
                 onSelect={() => runCommand(() => navigate("/analytics"))}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white cursor-pointer select-none"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[#f0f2f5] hover:bg-[#16181c] hover:text-[#ffb454] cursor-pointer select-none transition-colors"
               >
-                <BarChart3 className="w-4 h-4 text-emerald-400" />
+                <BarChart3 className="w-4 h-4 text-[#3ddc97]" />
                 <span>Security Analytics</span>
               </Command.Item>
 
               <Command.Item
                 onSelect={() => runCommand(() => navigate("/settings"))}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white cursor-pointer select-none"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[#f0f2f5] hover:bg-[#16181c] hover:text-[#ffb454] cursor-pointer select-none transition-colors"
               >
-                <Sliders className="w-4 h-4 text-slate-400" />
+                <Sliders className="w-4 h-4 text-[#9aa0a6]" />
                 <span>System Settings</span>
               </Command.Item>
 
               <Command.Item
                 onSelect={() => runCommand(() => navigate("/join"))}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white cursor-pointer select-none"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[#f0f2f5] hover:bg-[#16181c] hover:text-[#ffb454] cursor-pointer select-none transition-colors"
               >
-                <Users className="w-4 h-4 text-sky-400" />
+                <Users className="w-4 h-4 text-[#ffb454]" />
                 <span>Participant Portal</span>
               </Command.Item>
 
               <Command.Item
                 onSelect={() => runCommand(() => navigate("/design"))}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white cursor-pointer select-none"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[#f0f2f5] hover:bg-[#16181c] hover:text-[#ffb454] cursor-pointer select-none transition-colors"
               >
-                <Palette className="w-4 h-4 text-pink-400" />
+                <Palette className="w-4 h-4 text-[#e9c46a]" />
                 <span>Design System Showcase</span>
               </Command.Item>
             </Command.Group>
 
-            <Command.Group heading="Operator Actions" className="text-slate-500 font-semibold px-2 py-1.5 uppercase text-[10px] tracking-wider mt-2 border-t border-slate-800/60">
+            <Command.Group heading="Operator Actions" className="text-[#5f6368] font-mono font-medium px-2 py-1.5 uppercase text-[10px] tracking-wider mt-2 border-t border-[rgba(255,255,255,0.08)]">
               <Command.Item
                 onSelect={() => runCommand(handleEmergencyStop)}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-rose-300 hover:bg-rose-950/40 hover:text-rose-200 cursor-pointer select-none"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[#f4526b] hover:bg-[#2b1218] hover:text-[#f4526b] cursor-pointer select-none transition-colors"
               >
-                <PowerOff className="w-4 h-4 text-rose-500" />
+                <PowerOff className="w-4 h-4 text-[#f4526b]" />
                 <span>Engage Emergency Stop</span>
               </Command.Item>
 
               <Command.Item
                 onSelect={() => runCommand(handleResetEmergencyStop)}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white cursor-pointer select-none"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[#f0f2f5] hover:bg-[#16181c] hover:text-[#3ddc97] cursor-pointer select-none transition-colors"
               >
-                <RotateCcw className="w-4 h-4 text-emerald-400" />
+                <RotateCcw className="w-4 h-4 text-[#3ddc97]" />
                 <span>Reset Emergency Stop</span>
               </Command.Item>
             </Command.Group>

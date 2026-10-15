@@ -1,6 +1,5 @@
 import React from "react";
 import { Tooltip } from "./Tooltip";
-import { Wifi, WifiOff } from "lucide-react";
 
 export type WsConnectionStatus = "connected" | "connecting" | "reconnecting" | "disconnected" | "error" | "stale";
 
@@ -17,33 +16,33 @@ export const ConnectionIndicator: React.FC<ConnectionIndicatorProps> = ({
   latencyMs,
   className = "",
 }) => {
-  let color = "bg-emerald-400";
+  let color = "bg-[#3ddc97]"; // sev-low mint
   let pulse = true;
   let label = "Connected (Realtime)";
-  let pingBg = "bg-emerald-400";
+  let pingBg = "bg-[#3ddc97]";
 
   if (status === "connecting" || status === "reconnecting") {
-    color = "bg-amber-400";
-    pingBg = "bg-amber-400";
+    color = "bg-[#fe9a00]"; // brand amber indicator
+    pingBg = "bg-[#fe9a00]";
     label = status === "reconnecting" ? "Reconnecting (WS Protocol v1)..." : "Connecting...";
   } else if (status === "stale") {
-    color = "bg-amber-500";
-    pingBg = "bg-amber-500";
+    color = "bg-[#e9c46a]"; // sev-elevated
+    pingBg = "bg-[#e9c46a]";
     label = "Stale (Falling back to HTTP polling)";
   } else if (status === "disconnected" || status === "error") {
-    color = "bg-rose-500";
+    color = "bg-[#f4526b]"; // sev-critical
     pulse = false;
     label = "Disconnected (Offline)";
   }
 
   const tooltipContent = (
-    <div className="space-y-1 font-mono sf-tabular text-left">
-      <div className="font-semibold text-slate-100">{label}</div>
+    <div className="space-y-1 font-mono sf-tabular text-left text-xs">
+      <div className="font-semibold text-[#f0f2f5]">{label}</div>
       {lastSeq !== undefined && lastSeq !== null && (
-        <div className="text-slate-400 text-[10px]">Sequence: #{lastSeq}</div>
+        <div className="text-[#9aa0a6] text-[10px]">Sequence: #{lastSeq}</div>
       )}
       {latencyMs !== undefined && latencyMs !== null && (
-        <div className="text-slate-400 text-[10px]">p95 Latency: {latencyMs.toFixed(1)} ms</div>
+        <div className="text-[#9aa0a6] text-[10px]">p95 Latency: {latencyMs.toFixed(1)} ms</div>
       )}
     </div>
   );
@@ -51,7 +50,7 @@ export const ConnectionIndicator: React.FC<ConnectionIndicatorProps> = ({
   return (
     <Tooltip content={tooltipContent}>
       <div
-        className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-900/80 border border-slate-800 text-xs text-slate-300 font-mono sf-tabular cursor-pointer select-none hover:border-slate-700 transition-colors ${className}`}
+        className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#111417] border border-[rgba(255,255,255,0.07)] text-xs text-[#9aa0a6] font-mono sf-tabular cursor-pointer select-none hover:border-[rgba(255,255,255,0.15)] transition-colors ${className}`}
       >
         <span className="relative flex h-2 w-2">
           {pulse && (

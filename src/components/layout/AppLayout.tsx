@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, NavLink } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { CommandPalette } from "./CommandPalette";
@@ -8,13 +8,37 @@ import { Drawer } from "@/design/components/Drawer";
 import { setupRealtimeQuerySync } from "@/realtime/querySync";
 import { realtimeClient } from "@/realtime/RealtimeClient";
 import { useRealtimeEvent } from "@/realtime/useRealtime";
+import {
+  LayoutDashboard,
+  ShieldAlert,
+  Swords,
+  Cpu,
+  Palette,
+} from "lucide-react";
 
 export const AppLayout: React.FC = () => {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [timeRange, setTimeRange] = useState("Live");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
+    if (typeof localStorage !== "undefined") {
+      const saved = localStorage.getItem("sf_sidebar_collapsed");
+      return saved === "true";
+    }
+    return false;
+  });
   const [screenSize, setScreenSize] = useState<"mobile" | "tablet" | "desktop">("desktop");
   const [liveAnnouncement, setLiveAnnouncement] = useState<{ message: string; priority: "polite" | "assertive" } | null>(null);
+
+  const toggleSidebarCollapse = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      if (typeof localStorage !== "undefined") {
+        localStorage.setItem("sf_sidebar_collapsed", String(next));
+      }
+      return next;
+    });
+  };
 
   // Resize listener for breakpoint tracking
   useEffect(() => {
@@ -41,7 +65,6 @@ export const AppLayout: React.FC = () => {
 
     return () => {
       cleanupSync();
-      // Keep socket open during app lifecycle
     };
   }, []);
 
@@ -58,8 +81,10 @@ export const AppLayout: React.FC = () => {
     }
   });
 
+  const isCollapsed = screenSize === "tablet" || sidebarCollapsed;
+
   return (
-    <div className="min-h-screen bg-[#060b13] text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-white">
+    <div className="min-h-screen bg-[#090c10] text-[#f0f2f5] flex flex-col font-sans selection:bg-[#fe9a00]/30 selection:text-[#ffffff]">
       {/* Accessible aria-live regions */}
       <div
         aria-live="polite"
@@ -76,10 +101,11 @@ export const AppLayout: React.FC = () => {
         {liveAnnouncement?.priority === "assertive" ? liveAnnouncement.message : ""}
       </div>
 
-      <div className="flex flex-1 w-full overflow-hidden">
+      <div className="flex flex-1 w-full overflow-hidden pb-14 md:pb-0">
         {/* Desktop / Tablet Sidebar */}
         <Sidebar
-          collapsed={screenSize === "tablet"}
+          collapsed={isCollapsed}
+          onToggleCollapse={toggleSidebarCollapse}
           className="hidden md:flex shrink-0 sticky top-0 h-screen"
         />
 
@@ -87,7 +113,7 @@ export const AppLayout: React.FC = () => {
         <Drawer
           open={mobileDrawerOpen}
           onClose={() => setMobileDrawerOpen(false)}
-          title="Navigation"
+          title="Sentinel Flow Navigation"
           side="left"
           width="max-w-xs"
         >
@@ -100,7 +126,7 @@ export const AppLayout: React.FC = () => {
 
         {/* Main Application Area */}
         <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-          {/* Top Bar */}
+          {/* Top Bar (56px) */}
           <TopBar
             onToggleSidebar={() => setMobileDrawerOpen(true)}
             onOpenCommandPalette={() => setCommandPaletteOpen(true)}
@@ -109,11 +135,41 @@ export const AppLayout: React.FC = () => {
           />
 
           {/* Content Area with Max Width Container */}
-          <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-[1600px] w-full mx-auto">
+          <main className="flex-1 p-3 sm:p-5 md:p-6 lg:p-8 max-w-[1600px] w-full mx-auto">
             <Outlet />
           </main>
         </div>
       </div>
+
+      {/* Responsive Bottom Navigation Bar (<768px screens) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-14 bg-[#090c10] border-t border-[rgba(255,255,255,0.07)] flex items-center justify-around px-2 z-40 select-none">
+        {[
+          { to: "/overview", label: "Overview", icon: LayoutDashboard },
+          { to: "/alerts", label: "Alerts", icon: ShieldAlert },
+          { to: "/attack-console", label: "Red Team", icon: Swords },
+          { to: "/models", label: "Models", icon: Cpu },
+          { to: "/design", label: "Design", icon: Palette },
+        ].map(({ to, label, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center flex-1 h-full py-1 text-[10px] font-mono transition-colors ${
+                isActive
+                  ? "text-[#fe9a00] font-semibold"
+                  : "text-[#9aa0a6] hover:text-[#f0f2f5]"
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <Icon className={`w-5 h-5 mb-0.5 ${isActive ? "text-[#fe9a00]" : "text-[#5f6368]"}`} />
+                <span>{label}</span>
+              </>
+            )}
+          </NavLink>
+        ))}
+      </nav>
 
       {/* Global Command Palette (Ctrl+K) */}
       <CommandPalette
@@ -121,7 +177,7 @@ export const AppLayout: React.FC = () => {
         onOpenChange={setCommandPaletteOpen}
       />
 
-      {/* Global Sonner Toaster */}
+      {/* Global Toast */}
       <Toast />
     </div>
   );

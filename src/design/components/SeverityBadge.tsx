@@ -1,4 +1,5 @@
 import React from "react";
+import { AlertOctagon, AlertTriangle, AlertCircle, ShieldCheck, Info, Flame } from "lucide-react";
 
 export type SeverityLevel = "CRITICAL" | "HIGH" | "ELEVATED" | "LOW" | "INFO" | "EMERGENCY_STOP" | string;
 
@@ -17,32 +18,34 @@ export const SeverityBadge: React.FC<SeverityBadgeProps> = ({
 }) => {
   const norm = (severity || "LOW").toUpperCase();
 
-  let bgBorderText = "bg-emerald-950/70 border-emerald-500/40 text-emerald-300";
-  let dotColor = "bg-emerald-400";
+  // Colors measured directly from tokens (never brand amber):
+  // critical: #f4526b, high: #ff7a45, elevated: #e9c46a, low: #3ddc97, info: #5aa9ff
+  let bgBorderText = "bg-[#3ddc97]/10 border-[#3ddc97]/30 text-[#3ddc97]";
+  let icon = <ShieldCheck className="w-3.5 h-3.5 shrink-0" />;
   let label = norm;
 
   if (norm === "CRITICAL") {
-    bgBorderText = "bg-rose-950/80 border-rose-500/50 text-rose-300 shadow-sm shadow-rose-950/50";
-    dotColor = "bg-rose-400";
+    bgBorderText = "bg-[#f4526b]/15 border-[#f4526b]/40 text-[#ff8497]";
+    icon = <AlertOctagon className="w-3.5 h-3.5 shrink-0 text-[#ff8497]" />;
   } else if (norm === "HIGH") {
-    bgBorderText = "bg-orange-950/80 border-orange-500/50 text-orange-300";
-    dotColor = "bg-orange-400";
+    bgBorderText = "bg-[#ff7a45]/15 border-[#ff7a45]/40 text-[#ff9f7a]";
+    icon = <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-[#ff9f7a]" />;
   } else if (norm === "ELEVATED" || norm === "MEDIUM") {
-    bgBorderText = "bg-amber-950/80 border-amber-500/50 text-amber-300";
-    dotColor = "bg-amber-400";
+    bgBorderText = "bg-[#e9c46a]/15 border-[#e9c46a]/40 text-[#f5d78e]";
+    icon = <AlertCircle className="w-3.5 h-3.5 shrink-0 text-[#f5d78e]" />;
   } else if (norm === "INFO") {
-    bgBorderText = "bg-sky-950/80 border-sky-500/40 text-sky-300";
-    dotColor = "bg-sky-400";
+    bgBorderText = "bg-[#5aa9ff]/15 border-[#5aa9ff]/30 text-[#8ec4ff]";
+    icon = <Info className="w-3.5 h-3.5 shrink-0 text-[#8ec4ff]" />;
   } else if (norm === "EMERGENCY_STOP") {
-    bgBorderText = "bg-red-950/90 border-red-500 text-red-200 animate-pulse font-bold";
-    dotColor = "bg-red-500";
+    bgBorderText = "bg-[#f4526b]/25 border-[#f4526b] text-[#ff8497] font-bold";
+    icon = <Flame className="w-3.5 h-3.5 shrink-0 text-[#ff8497]" />;
     label = "ESTOP ENGAGED";
   }
 
   const sizeClasses = {
-    sm: "px-2 py-0.5 text-[10px] gap-1",
-    md: "px-2.5 py-0.75 text-xs gap-1.5",
-    lg: "px-3.5 py-1 text-sm gap-2 font-bold",
+    sm: "px-2 py-0.5 text-[10px] gap-1 rounded-[4px]",
+    md: "px-2.5 py-0.75 text-xs gap-1.5 rounded-[6px]",
+    lg: "px-3.5 py-1 text-sm gap-2 rounded-[8px] font-bold",
   }[size];
 
   const isAlerting = norm === "CRITICAL" || norm === "HIGH" || norm === "EMERGENCY_STOP";
@@ -51,16 +54,17 @@ export const SeverityBadge: React.FC<SeverityBadgeProps> = ({
     <span
       role="status"
       aria-label={`Severity level: ${label}`}
-      className={`inline-flex items-center font-mono font-semibold uppercase tracking-wider rounded-md border sf-tabular select-none ${sizeClasses} ${bgBorderText} ${className}`}
+      className={`inline-flex items-center font-mono font-medium tracking-wider border select-none tabular-nums ${sizeClasses} ${bgBorderText} ${className}`}
       {...props}
     >
-      <span className="relative flex h-2 w-2">
-        {showPulse && isAlerting && (
-          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${dotColor}`} />
-        )}
-        <span className={`relative inline-flex rounded-full h-2 w-2 ${dotColor}`} />
-      </span>
-      {label}
+      {icon}
+      <span>{label}</span>
+      {showPulse && isAlerting && (
+        <span className="relative flex h-1.5 w-1.5 ml-0.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-[#f4526b]" />
+          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#f4526b]" />
+        </span>
+      )}
     </span>
   );
 };

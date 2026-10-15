@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -11,20 +11,25 @@ import {
   Users,
   Palette,
   Shield,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { Tooltip } from "@/design/components/Tooltip";
+import { Tag } from "@/design/components/Tag";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/realtime/queryClient";
 import { api } from "@/lib/api";
 
 export interface SidebarProps {
   collapsed?: boolean;
+  onToggleCollapse?: () => void;
   onNavigate?: () => void;
   className?: string;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
-  collapsed = false,
+  collapsed: controlledCollapsed,
+  onToggleCollapse,
   onNavigate,
   className = "",
 }) => {
@@ -42,6 +47,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     ? (sessionStorage.getItem("sf_role") || "operator")
     : "operator";
 
+  const isOperator = role === "operator";
+
   const operatorNavItems = [
     { to: "/overview", label: "Overview", icon: LayoutDashboard },
     {
@@ -49,7 +56,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: "Alerts",
       icon: ShieldAlert,
       badge: activeAlertsCount > 0 ? activeAlertsCount : null,
-      badgeColor: "bg-rose-500 text-white",
+      badgeColor: "bg-[#f4526b] text-[#ffffff]",
     },
     { to: "/attack-console", label: "Red Team Activity", icon: Swords },
     { to: "/models", label: "Model Registry", icon: Cpu },
@@ -65,33 +72,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { to: "/design", label: "Design System", icon: Palette },
   ];
 
-  const navItems = role === "participant" ? participantNavItems : operatorNavItems;
+  const navItems = isOperator ? operatorNavItems : participantNavItems;
 
   return (
     <aside
-      className={`flex flex-col bg-slate-950/90 border-r border-slate-800/80 backdrop-blur-md transition-all duration-200 select-none ${
-        collapsed ? "w-16" : "w-60"
+      className={`flex flex-col bg-[#090c10] border-r border-[rgba(255,255,255,0.07)] transition-all duration-200 select-none z-20 ${
+        controlledCollapsed ? "w-[72px]" : "w-[232px]"
       } ${className}`}
     >
-      {/* Brand Header */}
-      <div className="h-16 flex items-center px-4 border-b border-slate-800/80 gap-3 shrink-0">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center shadow-md shadow-cyan-500/20 shrink-0">
-          <Shield className="w-5 h-5 text-white" />
+      {/* Brand Header (56px) */}
+      <div className="h-14 flex items-center px-4 border-b border-[rgba(255,255,255,0.07)] gap-3 shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#ffb454] to-[#fe9a00] flex items-center justify-center shadow-sm shrink-0">
+          <Shield className="w-4 h-4 text-[#1a1203]" />
         </div>
-        {!collapsed && (
+        {!controlledCollapsed && (
           <div className="flex flex-col overflow-hidden">
-            <span className="font-bold text-sm text-slate-100 tracking-tight whitespace-nowrap">
+            <span className="font-display font-bold text-xs tracking-tight text-[#f0f2f5] whitespace-nowrap">
               SENTINEL FLOW
             </span>
-            <span className="text-[10px] font-mono text-cyan-400 tracking-widest uppercase">
-              DEFENSE OPS v3.0
+            <span className="text-[10px] font-mono text-[#9aa0a6] tracking-wider uppercase">
+              {isOperator ? "MISSION CONSOLE" : "RED TEAM PORTAL"}
             </span>
           </div>
         )}
       </div>
 
       {/* Nav List */}
-      <nav className="flex-1 py-4 px-2 space-y-1.5 overflow-y-auto">
+      <nav className="flex-1 py-3 px-2 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
 
@@ -101,28 +108,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
               to={item.to}
               onClick={onNavigate}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+                `group relative flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#fe9a00] ${
                   isActive
-                    ? "bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30 shadow-sm"
-                    : "text-slate-400 hover:text-slate-100 hover:bg-slate-900/60"
-                } ${collapsed ? "justify-center px-0" : ""}`
+                    ? "bg-[#2d1f0b] text-[#ffb454] font-semibold border border-[#fe9a00]/40"
+                    : "text-[#9aa0a6] hover:text-[#f0f2f5] hover:bg-[#111417]"
+                } ${controlledCollapsed ? "justify-center px-0 h-10 w-full" : ""}`
               }
             >
-              <Icon className="w-4 h-4 shrink-0" />
-              {!collapsed && (
-                <span className="flex-1 truncate">{item.label}</span>
-              )}
-              {!collapsed && item.badge !== null && item.badge !== undefined && (
-                <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold sf-tabular ${item.badgeColor || "bg-cyan-500 text-slate-950"}`}
-                >
-                  {item.badge}
-                </span>
+              {({ isActive }) => (
+                <>
+                  {/* Authoritative 3px Left Accent Bar */}
+                  {isActive && (
+                    <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] bg-[#fe9a00] rounded-r" />
+                  )}
+                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-[#fe9a00]" : "text-[#9aa0a6] group-hover:text-[#f0f2f5]"}`} />
+                  {!controlledCollapsed && (
+                    <span className="flex-1 truncate tracking-tight">{item.label}</span>
+                  )}
+                  {!controlledCollapsed && item.badge !== null && item.badge !== undefined && (
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold sf-tabular ${
+                        item.badgeColor || "bg-[#fe9a00] text-[#1a1203]"
+                      }`}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+                </>
               )}
             </NavLink>
           );
 
-          if (collapsed) {
+          if (controlledCollapsed) {
             return (
               <Tooltip key={item.to} content={item.label} side="right">
                 {linkContent}
@@ -134,23 +151,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
         })}
       </nav>
 
-      {/* Role / Operator Footer */}
-      <div className="p-3 border-t border-slate-800/80 bg-slate-950/60">
-        {!collapsed ? (
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex flex-col">
-              <span className="text-[11px] text-slate-400 font-medium">Active Mode</span>
-              <span className="text-xs font-semibold text-slate-200 capitalize font-mono">
-                {role}
-              </span>
+      {/* Rail Collapse Toggle & Role Indicator Footer */}
+      <div className="p-2 border-t border-[rgba(255,255,255,0.07)] bg-[#0f1013] flex items-center justify-between">
+        {!controlledCollapsed ? (
+          <div className="flex items-center justify-between w-full px-1">
+            <div className="flex items-center gap-2">
+              <Tag variant={isOperator ? "amber" : "neutral"} size="sm">
+                {role.toUpperCase()}
+              </Tag>
+              <span className="text-[11px] font-mono text-[#5f6368]">v2.0</span>
             </div>
-            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-slate-300 border border-slate-700">
-              v2.0
-            </span>
+            {onToggleCollapse && (
+              <button
+                type="button"
+                onClick={onToggleCollapse}
+                className="p-1 rounded-md text-[#5f6368] hover:text-[#f0f2f5] hover:bg-[#16181c] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#fe9a00]"
+                title="Collapse sidebar (72px rail)"
+              >
+                <PanelLeftClose className="w-4 h-4" />
+              </button>
+            )}
           </div>
         ) : (
-          <div className="flex justify-center text-[10px] font-mono text-slate-500">
-            v2
+          <div className="w-full flex justify-center">
+            {onToggleCollapse ? (
+              <button
+                type="button"
+                onClick={onToggleCollapse}
+                className="p-1.5 rounded-md text-[#5f6368] hover:text-[#f0f2f5] hover:bg-[#16181c] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#fe9a00]"
+                title="Expand sidebar (232px)"
+              >
+                <PanelLeftOpen className="w-4 h-4" />
+              </button>
+            ) : (
+              <span className="text-[10px] font-mono text-[#5f6368]">v2</span>
+            )}
           </div>
         )}
       </div>

@@ -209,6 +209,12 @@ async def get_consent_audit() -> list[dict[str, Any]]:
 @router.post("/runs")
 async def start_run(request: Request, req: dict[str, Any] | None = None) -> dict[str, Any]:
     """Deprecated: Operators are strictly defensive. Attack runs are participant-only via /api/v1/red/runs."""
+    manager = get_run_manager()
+    if getattr(manager, "emergency_stop_tripped", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Emergency stop circuit breaker active. All attack executions halted.",
+        )
     verify_operator_access(request)
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,

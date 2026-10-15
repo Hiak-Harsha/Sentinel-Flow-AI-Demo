@@ -24,6 +24,12 @@ from app.auth.security import create_access_token
 @pytest.fixture(scope="module")
 def client() -> Generator[TestClient, None, None]:
     with TestClient(app) as c:
+        from app.orchestrator.routes import get_run_manager
+        try:
+            rm = get_run_manager()
+            rm._runs.clear()
+        except Exception:
+            pass
         yield c
 
 
@@ -148,7 +154,6 @@ def test_participant_cannot_launch_when_phase_locked(
 
 def test_participant_quota_enforced(
     client: TestClient,
-    participant_alex_token: str,
     operator_token: str,
 ):
     """When participant exceeds quota limit, subsequent runs return 429 Too Many Requests."""
@@ -167,7 +172,13 @@ def test_participant_quota_enforced(
         },
     )
 
-    pt_headers = {"Authorization": f"Bearer {participant_alex_token}"}
+    participant_quinn_token = create_access_token(
+        identity_id="pt_quinn_quota",
+        alias="Quinn",
+        role="participant",
+        extra_claims={"session_id": "session_phase2_test"},
+    )
+    pt_headers = {"Authorization": f"Bearer {participant_quinn_token}"}
     # Run 1: Succeeds (201)
     r1 = client.post("/api/v1/red/runs", headers=pt_headers, json={"scenario": "port_scan"})
     assert r1.status_code == 201
@@ -177,7 +188,7 @@ def test_participant_quota_enforced(
     assert r2.status_code == 429
     assert "quota exceeded" in r2.json()["detail"].lower()
 
-    # Clean up Alex's run
+    # Clean up Quinn's run
     client.post(f"/api/v1/red/runs/{r1.json()['run_id']}/stop", headers=pt_headers)
 
 
@@ -203,6 +214,19 @@ def test_participant_isolation_listing_and_inspection(
             "quota_per_participant": 10,
             "global_concurrency_cap": 10,
         },
+    )
+
+    # Seed Maya's run
+    from app.orchestrator.routes import get_run_manager
+    from app.orchestrator.run_manager import AttackRun
+    rm = get_run_manager()
+    rm._runs["run_maya_12345"] = AttackRun(
+        run_id="run_maya_12345",
+        scenario="port_scan",
+        target_origin="http://127.0.0.1:8000",
+        status="COMPLETED",
+        launched_by="participant",
+        participant_identity_id="pt_maya_01",
     )
 
     # Maya lists runs: must find run_maya_12345

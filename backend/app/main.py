@@ -28,6 +28,7 @@ from .config import (
 )
 from .logging_config import setup_structured_logging
 from .middleware.request_context import register_error_handlers, request_id_middleware
+from .middleware.security import request_size_limit_middleware, security_headers_middleware
 from .ws.connection_manager import WebSocketManager
 
 logger = setup_structured_logging(json_format=settings.is_production)
@@ -535,6 +536,8 @@ app.add_middleware(
 )
 
 app.middleware("http")(request_id_middleware)
+app.middleware("http")(security_headers_middleware)
+app.middleware("http")(request_size_limit_middleware)
 register_error_handlers(app)
 
 # Canonical API v1

@@ -6,6 +6,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
+from app.auth.dependencies import UserContext, require_roles
 from app.feature_schema import LIVE_FEATURE_NAMES
 from app.ml.registry import ModelRegistry
 
@@ -96,8 +97,16 @@ async def predict_model(request: Request, body: PredictRequest) -> dict[str, Any
     }
 
 
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+
+
 @router.post("/{model_id}/promote", summary="Promote a candidate model to production or staging")
-async def promote_model(request: Request, model_id: str, body: ModelPromoteRequest) -> dict[str, Any]:
+async def promote_model(
+    request: Request,
+    model_id: str,
+    body: ModelPromoteRequest,
+    user: UserContext = Depends(require_roles(["operator", "admin"])),
+) -> dict[str, Any]:
     event_store = getattr(request.app.state, "event_store", None)
     ws_mgr = getattr(request.app.state, "ws_manager", None)
 
@@ -106,7 +115,7 @@ async def promote_model(request: Request, model_id: str, body: ModelPromoteReque
     if event_store:
         ev_record = event_store.record_event(
             event_type="model_promoted",
-            source="soc_operator",
+            source=f"operator:{user.identity_id}",
             target_service="model_registry",
             metadata={
                 "model_id": model_id,

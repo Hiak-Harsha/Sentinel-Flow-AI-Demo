@@ -3,16 +3,18 @@
 from __future__ import annotations
 
 from typing import Any
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from app.auth.dependencies import UserContext, get_current_user
+from app.auth.security import verify_operator_passcode
 from app.config import OPERATOR_PASSCODE
 
 router = APIRouter(prefix="/targets", tags=["Targets & Allowlist"])
 
 
 class AuthorizeTargetRequest(BaseModel):
-    operator_passcode: str
+    operator_passcode: str = ""
     target_origin: str
     operator_name: str = "Lab Administrator"
     purpose: str = "Classroom SOC Training"
@@ -31,9 +33,20 @@ async def list_targets(request: Request) -> dict[str, Any]:
 
 
 @router.post("/authorize", summary="Add new authorized target origin to private network boundary")
-async def authorize_target(request: Request, body: AuthorizeTargetRequest) -> dict[str, Any]:
-    if body.operator_passcode != OPERATOR_PASSCODE:
-        raise HTTPException(status_code=403, detail="Invalid operator passcode.")
+async def authorize_target(
+    request: Request,
+    body: AuthorizeTargetRequest,
+    user: UserContext = Depends(get_current_user),
+) -> dict[str, Any]:
+    # Authorized if user is logged in as operator/admin OR valid passcode is supplied
+    is_authorized = False
+    if user.authenticated and user.role in ("operator", "admin"):
+        is_authorized = True
+    elif body.operator_passcode and verify_operator_passcode(body.operator_passcode):
+        is_authorized = True
+
+    if not is_authorized:
+        raise HTTPException(status_code=403, detail="Forbidden: Operator authorization required to register targets.")
 
     allowlist = request.app.state.allowlist
     consent_gate = request.app.state.run_manager.consent_gate

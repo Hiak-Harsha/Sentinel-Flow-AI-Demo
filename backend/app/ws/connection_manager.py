@@ -93,11 +93,11 @@ class WsClientConnection:
     def can_access_channel(self, channel: str) -> bool:
         if channel == "public":
             return True
-        if channel == "operator":
-            return self.role == "operator"
+        if channel in ("operator", "analyst"):
+            return self.role in ("operator", "admin")
         if channel.startswith("participant:"):
             target_id = channel.split(":", 1)[1]
-            return self.role == "operator" or self.identity_id == target_id
+            return self.role in ("operator", "admin") or self.identity_id == target_id
         return False
 
     async def enqueue_message(self, message: dict[str, Any], high_priority: bool = False) -> None:

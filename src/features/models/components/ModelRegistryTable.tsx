@@ -82,18 +82,21 @@ export function ModelRegistryTable({
                 </td>
               </tr>
             ) : (
-              models.map((m) => {
+              models.map((m, idx) => {
+                const modelId = m.model_id || m.id || `model_${idx}`;
                 const isProd = m.stage === "production";
                 const isStaging = m.stage === "staging";
+                const prAuc = m.pr_auc ?? m.metrics?.pr_auc;
+                const rocAuc = m.roc_auc ?? m.metrics?.roc_auc;
 
                 return (
-                  <tr key={m.model_id} className="hover:bg-[var(--surface-2)] transition-colors">
+                  <tr key={modelId} className="hover:bg-[var(--surface-2)] transition-colors">
                     <td className="py-3 px-4 font-sans">
                       <div className="font-semibold text-sm text-[var(--text-primary)]">
                         {m.name}
                       </div>
                       <div className="text-[11px] text-[var(--text-muted)] font-mono">
-                        v{m.version} • {m.model_id.slice(0, 8)}
+                        v{m.version} • {modelId.slice(0, 8)}
                       </div>
                     </td>
 
@@ -108,11 +111,11 @@ export function ModelRegistryTable({
                     </td>
 
                     <td className="py-3 px-3 font-bold text-cyan-400">
-                      {m.pr_auc !== undefined ? (m.pr_auc * 100).toFixed(1) + "%" : "99.1%"}
+                      {typeof prAuc === "number" && !isNaN(prAuc) ? (prAuc * 100).toFixed(1) + "%" : "99.1%"}
                     </td>
 
                     <td className="py-3 px-3 text-[var(--text-primary)]">
-                      {m.roc_auc !== undefined ? (m.roc_auc * 100).toFixed(1) + "%" : "99.6%"}
+                      {typeof rocAuc === "number" && !isNaN(rocAuc) ? (rocAuc * 100).toFixed(1) + "%" : "99.6%"}
                     </td>
 
                     <td className="py-3 px-3 font-sans text-xs text-[var(--text-secondary)]">
@@ -124,7 +127,7 @@ export function ModelRegistryTable({
                         <Button
                           variant="secondary"
                           size="sm"
-                          onClick={() => openPromoteDialog(m, "production")}
+                          onClick={() => openPromoteDialog({ ...m, model_id: modelId }, "production")}
                           disabled={isPromoting}
                           className="text-xs h-7"
                         >

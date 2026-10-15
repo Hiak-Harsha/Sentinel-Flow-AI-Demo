@@ -23,7 +23,7 @@ EVIDENCE_LEDGER_PATH = RUNTIME_DIR / "evidence_ledger.db"
 
 # Default fallback secrets for local development only
 DEFAULT_OPERATOR_PASSCODE = "SF-OPERATOR-2026"
-DEFAULT_OPERATOR_SECRET = "sentinel-operator-hmac-key-2026"
+DEFAULT_OPERATOR_SECRET = "sentinel-operator-hmac-sha256-key-2026"
 DEFAULT_WEBHOOK_SECRET = "sentinel-lab-webhook-secret-2026"
 
 

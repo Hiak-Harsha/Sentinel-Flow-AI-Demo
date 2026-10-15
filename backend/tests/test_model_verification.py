@@ -256,9 +256,12 @@ async def test_api_v1_models_routes():
             assert pdata["confidence"] > 0.0
 
             # 6. POST /api/v1/models/{model_id}/promote
+            from app.auth.security import create_access_token
+            op_tok = create_access_token(identity_id="test_op", alias="Operator", role="operator")
             resp_promo = await client.post(
                 "/api/v1/models/sentinel-candidate-rf/promote",
                 json={"stage": "staging", "notes": "Automated verification test promotion"},
+                headers={"Authorization": f"Bearer {op_tok}"},
             )
             assert resp_promo.status_code == 200
             assert resp_promo.json()["status"] == "promoted"

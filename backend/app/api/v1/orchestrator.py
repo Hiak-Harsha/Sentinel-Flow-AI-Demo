@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from typing import Any
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
+from app.auth.dependencies import UserContext, require_roles
 from app.schemas.orchestrator import (
     AttackRunModel,
     ConsentResponse,
@@ -40,7 +41,11 @@ async def get_run(request: Request, run_id: str) -> dict[str, Any]:
 
 
 @router.post("/runs", summary="Launch a bounded, consented attack scenario")
-async def launch_run(request: Request, body: StartRunRequest) -> dict[str, Any]:
+async def launch_run(
+    request: Request,
+    body: StartRunRequest,
+    user: UserContext = Depends(require_roles(["operator", "admin"])),
+) -> dict[str, Any]:
     manager = request.app.state.run_manager
     ws_mgr = getattr(request.app.state, "ws_manager", None)
 
@@ -67,7 +72,10 @@ async def launch_run(request: Request, body: StartRunRequest) -> dict[str, Any]:
 
 
 @router.post("/emergency-stop", response_model=EmergencyStopResponse, summary="Trip emergency stop circuit breaker and halt all scenarios")
-async def emergency_stop(request: Request) -> dict[str, Any]:
+async def emergency_stop(
+    request: Request,
+    user: UserContext = Depends(require_roles(["operator", "admin"])),
+) -> dict[str, Any]:
     manager = request.app.state.run_manager
     event_store = request.app.state.event_store
     ws_mgr = getattr(request.app.state, "ws_manager", None)
@@ -75,7 +83,7 @@ async def emergency_stop(request: Request) -> dict[str, Any]:
     result = manager.emergency_stop()
     event_store.record_event(
         event_type="emergency_stop_tripped",
-        source="operator_console",
+        source=f"operator:{user.identity_id}",
         target_service="orchestrator",
         metadata={"stopped_runs": result.get("stopped_runs", [])},
     )
@@ -91,7 +99,10 @@ async def emergency_stop(request: Request) -> dict[str, Any]:
 
 
 @router.post("/emergency-stop/reset", response_model=EmergencyStopResponse, summary="Reset emergency stop circuit breaker")
-async def reset_emergency_stop(request: Request) -> dict[str, Any]:
+async def reset_emergency_stop(
+    request: Request,
+    user: UserContext = Depends(require_roles(["operator", "admin"])),
+) -> dict[str, Any]:
     manager = request.app.state.run_manager
     event_store = request.app.state.event_store
     ws_mgr = getattr(request.app.state, "ws_manager", None)
@@ -99,7 +110,7 @@ async def reset_emergency_stop(request: Request) -> dict[str, Any]:
     result = manager.reset_emergency_stop()
     event_store.record_event(
         event_type="emergency_stop_reset",
-        source="operator_console",
+        source=f"operator:{user.identity_id}",
         target_service="orchestrator",
         metadata={},
     )
@@ -115,12 +126,16 @@ async def reset_emergency_stop(request: Request) -> dict[str, Any]:
 
 
 @router.post("/consent", response_model=ConsentResponse, summary="Issue verified operator consent token for an allowlisted target")
-async def grant_consent(request: Request, body: GrantConsentRequest) -> dict[str, Any]:
+async def grant_consent(
+    request: Request,
+    body: GrantConsentRequest,
+    user: UserContext = Depends(require_roles(["operator", "admin"])),
+) -> dict[str, Any]:
     consent_gate = request.app.state.run_manager.consent_gate
     try:
         record = consent_gate.grant_consent(
             target_origin=body.target_origin,
-            operator_name=body.operator_name,
+            operator_name=body.operator_name or user.alias,
             confirmed_ownership=body.confirmed_ownership,
         )
         return {

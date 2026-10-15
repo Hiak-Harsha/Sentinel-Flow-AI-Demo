@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from typing import Any
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
+from app.auth.dependencies import UserContext, require_roles
 from app.schemas.detection import (
     AlertDispositionRequest,
     AlertModel,
@@ -37,6 +38,7 @@ async def update_alert_disposition(
     request: Request,
     alert_id: str,
     body: AlertDispositionRequest,
+    user: UserContext = Depends(require_roles(["analyst", "operator", "admin"])),
 ) -> dict[str, Any]:
     event_store = request.app.state.event_store
     ws_mgr = getattr(request.app.state, "ws_manager", None)
@@ -88,7 +90,10 @@ async def verify_evidence_chain(request: Request) -> dict[str, Any]:
 
 
 @router.post("/baseline/calibrate", summary="Calibrate detection baseline metrics")
-async def calibrate_baseline(request: Request) -> dict[str, Any]:
+async def calibrate_baseline(
+    request: Request,
+    user: UserContext = Depends(require_roles(["operator", "admin"])),
+) -> dict[str, Any]:
     pipeline = request.app.state.feature_pipeline
     det_engine = request.app.state.detection_engine
 

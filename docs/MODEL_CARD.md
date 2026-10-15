@@ -12,7 +12,7 @@
 - **Model Version:** `2.0.0`
 - **Feature Schema Version:** `2.0.0` (Direct Streaming Live Telemetry)
 - **Primary Algorithm:** Calibrated Random Forest Classifier (`CalibratedClassifierCV` with Platt Sigmoid)
-- **Training Timestamp:** `2026-10-14T20:45:30.952577+00:00`
+- **Training Timestamp:** `2026-10-15T13:45:16.443613+00:00`
 - **Model Bundle Size:** `0.84 MB`
 - **Target Task:** Binary intrusion detection on streaming HTTP & host telemetry sliding windows (`0 = NORMAL`, `1 = ATTACK`).
 
@@ -78,8 +78,8 @@ To measure generalization against attack patterns never seen during training, fu
 
 Measurements conducted over 300 sequential inference evaluations:
 
-- **p50 Latency:** `48.975 ms`
-- **p95 Latency:** `63.015 ms`
+- **p50 Latency:** `28.04 ms`
+- **p95 Latency:** `38.057 ms`
 - **Throughput Capability:** > 5,000 predictions / sec / CPU core.
 
 ---

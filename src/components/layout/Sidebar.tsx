@@ -51,7 +51,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: activeAlertsCount > 0 ? activeAlertsCount : null,
       badgeColor: "bg-rose-500 text-white",
     },
-    { to: "/attack-console", label: "Attack Console", icon: Swords },
+    { to: "/attack-console", label: "Red Team Activity", icon: Swords },
     { to: "/models", label: "Model Registry", icon: Cpu },
     { to: "/analytics", label: "Analytics", icon: BarChart3 },
     { to: "/devices", label: "Network Topology", icon: Network },
@@ -61,7 +61,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const participantNavItems = [
     { to: "/join", label: "Participant App", icon: Users },
-    { to: "/attack-console", label: "Lab Scenarios", icon: Swords },
+    { to: "/attack-console", label: "Red Team Scenarios", icon: Swords },
     { to: "/design", label: "Design System", icon: Palette },
   ];
 

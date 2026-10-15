@@ -227,3 +227,118 @@ async def list_operator_runs(
         return {"runs": []}
     runs = [run_manager.get_run_status(r_id) for r_id in run_manager.list_runs()]
     return {"runs": [r for r in runs if r is not None]}
+
+
+# ============================================================================
+# Operator Defensive Countermeasures & Mitigations
+# ============================================================================
+
+class RateLimitMitigationRequest(BaseModel):
+    identity_id: str = Field(..., description="Target participant identity ID e.g. pt_maya_01")
+    rate_limit_rps: float = Field(default=2.0, ge=0.5, le=50.0, description="Max allowed requests/sec")
+
+
+class IsolateMitigationRequest(BaseModel):
+    identity_id: str = Field(..., description="Target participant identity ID to isolate/drop")
+
+
+class ResetMitigationRequest(BaseModel):
+    identity_id: str = Field(..., description="Target participant identity ID to clear mitigations for")
+
+
+def _resolve_mitigation_service(request: Request):
+    from app.services.mitigation_service import get_mitigation_service
+    return getattr(request.app.state, "mitigation_service", None) or get_mitigation_service()
+
+
+@router.post("/mitigations/rate-limit", summary="Rate limit an attacker identity")
+async def apply_rate_limit(
+    body: RateLimitMitigationRequest,
+    request: Request,
+    actor: Actor = Depends(require_role("operator", "admin")),
+) -> dict[str, Any]:
+    mit_svc = _resolve_mitigation_service(request)
+    rule = mit_svc.rate_limit_identity(
+        identity_id=body.identity_id,
+        rate_limit_rps=body.rate_limit_rps,
+        applied_by=actor.alias or actor.identity_id,
+    )
+    ws_mgr = getattr(request.app.state, "ws_manager", None)
+    if ws_mgr:
+        ws_mgr.broadcast(
+            event_type="mitigation.applied",
+            channel="public",
+            data=rule,
+        )
+    return {"status": "success", "mitigation": rule}
+
+
+@router.post("/mitigations/isolate", summary="Isolate / drop an attacker identity")
+async def apply_isolation(
+    body: IsolateMitigationRequest,
+    request: Request,
+    actor: Actor = Depends(require_role("operator", "admin")),
+) -> dict[str, Any]:
+    mit_svc = _resolve_mitigation_service(request)
+    rule = mit_svc.isolate_identity(
+        identity_id=body.identity_id,
+        applied_by=actor.alias or actor.identity_id,
+    )
+    ws_mgr = getattr(request.app.state, "ws_manager", None)
+    if ws_mgr:
+        ws_mgr.broadcast(
+            event_type="mitigation.applied",
+            channel="public",
+            data=rule,
+        )
+    return {"status": "success", "mitigation": rule}
+
+
+@router.post("/mitigations/reset", summary="Reset active mitigations for an identity")
+async def reset_mitigation(
+    body: ResetMitigationRequest,
+    request: Request,
+    actor: Actor = Depends(require_role("operator", "admin")),
+) -> dict[str, Any]:
+    mit_svc = _resolve_mitigation_service(request)
+    event = mit_svc.reset_identity_mitigation(
+        identity_id=body.identity_id,
+        reset_by=actor.alias or actor.identity_id,
+    )
+    ws_mgr = getattr(request.app.state, "ws_manager", None)
+    if ws_mgr:
+        ws_mgr.broadcast(
+            event_type="mitigation.reset",
+            channel="public",
+            data=event,
+        )
+    return {"status": "success", "mitigation": event}
+
+
+@router.get("/mitigations", summary="List active operator mitigations")
+async def list_mitigations(
+    request: Request,
+    actor: Actor = Depends(require_role("operator", "admin")),
+) -> dict[str, Any]:
+    mit_svc = _resolve_mitigation_service(request)
+    return {
+        "active_mitigations": mit_svc.list_mitigations(),
+        "history": mit_svc.get_history(),
+    }
+
+
+# Circuit Breaker explicit routes matching v2 specs
+@router.post("/circuit-breaker/trip", summary="Trip circuit breaker and halt all runs")
+async def trip_circuit_breaker_route(
+    request: Request,
+    actor: Actor = Depends(require_role("operator", "admin")),
+) -> dict[str, Any]:
+    return await trigger_emergency_stop(request, actor)
+
+
+@router.post("/circuit-breaker/reset", summary="Reset circuit breaker")
+async def reset_circuit_breaker_route(
+    request: Request,
+    actor: Actor = Depends(require_role("operator", "admin")),
+) -> dict[str, Any]:
+    return await reset_emergency_stop(request, actor)

@@ -72,26 +72,43 @@ def _resolve_target_actor(request: Request) -> str:
     
     Rejects tampered internal signatures with 403 Forbidden.
     Ignores forged client-supplied identity headers.
+    Enforces active operator defensive mitigations (rate limiting & isolation).
     """
     internal_header = request.headers.get("X-Sentinel-Actor")
+    actor_id: str | None = None
     if internal_header:
         verified = verify_internal_actor(internal_header)
         if verified and verified.get("actor_id"):
-            return verified["actor_id"]
-        logger.warning("Rejected lab target request with invalid or tampered X-Sentinel-Actor signature")
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Forbidden: Invalid or tampered internal actor signature.",
-        )
+            actor_id = verified["actor_id"]
+        else:
+            logger.warning("Rejected lab target request with invalid or tampered X-Sentinel-Actor signature")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Forbidden: Invalid or tampered internal actor signature.",
+            )
 
     # In automated test suite ONLY (when hitting target directly without proxy)
-    if settings.env.lower() in ("test", "testing"):
+    if not actor_id and settings.env.lower() in ("test", "testing"):
         compat = request.headers.get("X-Sentinel-Identity") or request.headers.get("X-Attack-Run-ID")
         if compat:
-            return compat.strip()
+            actor_id = compat.strip()
 
-    client_ip = request.client.host if request.client else "local"
-    return f"guest_{client_ip}"
+    if not actor_id:
+        client_ip = request.client.host if request.client else "local"
+        actor_id = f"guest_{client_ip}"
+
+    # Enforce active operator defensive mitigations
+    from app.services.mitigation_service import get_mitigation_service
+    mit_svc = getattr(request.app.state, "mitigation_service", None) if hasattr(request, "app") and hasattr(request.app, "state") else None
+    if not mit_svc:
+        mit_svc = get_mitigation_service()
+
+    allowed, reason, err_code = mit_svc.check_request_allowed(actor_id)
+    if not allowed:
+        logger.warning("Defensive mitigation active on %s: %s", actor_id, reason)
+        raise HTTPException(status_code=err_code, detail=reason)
+
+    return actor_id
 
 
 class LoginRequest(BaseModel):
@@ -157,8 +174,9 @@ async def target_login(req: LoginRequest, request: Request) -> dict[str, Any]:
 
 
 @router.get("/api/products")
-async def list_products() -> list[dict[str, Any]]:
+async def list_products(request: Request) -> list[dict[str, Any]]:
     """Inexpensive catalog endpoint for testing regular browsing."""
+    _resolve_target_actor(request)
     return [
         {"id": 1, "name": "Synthetic Sensor Tag", "category": "Hardware", "price": 29.99},
         {"id": 2, "name": "Telemetry Gateway Hub", "category": "Network", "price": 149.00},
@@ -167,8 +185,9 @@ async def list_products() -> list[dict[str, Any]]:
 
 
 @router.get("/api/status")
-async def get_service_status() -> dict[str, Any]:
+async def get_service_status(request: Request) -> dict[str, Any]:
     """Target service health and saturation indicator endpoint."""
+    _resolve_target_actor(request)
     return {
         "status": "HEALTHY",
         "active_threads": 4,

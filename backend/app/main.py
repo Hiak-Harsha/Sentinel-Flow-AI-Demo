@@ -58,6 +58,7 @@ from .proxy.allowlist import TargetAllowlist, load_allowlist_from_config
 from .proxy.reverse_proxy import get_proxy_handler, init_proxy_handler, proxy_router
 from .proxy.session_bridge import SessionBridge
 from .proxy.traffic_logger import TrafficLogger
+from .services.mitigation_service import get_mitigation_service, set_mitigation_service
 from .proxy.webhook_receiver import router as webhook_router, set_webhook_traffic_logger
 from .schemas.events import NormalizedEvent
 from .sensors.host_flow import HostFlowSensor
@@ -448,6 +449,7 @@ async def lifespan(app: FastAPI):
     app.state.event_bus = event_bus
     app.state.host_sensor = host_sensor
     app.state.replay_engine = replay_engine
+    app.state.mitigation_service = get_mitigation_service()
 
     # Start periodic telemetry broadcaster background task
     health_tick_counter = 0

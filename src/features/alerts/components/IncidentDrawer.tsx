@@ -5,6 +5,8 @@ import { ProvenanceBadge } from "@/design/components/ProvenanceBadge";
 import { Badge } from "@/design/components/Badge";
 import { Button } from "@/design/components/Button";
 import { CodeBlock } from "@/design/components/CodeBlock";
+import { api } from "@/lib/api";
+import { showToast } from "@/design/components/Toast";
 import {
   ShieldAlert,
   CheckCircle2,
@@ -15,6 +17,10 @@ import {
   UserCheck,
   AlertTriangle,
   RotateCcw,
+  Ban,
+  Gauge,
+  Octagon,
+  ShieldCheck,
 } from "lucide-react";
 import { AlertRecord } from "./AlertsTable";
 
@@ -35,16 +41,69 @@ export function IncidentDrawer({
 }: IncidentDrawerProps) {
   const [activeTab, setActiveTab] = useState<"evidence" | "scores" | "raw">("evidence");
   const [analystNotes, setAnalystNotes] = useState("");
+  const [mitigating, setMitigating] = useState(false);
 
   if (!alert) return null;
 
   const alertId = alert.alert_id || alert.id;
   const prov = alert.provenance || "live";
   const techniques = alert.mitre_techniques || [];
+  const targetIdentity = alert.identity_id || "";
 
   const handleAction = async (disposition: string) => {
     await onUpdateDisposition(alertId, disposition, analystNotes);
     setAnalystNotes("");
+  };
+
+  const handleRateLimit = async () => {
+    if (!targetIdentity) return;
+    setMitigating(true);
+    try {
+      await api.operator.applyRateLimit(targetIdentity, 2.0);
+      showToast.success("Rate Limit Applied", `Identity ${targetIdentity} bounded to 2 req/s.`);
+    } catch (err: any) {
+      showToast.error("Mitigation Failed", err?.message);
+    } finally {
+      setMitigating(false);
+    }
+  };
+
+  const handleIsolate = async () => {
+    if (!targetIdentity) return;
+    setMitigating(true);
+    try {
+      await api.operator.isolateIdentity(targetIdentity);
+      showToast.warning("Identity Isolated", `Identity ${targetIdentity} dropped from lab targets.`);
+    } catch (err: any) {
+      showToast.error("Mitigation Failed", err?.message);
+    } finally {
+      setMitigating(false);
+    }
+  };
+
+  const handleResetMitigation = async () => {
+    if (!targetIdentity) return;
+    setMitigating(true);
+    try {
+      await api.operator.resetMitigation(targetIdentity);
+      showToast.info("Mitigation Cleared", `Identity ${targetIdentity} restored to normal privileges.`);
+    } catch (err: any) {
+      showToast.error("Reset Failed", err?.message);
+    } finally {
+      setMitigating(false);
+    }
+  };
+
+  const handleTripCircuitBreaker = async () => {
+    setMitigating(true);
+    try {
+      await api.operator.tripCircuitBreaker();
+      showToast.error("Circuit Breaker Tripped", "All active scenario runs halted immediately.");
+    } catch (err: any) {
+      showToast.error("Circuit Breaker Failed", err?.message);
+    } finally {
+      setMitigating(false);
+    }
   };
 
   return (
@@ -118,6 +177,66 @@ export function IncidentDrawer({
           <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] font-mono">
             <Clock className="w-3.5 h-3.5" />
             <span>{alert.created_at || alert.timestamp || "Active incident"}</span>
+          </div>
+        </div>
+
+        {/* Defensive Mitigation Controls */}
+        <div className="p-3.5 rounded-lg bg-[var(--surface-1)] border border-[var(--border-subtle)] space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-cyan-400" />
+              Active Defensive Countermeasures
+            </span>
+            {targetIdentity && (
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                Attributed: {targetIdentity}
+              </span>
+            )}
+          </div>
+          <p className="text-[11px] text-[var(--text-muted)]">
+            Enforce real-time telemetry-driven mitigations against the attributed actor without interrupting harmless traffic.
+          </p>
+          <div className="flex items-center gap-2 flex-wrap pt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRateLimit}
+              disabled={mitigating || !targetIdentity}
+              className="text-xs border-amber-500/40 text-amber-300 hover:bg-amber-500/10"
+            >
+              <Gauge className="w-3.5 h-3.5 mr-1" />
+              Rate Limit (2 RPS)
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleIsolate}
+              disabled={mitigating || !targetIdentity}
+              className="text-xs border-rose-500/40 text-rose-300 hover:bg-rose-500/10"
+            >
+              <Ban className="w-3.5 h-3.5 mr-1" />
+              Isolate Identity
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleResetMitigation}
+              disabled={mitigating || !targetIdentity}
+              className="text-xs text-[var(--text-muted)] hover:text-white"
+            >
+              <RotateCcw className="w-3.5 h-3.5 mr-1" />
+              Reset Mitigation
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={handleTripCircuitBreaker}
+              disabled={mitigating}
+              className="text-xs ml-auto"
+            >
+              <Octagon className="w-3.5 h-3.5 mr-1" />
+              Trip Circuit Breaker
+            </Button>
           </div>
         </div>
 

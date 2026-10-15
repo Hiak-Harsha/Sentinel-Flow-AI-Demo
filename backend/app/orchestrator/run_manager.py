@@ -155,6 +155,10 @@ class RunManager:
             "message": "Emergency stop triggered. Circuit breaker active.",
         }
 
+    def trigger_emergency_stop(self) -> dict[str, Any]:
+        """Alias for emergency_stop."""
+        return self.emergency_stop()
+
     def reset_emergency_stop(self) -> dict[str, Any]:
         """Reset emergency stop circuit breaker."""
         self.emergency_stop_tripped = False

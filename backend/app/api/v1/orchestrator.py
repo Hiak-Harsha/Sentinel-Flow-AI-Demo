@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
 from app.auth.dependencies import UserContext, require_roles
 from app.schemas.orchestrator import (
@@ -40,35 +40,21 @@ async def get_run(request: Request, run_id: str) -> dict[str, Any]:
     return {"run": status, "effects": effects}
 
 
-@router.post("/runs", summary="Launch a bounded, consented attack scenario")
+@router.post("/runs", summary="Deprecated: Operator attack launch prohibited")
 async def launch_run(
     request: Request,
-    body: StartRunRequest,
+    body: dict[str, Any] | None = None,
     user: UserContext = Depends(require_roles(["operator", "admin"])),
 ) -> dict[str, Any]:
-    manager = request.app.state.run_manager
-    ws_mgr = getattr(request.app.state, "ws_manager", None)
+    """In Sentinel Flow v2, operator attack launches are strictly prohibited.
 
-    try:
-        run = await manager.start_run(
-            scenario=body.scenario,
-            target_origin=body.target_origin,
-            duration_seconds=body.duration_seconds,
-            requests_per_second=body.requests_per_second,
-            account_count=body.account_count,
-            scraping_iterations=body.scraping_iterations,
-            accounts=body.accounts,
-        )
-        if ws_mgr:
-            ws_mgr.broadcast(
-                event_type="attack.progress",
-                channel="operator",
-                provenance="simulated",
-                data=manager.get_run_status(run.run_id) or {},
-            )
-        return {"run_id": run.run_id, "status": run.status, "scenario": run.scenario}
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    The operator console is strictly defensive. Bounded attack scenarios must be
+    initiated by authorized classroom participants via /api/v1/red/runs.
+    """
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Operator cannot launch attack runs. Operators maintain strictly defensive visibility. Attack runs must be initiated by authorized participants via /api/v1/red/runs.",
+    )
 
 
 @router.post("/emergency-stop", response_model=EmergencyStopResponse, summary="Trip emergency stop circuit breaker and halt all scenarios")

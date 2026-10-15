@@ -20,6 +20,11 @@ export default function AttackConsolePage() {
   const [isConsented, setIsConsented] = useState(true); // default true for verified local loopback
   const [targetOrigin, setTargetOrigin] = useState("http://127.0.0.1:8000");
 
+  const role = typeof sessionStorage !== "undefined"
+    ? (sessionStorage.getItem("sf_role") || "operator")
+    : "operator";
+  const isOperator = role === "operator" || role === "admin";
+
   // 1. Fetch Orchestrator Status
   const { data: statusData } = useQuery({
     queryKey: ["orchestrator_status"],
@@ -153,30 +158,109 @@ export default function AttackConsolePage() {
       </div>
 
       <PageHeader
-        title="Adversarial Attack Console"
-        description="Consented simulation runner for exercising real-time detection fusion against owned targets"
+        title={isOperator ? "Red Team Live Activity & Defense Monitor" : "Participant Red Team Lab Scenarios"}
+        description={
+          isOperator
+            ? "Live defensive observation of participant-initiated attack scenarios and telemetry effects. Operator console is strictly defensive."
+            : "Authorized bounded attack scenarios against instrumented lab target for intrusion detection validation."
+        }
       />
 
-      {/* 2. Consent Gate Banner */}
-      <ConsentGateBanner
-        isConsented={isConsented}
-        targetOrigin={targetOrigin}
-        onGrantConsent={async (op) => {
-          await api.orchestrator.confirmConsent(targetOrigin, op);
-          setIsConsented(true);
-          showToast.success("Consent Recorded", "Target authorized for bounded testing.");
-        }}
-      />
+      {/* 2. Consent Gate Banner (Only for participants or settings) */}
+      {!isOperator && (
+        <ConsentGateBanner
+          isConsented={isConsented}
+          targetOrigin={targetOrigin}
+          onGrantConsent={async (op) => {
+            await api.orchestrator.confirmConsent(targetOrigin, op);
+            setIsConsented(true);
+            showToast.success("Consent Recorded", "Target authorized for bounded testing.");
+          }}
+        />
+      )}
 
       {/* 3. Main Console Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ScenarioSelector
-          onStartScenario={async (scen, dur, rps) => {
-            await startRunMutation.mutateAsync({ scenario: scen, duration: dur, rps });
-          }}
-          isRunning={isRunning}
-          disabled={!isConsented}
-        />
+        {isOperator ? (
+          <div className="p-5 rounded-xl bg-[var(--surface-1)] border border-[var(--border-subtle)] space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5 text-cyan-400" />
+                <h3 className="font-semibold text-sm text-[var(--text-primary)]">
+                  Operator Defensive Posture
+                </h3>
+              </div>
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-medium">
+                Defensive Only
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-lg bg-[var(--surface-2)] text-xs text-[var(--text-secondary)] space-y-2 leading-relaxed">
+              <p className="font-medium text-[var(--text-primary)]">
+                Classroom Participant-Attacks Model
+              </p>
+              <p>
+                In Sentinel Flow v2, operators maintain strictly defensive roles (observe, correlate, attribute, mitigate). All intrusion scenarios must be initiated by authorized classroom participants via the Participant Red Team Portal.
+              </p>
+              <p className="text-[11px] text-[var(--text-muted)] font-mono">
+                Target: {targetOrigin} • Bounded Quotas Active
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                Recorded Red Team Runs
+              </div>
+              {statusData?.runs && statusData.runs.length > 0 ? (
+                <div className="space-y-1.5 max-h-56 overflow-y-auto font-mono text-xs">
+                  {statusData.runs.map((r: any) => (
+                    <div
+                      key={r.run_id}
+                      className="p-2 rounded bg-[var(--surface-2)] border border-[var(--border-subtle)] flex items-center justify-between"
+                    >
+                      <div>
+                        <span className="font-semibold text-slate-200">{r.scenario}</span>
+                        <span className="text-[11px] text-cyan-400 ml-2">
+                          {r.participant_identity_id || "participant"}
+                        </span>
+                      </div>
+                      <span className={`text-[11px] px-1.5 py-0.5 rounded ${
+                        r.status === "RUNNING"
+                          ? "bg-rose-500/20 text-rose-300 animate-pulse"
+                          : "bg-slate-700/50 text-slate-400"
+                      }`}>
+                        {r.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-xs text-[var(--text-muted)] py-4 text-center">
+                  No participant attack runs recorded in this session.
+                </div>
+              )}
+            </div>
+
+            <div className="pt-2 flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open("/join", "_blank")}
+                className="text-xs"
+              >
+                Open Participant Red Portal
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <ScenarioSelector
+            onStartScenario={async (scen, dur, rps) => {
+              await startRunMutation.mutateAsync({ scenario: scen, duration: dur, rps });
+            }}
+            isRunning={isRunning}
+            disabled={!isConsented}
+          />
+        )}
 
         <LiveEffectTimeline
           runStatus={activeRunStatus}

@@ -145,7 +145,7 @@ export const api = {
       }),
     }),
 
-  // Attack Orchestrator
+  // Attack Orchestrator (Legacy & Monitoring)
   orchestrator: {
     listScenarios: () => request("/api/orchestrator/scenarios"),
     startRun: (params, targetOrigin, accounts) => {
@@ -156,8 +156,8 @@ export const api = {
       });
     },
     stopRun: (runId) => request(`/api/orchestrator/run/${runId}/stop`, { method: "POST" }),
-    emergencyStop: () => request("/api/orchestrator/emergency-stop", { method: "POST" }),
-    resetEmergencyStop: () => request("/api/orchestrator/emergency-stop/reset", { method: "POST" }),
+    emergencyStop: () => request("/api/v1/operator/circuit-breaker/trip", { method: "POST" }),
+    resetEmergencyStop: () => request("/api/v1/operator/circuit-breaker/reset", { method: "POST" }),
     getRunStatus: (runId) => request(`/api/orchestrator/run/${runId}`),
     getEffectTimeline: (runId) => request(`/api/orchestrator/run/${runId}/effect-timeline`),
     listRuns: () => request("/api/orchestrator/runs"),
@@ -171,6 +171,57 @@ export const api = {
           confirmed_ownership: confirmedOwnership,
         }),
       }),
+  },
+
+  // Operator Defensive Countermeasures & Exercise Control (Phase 3)
+  operator: {
+    setPhase: (phase) =>
+      request("/api/v1/operator/session/phase", {
+        method: "POST",
+        body: JSON.stringify({ phase }),
+      }),
+    getAuthorization: () => request("/api/v1/operator/authorization"),
+    updateAuthorization: (authData) =>
+      request("/api/v1/operator/authorization", {
+        method: "PUT",
+        body: JSON.stringify(authData),
+      }),
+    applyRateLimit: (identityId, rateLimitRps = 2.0) =>
+      request("/api/v1/operator/mitigations/rate-limit", {
+        method: "POST",
+        body: JSON.stringify({ identity_id: identityId, rate_limit_rps: rateLimitRps }),
+      }),
+    isolateIdentity: (identityId) =>
+      request("/api/v1/operator/mitigations/isolate", {
+        method: "POST",
+        body: JSON.stringify({ identity_id: identityId }),
+      }),
+    resetMitigation: (identityId) =>
+      request("/api/v1/operator/mitigations/reset", {
+        method: "POST",
+        body: JSON.stringify({ identity_id: identityId }),
+      }),
+    listMitigations: () => request("/api/v1/operator/mitigations"),
+    tripCircuitBreaker: () =>
+      request("/api/v1/operator/circuit-breaker/trip", { method: "POST" }),
+    resetCircuitBreaker: () =>
+      request("/api/v1/operator/circuit-breaker/reset", { method: "POST" }),
+    suspendParticipant: (participantId) =>
+      request(`/api/v1/operator/participants/${participantId}/suspend`, { method: "POST" }),
+    listRuns: () => request("/api/v1/operator/runs"),
+  },
+
+  // Participant Red Team Runs (Phase 2 & 3)
+  red: {
+    startRun: (scenario, targetUrl = null, effectsMax = null) =>
+      request("/api/v1/red/runs", {
+        method: "POST",
+        body: JSON.stringify({ scenario, target_url: targetUrl, effects_max: effectsMax }),
+      }),
+    listRuns: () => request("/api/v1/red/runs"),
+    getRun: (runId) => request(`/api/v1/red/runs/${runId}`),
+    stopRun: (runId) => request(`/api/v1/red/runs/${runId}/stop`, { method: "POST" }),
+    listScenarios: () => request("/api/v1/red/scenarios"),
   },
 
   // WebSocket Auth Ticket

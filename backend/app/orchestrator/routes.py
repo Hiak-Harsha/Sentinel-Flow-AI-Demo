@@ -207,26 +207,13 @@ async def get_consent_audit() -> list[dict[str, Any]]:
 
 @router.post("/run")
 @router.post("/runs")
-async def start_run(req: StartRunRequest, request: Request) -> dict[str, Any]:
-    """Launch an authorized attack scenario against allowlisted private lab target."""
+async def start_run(request: Request, req: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Deprecated: Operators are strictly defensive. Attack runs are participant-only via /api/v1/red/runs."""
     verify_operator_access(request)
-    manager = get_run_manager()
-    try:
-        run = await manager.start_run(
-            scenario=req.scenario,
-            target_origin=req.target_origin,
-            accounts=req.accounts,
-            duration_seconds=req.duration_seconds,
-            requests_per_second=req.requests_per_second,
-            account_count=req.account_count,
-            scraping_iterations=req.scraping_iterations,
-            launched_by=req.launched_by,
-        )
-        return {"status": "started", "run": run.to_dict()}
-    except SecurityError as err:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(err))
-    except ValueError as err:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Operator cannot launch attack runs. Operators maintain strictly defensive visibility. Attack runs must be initiated by authorized participants via /api/v1/red/runs.",
+    )
 
 
 @router.post("/run/{run_id}/stop")

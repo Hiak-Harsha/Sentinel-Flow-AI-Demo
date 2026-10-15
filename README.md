@@ -1,4 +1,4 @@
-# Sentinel Flow: AI-Based Defensive Intrusion Detection System
+# Sentinel Flow v2: AI-Based Defensive Intrusion Detection System & Classroom Cyber Range
 
 [![CI](https://github.com/Hiak-Harsha/Sentinel-Flow-AI-Demo/actions/workflows/ci.yml/badge.svg)](https://github.com/Hiak-Harsha/Sentinel-Flow-AI-Demo/actions/workflows/ci.yml)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
@@ -8,11 +8,26 @@
 [![Grafana](https://img.shields.io/badge/Grafana-Telemetry-F46800?logo=grafana&logoColor=white)](https://grafana.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **Sentinel Flow** is an enterprise-grade, defensive cybersecurity monitoring and threat detection platform built for live classroom demonstration and security analytics. It demonstrates the complete lifecycle:
+> **Sentinel Flow v2** is an enterprise-grade, defensive cybersecurity operations and live educational cyber range platform. It bridges hands-on red team participation with real-time SOC blue team defensive telemetry:
 >
-> $$\textbf{Real-World Threat} \longrightarrow \textbf{Streaming Feature Extraction} \longrightarrow \textbf{Multi-Layer Detection Fusion} \longrightarrow \textbf{Verifiable Explainability} \longrightarrow \textbf{Defensive Action}$$
+> $$\textbf{Participant Attack Scenario} \longrightarrow \textbf{Streaming Feature Extraction} \longrightarrow \textbf{3-Layer Detection Fusion} \longrightarrow \textbf{Calibrated Probability} \longrightarrow \textbf{Operator Defensive Action}$$
 
-Unlike simple static signature engines or black-box academic scripts, Sentinel Flow extracts **35 observable live streaming features** from live HTTP reverse proxy flows, establishes an **empirical baseline** of normal user traffic, correlates deterministic **MITRE ATT&CK rules**, and computes **Platt-calibrated machine learning inference** with conformal prediction uncertainty intervals.
+### Key Invariants in Sentinel Flow v2
+- **Participant Arena (Red Team):** Students connect using room join codes and an alias, launching bounded attack scenarios (`burst_dos`, `credential_stuffing`, `directory_traversal`, `sqli_probe`) against allowlisted disposable lab targets within strict run quotas.
+- **Operator Console (Blue Team):** Instructors and SOC operators supervise exercises through a **strictly defensive** command center (zero attack launch capability) with real-time WebSocket telemetry, calibrated Brier scoring, incident triage, and global emergency stop.
+- **Graphite & Warm Amber Design System:** Completely redesigned instrument panel aesthetic with custom typography (*Space Grotesk*, *Inter*, *JetBrains Mono*), hair-line borders, zero cyan/purple pollution, and responsive layouts across Desktop, Tablet, and Mobile.
+- **Forensic Hash Chain:** Immutable, forward SHA-256 evidence chain verification proving tamper resistance.
+
+---
+
+## Documentation Index
+- [Architecture & System Specification (v2)](docs/ARCHITECTURE_V2.md)
+- [Classroom & SOC Operations Runbook](docs/RUNBOOK.md)
+- [Role-Based Access Control & Permission Matrix](docs/ROLE_MODEL.md)
+- [Empirical Baseline & Statistical Calibration](docs/BASELINE_V2.md)
+- [Model Governance Card](docs/MODEL_CARD.md)
+- [Realtime WebSocket Protocol Specification](docs/WS_PROTOCOL.md)
+- [Performance & Ingestion Benchmarks](docs/PERF.md)
 
 ---
 

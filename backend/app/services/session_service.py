@@ -266,6 +266,9 @@ class SessionService:
     def get_participants(self) -> list[dict[str, Any]]:
         return list(self.participants.values())
 
+    def get_participant(self, participant_id: str) -> dict[str, Any] | None:
+        return self.get_participant_by_token_or_id(participant_id)
+
     def get_participant_by_token_or_id(self, identifier: str) -> dict[str, Any] | None:
         for p in self.participants.values():
             if p["id"] == identifier or p["token"] == identifier or p["device_id"] == identifier:
@@ -431,4 +434,19 @@ class SessionService:
         """Check whether participant has been suspended by operator."""
         p = self.get_participant_by_token_or_id(identifier)
         return bool(p and p.get("status") == "SUSPENDED")
+
+
+_session_service: SessionService | None = None
+
+
+def set_session_service(service: SessionService) -> None:
+    global _session_service
+    _session_service = service
+
+
+def get_session_service() -> SessionService:
+    global _session_service
+    if _session_service is None:
+        _session_service = SessionService()
+    return _session_service
 

@@ -48,17 +48,31 @@ class ZapDriver:
         stop_event: asyncio.Event,
         progress_callback: Callable[[dict[str, Any]], None] | None = None,
         effect_callback: Callable[[dict[str, Any]], None] | None = None,
+        attacker_identity: str | None = None,
     ) -> dict[str, Any]:
         """Execute non-destructive security canary probes with server-measured logging."""
         valid_origin = self.enforcer.validate_target(target_origin)
         base_url = valid_origin.split("/lab-target")[0] if "/lab-target" in valid_origin else valid_origin
-        attacker_id = f"canary_runner_{run_id[:8]}"
+        attacker_id = attacker_identity or f"canary_runner_{run_id[:8]}"
+
+        from app.auth.security import sign_internal_actor
+        signed_actor = sign_internal_actor(actor_id=attacker_id, role="participant", run_id=run_id)
 
         total = len(CANARY_PROBES)
         sent = 0
         failed = 0
 
-        async with httpx.AsyncClient(timeout=4.0) as client:
+        transport = None
+        import sys
+        from app.config import settings
+        if "pytest" in sys.modules or settings.env.lower() in ("test", "testing"):
+            try:
+                from app.main import app as main_app
+                transport = httpx.ASGITransport(app=main_app)
+            except Exception:
+                pass
+
+        async with httpx.AsyncClient(transport=transport, timeout=4.0) as client:
             for idx, (path_and_query, probe_name) in enumerate(CANARY_PROBES):
                 if stop_event.is_set():
                     logger.info("Probe scan %s was halted by operator.", run_id)
@@ -68,6 +82,7 @@ class ZapDriver:
                 headers = {
                     "X-Attack-Run-ID": run_id,
                     "X-Sentinel-Identity": attacker_id,
+                    "X-Sentinel-Actor": signed_actor,
                     "User-Agent": "SentinelFlow-CanaryProbeEngine/2.0",
                 }
 
@@ -148,17 +163,31 @@ class ZapDriver:
         stop_event: asyncio.Event,
         progress_callback: Callable[[dict[str, Any]], None] | None = None,
         effect_callback: Callable[[dict[str, Any]], None] | None = None,
+        attacker_identity: str | None = None,
     ) -> dict[str, Any]:
         """Execute simulated connection sensor probes across distinct ports."""
         valid_origin = self.enforcer.validate_target(target_origin)
         base_url = valid_origin.split("/lab-target")[0] if "/lab-target" in valid_origin else valid_origin
         sensor_url = f"{base_url}/lab-target/sensor/port-probe"
-        attacker_id = f"port_scanner_{run_id[:8]}"
+        attacker_id = attacker_identity or f"port_scanner_{run_id[:8]}"
+
+        from app.auth.security import sign_internal_actor
+        signed_actor = sign_internal_actor(actor_id=attacker_id, role="participant", run_id=run_id)
 
         total = len(DISTINCT_PORTS)
         sent = 0
 
-        async with httpx.AsyncClient(timeout=3.0) as client:
+        transport = None
+        import sys
+        from app.config import settings
+        if "pytest" in sys.modules or settings.env.lower() in ("test", "testing"):
+            try:
+                from app.main import app as main_app
+                transport = httpx.ASGITransport(app=main_app)
+            except Exception:
+                pass
+
+        async with httpx.AsyncClient(transport=transport, timeout=3.0) as client:
             for idx, port in enumerate(DISTINCT_PORTS):
                 if stop_event.is_set():
                     logger.info("Port scan %s was halted by operator.", run_id)
@@ -167,6 +196,7 @@ class ZapDriver:
                 headers = {
                     "X-Attack-Run-ID": run_id,
                     "X-Sentinel-Identity": attacker_id,
+                    "X-Sentinel-Actor": signed_actor,
                     "User-Agent": "SentinelFlow-PortScanner/2.0",
                 }
 

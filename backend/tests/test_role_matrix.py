@@ -74,11 +74,15 @@ def admin_token() -> str:
 
 def test_participant_can_launch_scenario_when_exercise_open(participant_token: str):
     """Participant should be able to launch a bounded scenario via /api/v1/red/runs
-
     when the exercise phase is EXERCISE_OPEN.
-    Expected to fail in Phase 0 because /api/v1/red/runs is not yet implemented (returns 404).
     """
     with TestClient(app) as client:
+        op_token = create_access_token(identity_id="op_admin", alias="Admin", role="operator")
+        client.post(
+            "/api/v1/operator/session/phase",
+            headers={"Authorization": f"Bearer {op_token}"},
+            json={"phase": "EXERCISE_OPEN"},
+        )
         headers = {"Authorization": f"Bearer {participant_token}"}
         resp = client.post(
             "/api/v1/red/runs",
@@ -96,11 +100,15 @@ def test_participant_can_launch_scenario_when_exercise_open(participant_token: s
 
 def test_participant_cannot_launch_attacks_when_phase_locked(participant_token: str):
     """When the session phase is LOBBY, BASELINE, DEBRIEF, or CLOSED, attack requests
-
     must be rejected with HTTP 423 Locked.
-    Expected to fail in Phase 0 because /api/v1/red/runs does not exist yet (returns 404).
     """
     with TestClient(app) as client:
+        op_token = create_access_token(identity_id="op_admin", alias="Admin", role="operator")
+        client.post(
+            "/api/v1/operator/session/phase",
+            headers={"Authorization": f"Bearer {op_token}"},
+            json={"phase": "LOBBY"},
+        )
         headers = {"Authorization": f"Bearer {participant_token}"}
         resp = client.post(
             "/api/v1/red/runs",

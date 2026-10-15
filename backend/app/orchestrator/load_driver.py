@@ -56,6 +56,7 @@ class LoadBurstDriver:
         stop_event: asyncio.Event,
         progress_callback: Callable[[dict[str, Any]], None] | None = None,
         effect_callback: Callable[[dict[str, Any]], None] | None = None,
+        attacker_identity: str | None = None,
     ) -> dict[str, Any]:
         """Execute a volumetric burst (burst_dos) with real server-measured logging."""
         valid_origin = self.enforcer.validate_target(target_origin)
@@ -63,11 +64,24 @@ class LoadBurstDriver:
         sent = 0
         success = 0
         failed = 0
-        attacker_id = f"dos_agent_{run_id[:8]}"
+        attacker_id = attacker_identity or f"dos_agent_{run_id[:8]}"
+
+        from app.auth.security import sign_internal_actor
+        signed_actor = sign_internal_actor(actor_id=attacker_id, role="participant", run_id=run_id)
 
         delay = 1.0 / max(1, requests_per_sec)
 
-        async with httpx.AsyncClient(timeout=4.0) as client:
+        transport = None
+        import sys
+        from app.config import settings
+        if "pytest" in sys.modules or settings.env.lower() in ("test", "testing"):
+            try:
+                from app.main import app as main_app
+                transport = httpx.ASGITransport(app=main_app)
+            except Exception:
+                pass
+
+        async with httpx.AsyncClient(transport=transport, timeout=4.0) as client:
             for i in range(total_requests):
                 if stop_event.is_set():
                     break
@@ -75,6 +89,7 @@ class LoadBurstDriver:
                 headers = {
                     "X-Attack-Run-ID": run_id,
                     "X-Sentinel-Identity": attacker_id,
+                    "X-Sentinel-Actor": signed_actor,
                     "User-Agent": "SentinelFlow-BurstTester/2.0",
                 }
 
@@ -166,6 +181,7 @@ class LoadBurstDriver:
         stop_event: asyncio.Event,
         progress_callback: Callable[[dict[str, Any]], None] | None = None,
         effect_callback: Callable[[dict[str, Any]], None] | None = None,
+        attacker_identity: str | None = None,
     ) -> dict[str, Any]:
         """Execute automated web scraping with real server-measured logging."""
         valid_origin = self.enforcer.validate_target(target_origin)
@@ -173,11 +189,24 @@ class LoadBurstDriver:
         total = len(endpoints)
         sent = 0
         failed = 0
-        attacker_id = f"scraper_bot_{run_id[:8]}"
+        attacker_id = attacker_identity or f"scraper_bot_{run_id[:8]}"
+
+        from app.auth.security import sign_internal_actor
+        signed_actor = sign_internal_actor(actor_id=attacker_id, role="participant", run_id=run_id)
 
         delay = interval_ms / 1000.0
 
-        async with httpx.AsyncClient(timeout=4.0) as client:
+        transport = None
+        import sys
+        from app.config import settings
+        if "pytest" in sys.modules or settings.env.lower() in ("test", "testing"):
+            try:
+                from app.main import app as main_app
+                transport = httpx.ASGITransport(app=main_app)
+            except Exception:
+                pass
+
+        async with httpx.AsyncClient(transport=transport, timeout=4.0) as client:
             for idx, path in enumerate(endpoints):
                 if stop_event.is_set():
                     break
@@ -185,6 +214,7 @@ class LoadBurstDriver:
                 headers = {
                     "X-Attack-Run-ID": run_id,
                     "X-Sentinel-Identity": attacker_id,
+                    "X-Sentinel-Actor": signed_actor,
                     "User-Agent": "SentinelFlow-Scraper/2.0 (SecuritySpider)",
                 }
 

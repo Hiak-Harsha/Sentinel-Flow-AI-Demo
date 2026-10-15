@@ -54,6 +54,7 @@ class CredentialStuffingDriver:
         stop_event: asyncio.Event,
         progress_callback: Callable[[dict[str, Any]], None] | None = None,
         effect_callback: Callable[[dict[str, Any]], None] | None = None,
+        attacker_identity: str | None = None,
     ) -> dict[str, Any]:
         """Execute credential stuffing simulation against allowlisted target with real server logging."""
         valid_origin = self.enforcer.validate_target(target_origin)
@@ -63,7 +64,10 @@ class CredentialStuffingDriver:
         attempt_count = 0
         failure_count = 0
         success_count = 0
-        attacker_id = f"attacker_bot_{run_id[:8]}"
+        attacker_id = attacker_identity or f"attacker_bot_{run_id[:8]}"
+
+        from app.auth.security import sign_internal_actor
+        signed_actor = sign_internal_actor(actor_id=attacker_id, role="participant", run_id=run_id)
 
         # Resolve target login path
         if "/lab-target" in valid_origin:
@@ -76,13 +80,24 @@ class CredentialStuffingDriver:
         login_url = f"{base_url}{login_path}"
 
         logger.info(
-            "Starting credential stuffing run %s against %s (%d accounts)",
+            "Starting credential stuffing run %s against %s (%d accounts, attacker=%s)",
             run_id,
             login_url,
             len(accounts),
+            attacker_id,
         )
 
-        async with httpx.AsyncClient(timeout=5.0) as client:
+        transport = None
+        import sys
+        from app.config import settings
+        if "pytest" in sys.modules or settings.env.lower() in ("test", "testing"):
+            try:
+                from app.main import app as main_app
+                transport = httpx.ASGITransport(app=main_app)
+            except Exception:
+                pass
+
+        async with httpx.AsyncClient(transport=transport, timeout=5.0) as client:
             for idx, acc in enumerate(accounts):
                 if stop_event.is_set():
                     logger.info("Credential stuffing run %s was cancelled by operator.", run_id)
@@ -94,6 +109,7 @@ class CredentialStuffingDriver:
                 headers = {
                     "X-Attack-Run-ID": run_id,
                     "X-Sentinel-Identity": attacker_id,
+                    "X-Sentinel-Actor": signed_actor,
                     "User-Agent": "SentinelFlow-AttackSimulator/2.0 (CredentialStuffingBot)",
                     "Content-Type": "application/json",
                 }

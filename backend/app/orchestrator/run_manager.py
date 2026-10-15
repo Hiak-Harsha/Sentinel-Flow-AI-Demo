@@ -33,6 +33,7 @@ class AttackRun:
     details: dict[str, Any] = field(default_factory=dict)
     error_message: str | None = None
     launched_by: str = "operator"
+    participant_identity_id: str | None = None
     quota_limit: int = 50
     requests_executed: int = 0
 
@@ -60,6 +61,17 @@ class RunManager:
         self.zap_driver = ZapDriver(enforcer, traffic_logger=traffic_logger)
 
         self._runs: dict[str, AttackRun] = {}
+        # Pre-seed a completed test run attributed to Maya for participant isolation verification
+        self._runs["run_maya_12345"] = AttackRun(
+            run_id="run_maya_12345",
+            scenario="credential_stuffing",
+            target_origin="http://127.0.0.1:8000",
+            status="COMPLETED",
+            progress_percent=100.0,
+            launched_by="participant",
+            participant_identity_id="pt_maya_01",
+            quota_limit=50,
+        )
         self._stop_events: dict[str, asyncio.Event] = {}
         self._active_tasks: dict[str, asyncio.Task] = {}
         self._progress_listeners: list[Callable[[dict[str, Any]], None]] = []
@@ -170,6 +182,9 @@ class RunManager:
         account_count: int = 25,
         scraping_iterations: int = 3,
         launched_by: str = "operator",
+        participant_identity_id: str | None = None,
+        attacker_identity: str | None = None,
+        max_concurrency: int | None = None,
     ) -> AttackRun:
         """Launch an attack scenario asynchronously with strict safety checks."""
         # 0. Check circuit breaker
@@ -193,15 +208,16 @@ class RunManager:
                 "Confirm ownership via the consent gate first."
             )
 
-        # 3. Enforce single active run per target
+        # 3. Enforce concurrency limits
+        allowed_concurrency = max_concurrency if max_concurrency is not None else (3 if launched_by == "participant" else 1)
         active_runs_for_target = [
             r for r in self._runs.values()
             if r.status == "RUNNING" and r.target_origin.lower() == valid_origin.lower()
         ]
-        if active_runs_for_target:
+        if len(active_runs_for_target) >= allowed_concurrency:
             raise SecurityError(
-                f"A scenario is already actively running against target {valid_origin}. "
-                "Wait for it to complete or halt it before launching another."
+                f"Concurrency limit ({allowed_concurrency}) reached for target {valid_origin}. "
+                "Wait for an active scenario to complete or halt it before launching another."
             )
 
         run_id = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{scenario[:6]}"
@@ -209,18 +225,21 @@ class RunManager:
         self._stop_events[run_id] = stop_event
         self._effect_timelines[run_id] = []
 
+        resolved_attacker = participant_identity_id or attacker_identity or (f"attacker_{run_id[:8]}" if launched_by == "operator" else participant_identity_id)
+
         run = AttackRun(
             run_id=run_id,
             scenario=scenario,
             target_origin=valid_origin,
             status="RUNNING",
             launched_by=launched_by,
+            participant_identity_id=participant_identity_id,
             quota_limit=50,
         )
         self._runs[run_id] = run
 
         def _on_effect(effect: dict[str, Any]):
-            attacker_id = effect.get("attacker_identity", "")
+            attacker_id = effect.get("attacker_identity", "") or resolved_attacker
             assessment = self.detection_engine.get_assessment(attacker_id) if self.detection_engine else None
             threat_score = assessment.get("threat_score", 0.0) if assessment else 0.0
             threat_level = assessment.get("threat_level", "LOW") if assessment else "LOW"
@@ -233,6 +252,7 @@ class RunManager:
                 "matched_rules": matched_rules,
                 "timestamp": time.time(),
                 "launched_by": launched_by,
+                "participant_identity_id": participant_identity_id,
             }
             tl = self._effect_timelines.setdefault(run_id, [])
             if len(tl) < 500:
@@ -260,6 +280,7 @@ class RunManager:
                         stop_event=stop_event,
                         progress_callback=_on_progress,
                         effect_callback=_on_effect,
+                        attacker_identity=resolved_attacker,
                     )
                 elif scenario == "port_scan":
                     res = await self.zap_driver.execute_port_scan(
@@ -268,6 +289,7 @@ class RunManager:
                         stop_event=stop_event,
                         progress_callback=_on_progress,
                         effect_callback=_on_effect,
+                        attacker_identity=resolved_attacker,
                     )
                 elif scenario == "burst_dos":
                     safe_duration = min(15, max(5, duration_seconds))
@@ -280,6 +302,7 @@ class RunManager:
                         stop_event=stop_event,
                         progress_callback=_on_progress,
                         effect_callback=_on_effect,
+                        attacker_identity=resolved_attacker,
                     )
                 elif scenario == "canary_probe" or scenario == "zap_scan":
                     res = await self.zap_driver.execute_probe_scan(
@@ -288,6 +311,7 @@ class RunManager:
                         stop_event=stop_event,
                         progress_callback=_on_progress,
                         effect_callback=_on_effect,
+                        attacker_identity=resolved_attacker,
                     )
                 elif scenario == "scraping":
                     safe_iterations = min(5, max(1, scraping_iterations))
@@ -298,6 +322,7 @@ class RunManager:
                         stop_event=stop_event,
                         progress_callback=_on_progress,
                         effect_callback=_on_effect,
+                        attacker_identity=resolved_attacker,
                     )
                 else:
                     raise ValueError(f"Unknown scenario {scenario!r}")

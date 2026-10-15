@@ -122,6 +122,8 @@ async def lifespan(app: FastAPI):
     ws_manager = WebSocketManager()
     sessions = SessionService(repo=session_repo)
     await sessions.load_from_db()
+    from app.services.session_service import set_session_service as set_global_session_service
+    set_global_session_service(sessions)
     academic = AcademicModelService(ARTIFACT_DIR)
     model_registry = ModelRegistry(ARTIFACT_DIR)
     await model_registry.sync_from_db()

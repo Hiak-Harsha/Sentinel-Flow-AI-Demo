@@ -38,6 +38,8 @@ class SessionRepository:
         session_code: str,
         join_code: str,
         status: str = "active",
+        phase: str = "LOBBY",
+        authorizations_json: dict[str, Any] | None = None,
         controlled_target_device_id: str | None = None,
     ) -> SessionModel:
         """Insert or update a session record."""
@@ -60,6 +62,8 @@ class SessionRepository:
                     session_code=session_code,
                     join_code=join_code,
                     status=status,
+                    phase=phase,
+                    authorizations_json=authorizations_json,
                     controlled_target_device_id=controlled_target_device_id,
                 )
                 session.add(record)
@@ -67,6 +71,9 @@ class SessionRepository:
                 record.session_code = session_code
                 record.join_code = join_code
                 record.status = status
+                record.phase = phase
+                if authorizations_json is not None:
+                    record.authorizations_json = authorizations_json
                 record.controlled_target_device_id = controlled_target_device_id
 
             await session.flush()

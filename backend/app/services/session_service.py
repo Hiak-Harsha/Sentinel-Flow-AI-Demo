@@ -59,6 +59,9 @@ class SessionService:
             if db_session:
                 raw_phase = getattr(db_session, "phase", None) or "LOBBY"
                 phase = raw_phase if raw_phase in VALID_EXERCISE_PHASES else "LOBBY"
+                auth_json = getattr(db_session, "authorizations_json", None)
+                if auth_json and isinstance(auth_json, dict):
+                    self.session_authorizations[db_session.id] = auth_json
                 self.active_session = {
                     "id": db_session.id,
                     "join_code": db_session.join_code,
@@ -86,9 +89,10 @@ class SessionService:
                         "state": "NORMAL",
                     }
                 logger.info(
-                    "Restored active session %s with %d participants from database",
+                    "Restored active session %s with %d participants and phase %s from database",
                     db_session.id,
                     len(self.participants),
+                    phase,
                 )
         except Exception:
             logger.exception("Failed loading session state from database")
@@ -347,6 +351,8 @@ class SessionService:
                 session_code=f"session_{session['id'][:8]}",
                 join_code=session["join_code"],
                 status="active" if norm_phase != "CLOSED" else "closed",
+                phase=norm_phase,
+                authorizations_json=self.session_authorizations.get(session["id"]),
                 controlled_target_device_id=session.get("controlled_target"),
             )
         )
@@ -407,6 +413,17 @@ class SessionService:
             "authorized_at_iso": _timestamp(),
         }
         self.session_authorizations[sid] = updated
+        self._persist_async(
+            self.repo.save_session(
+                session_id=session["id"],
+                session_code=f"session_{session['id'][:8]}",
+                join_code=session["join_code"],
+                status="active" if session.get("phase") != "CLOSED" else "closed",
+                phase=session.get("phase", "LOBBY"),
+                authorizations_json=updated,
+                controlled_target_device_id=session.get("controlled_target"),
+            )
+        )
         logger.info(
             "Session %s authorization updated by %s (target=%s, scenarios=%d, concurrency=%d)",
             sid[:8],

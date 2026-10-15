@@ -6,6 +6,181 @@
     "version": "3.0.0"
   },
   "paths": {
+    "/api/v1/auth/operator-login": {
+      "post": {
+        "tags": [
+          "Authentication & RBAC"
+        ],
+        "summary": "Authenticate operator with Argon2 passcode and issue short-lived JWT + rotating refresh token",
+        "operationId": "operator_login_api_v1_auth_operator_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__api__v1__auth__OperatorLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "Authentication & RBAC"
+        ],
+        "summary": "Rotate refresh token and issue new JWT access token",
+        "operationId": "refresh_token_api_v1_auth_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Refresh Token Api V1 Auth Refresh Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "Authentication & RBAC"
+        ],
+        "summary": "Revoke refresh token and invalidate operator session",
+        "operationId": "logout_api_v1_auth_logout_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogoutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Logout Api V1 Auth Logout Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/whoami": {
+      "get": {
+        "tags": [
+          "Authentication & RBAC"
+        ],
+        "summary": "Get authenticated user role and identity context",
+        "operationId": "whoami_api_v1_auth_whoami_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Whoami Api V1 Auth Whoami Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/metrics": {
+      "get": {
+        "tags": [
+          "Observability & Metrics"
+        ],
+        "summary": "Prometheus formatted telemetry and system metrics",
+        "description": "Return standard Prometheus text format telemetry metrics.",
+        "operationId": "get_metrics_api_v1_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/health/live": {
       "get": {
         "tags": [
@@ -613,6 +788,698 @@
         }
       }
     },
+    "/api/v1/operator/session/phase": {
+      "post": {
+        "tags": [
+          "Operator Controls"
+        ],
+        "summary": "Transition exercise session phase",
+        "description": "Advance session phase. Only operator or admin can transition phases.",
+        "operationId": "set_session_phase_api_v1_operator_session_phase_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhaseChangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Set Session Phase Api V1 Operator Session Phase Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/operator/authorization": {
+      "get": {
+        "tags": [
+          "Operator Controls"
+        ],
+        "summary": "Retrieve active session authorization record",
+        "operationId": "get_authorization_api_v1_operator_authorization_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Authorization Api V1 Operator Authorization Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Operator Controls"
+        ],
+        "summary": "Configure authorized target, enabled scenarios, and quotas",
+        "operationId": "update_authorization_api_v1_operator_authorization_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthorizationUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Update Authorization Api V1 Operator Authorization Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/operator/emergency-stop": {
+      "post": {
+        "tags": [
+          "Operator Controls"
+        ],
+        "summary": "Emergency Stop: Halt all runs within 2s and trip circuit breaker",
+        "operationId": "trigger_emergency_stop_api_v1_operator_emergency_stop_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Trigger Emergency Stop Api V1 Operator Emergency Stop Post"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/operator/emergency-stop/reset": {
+      "post": {
+        "tags": [
+          "Operator Controls"
+        ],
+        "summary": "Reset emergency stop circuit breaker",
+        "operationId": "reset_emergency_stop_api_v1_operator_emergency_stop_reset_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Reset Emergency Stop Api V1 Operator Emergency Stop Reset Post"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/operator/participants/{participant_id}/suspend": {
+      "post": {
+        "tags": [
+          "Operator Controls"
+        ],
+        "summary": "Suspend a participant's intrusion tools",
+        "operationId": "suspend_participant_route_api_v1_operator_participants__participant_id__suspend_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "participant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Participant Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Suspend Participant Route Api V1 Operator Participants  Participant Id  Suspend Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/operator/runs": {
+      "get": {
+        "tags": [
+          "Operator Controls"
+        ],
+        "summary": "Read-only view of recorded attack runs",
+        "operationId": "list_operator_runs_api_v1_operator_runs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Operator Runs Api V1 Operator Runs Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/operator/mitigations/rate-limit": {
+      "post": {
+        "tags": [
+          "Operator Controls"
+        ],
+        "summary": "Rate limit an attacker identity",
+        "operationId": "apply_rate_limit_api_v1_operator_mitigations_rate_limit_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RateLimitMitigationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Apply Rate Limit Api V1 Operator Mitigations Rate Limit Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/operator/mitigations/isolate": {
+      "post": {
+        "tags": [
+          "Operator Controls"
+        ],
+        "summary": "Isolate / drop an attacker identity",
+        "operationId": "apply_isolation_api_v1_operator_mitigations_isolate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IsolateMitigationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Apply Isolation Api V1 Operator Mitigations Isolate Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/operator/mitigations/reset": {
+      "post": {
+        "tags": [
+          "Operator Controls"
+        ],
+        "summary": "Reset active mitigations for an identity",
+        "operationId": "reset_mitigation_api_v1_operator_mitigations_reset_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetMitigationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Reset Mitigation Api V1 Operator Mitigations Reset Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/operator/mitigations": {
+      "get": {
+        "tags": [
+          "Operator Controls"
+        ],
+        "summary": "List active operator mitigations",
+        "operationId": "list_mitigations_api_v1_operator_mitigations_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Mitigations Api V1 Operator Mitigations Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/operator/circuit-breaker/trip": {
+      "post": {
+        "tags": [
+          "Operator Controls"
+        ],
+        "summary": "Trip circuit breaker and halt all runs",
+        "operationId": "trip_circuit_breaker_route_api_v1_operator_circuit_breaker_trip_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Trip Circuit Breaker Route Api V1 Operator Circuit Breaker Trip Post"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/operator/circuit-breaker/reset": {
+      "post": {
+        "tags": [
+          "Operator Controls"
+        ],
+        "summary": "Reset circuit breaker",
+        "operationId": "reset_circuit_breaker_route_api_v1_operator_circuit_breaker_reset_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Reset Circuit Breaker Route Api V1 Operator Circuit Breaker Reset Post"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/red/runs": {
+      "get": {
+        "tags": [
+          "Participant Red Team"
+        ],
+        "summary": "List Red Runs",
+        "description": "List attack runs with strict participant isolation.\n\nParticipants only see their own runs; operators and admins see all runs.",
+        "operationId": "list_red_runs_api_v1_red_runs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response List Red Runs Api V1 Red Runs Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Participant Red Team"
+        ],
+        "summary": "Start Participant Run",
+        "description": "Launch a bounded intrusion scenario under the authenticated participant's identity.\n\nGated strictly to participants. Operators receive 403 Forbidden.",
+        "operationId": "start_participant_run_api_v1_red_runs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartRedRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Start Participant Run Api V1 Red Runs Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/red/runs/{run_id}": {
+      "get": {
+        "tags": [
+          "Participant Red Team"
+        ],
+        "summary": "Get Red Run",
+        "description": "Retrieve run details and effect timeline with participant isolation enforcement.",
+        "operationId": "get_red_run_api_v1_red_runs__run_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Red Run Api V1 Red Runs  Run Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/red/runs/{run_id}/stop": {
+      "post": {
+        "tags": [
+          "Participant Red Team"
+        ],
+        "summary": "Stop Red Run",
+        "description": "Halt an active attack run. Participants can only halt their own runs.",
+        "operationId": "stop_red_run_api_v1_red_runs__run_id__stop_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Stop Red Run Api V1 Red Runs  Run Id  Stop Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/red/scenarios": {
+      "get": {
+        "tags": [
+          "Participant Red Team"
+        ],
+        "summary": "Get Participant Scenarios",
+        "description": "Retrieve enabled scenarios and current quota status for this participant.",
+        "operationId": "get_participant_scenarios_api_v1_red_scenarios_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Participant Scenarios Api V1 Red Scenarios Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/detection/status": {
       "get": {
         "tags": [
@@ -706,6 +1573,11 @@
         ],
         "summary": "Update alert disposition and analyst investigation notes",
         "operationId": "update_alert_disposition_api_v1_detection_alerts__alert_id__disposition_patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "alert_id",
@@ -815,7 +1687,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/models": {
@@ -961,6 +1838,11 @@
         ],
         "summary": "Promote a candidate model to production or staging",
         "operationId": "promote_model_api_v1_models__model_id__promote_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "model_id",
@@ -1057,17 +1939,26 @@
         "tags": [
           "Attack Orchestrator"
         ],
-        "summary": "Launch a bounded, consented attack scenario",
+        "summary": "Deprecated: Operator attack launch prohibited",
+        "description": "In Sentinel Flow v2, operator attack launches are strictly prohibited.\n\nThe operator console is strictly defensive. Bounded attack scenarios must be\ninitiated by authorized classroom participants via /api/v1/red/runs.",
         "operationId": "launch_run_api_v1_orchestrator_runs_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/app__schemas__orchestrator__StartRunRequest"
+                "anyOf": [
+                  {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -1092,7 +1983,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/orchestrator/runs/{run_id}": {
@@ -1157,7 +2053,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/orchestrator/emergency-stop/reset": {
@@ -1178,7 +2079,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/orchestrator/consent": {
@@ -1219,7 +2125,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/orchestrator/consent/log": {
@@ -1308,7 +2219,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/ws/ticket": {
@@ -1349,7 +2265,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/replay/status": {
@@ -1546,13 +2467,13 @@
           "Identity"
         ],
         "summary": "Operator Login",
-        "description": "Verify operator passcode and issue operator session token.",
+        "description": "Verify operator passcode using Argon2 and issue short-lived JWT + rotating refresh token.",
         "operationId": "operator_login_api_v1_api_identity_operator_login_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/OperatorLoginRequest"
+                "$ref": "#/components/schemas/app__identity__routes__OperatorLoginRequest"
               }
             }
           },
@@ -1590,7 +2511,7 @@
           "Identity"
         ],
         "summary": "Whoami",
-        "description": "Return identity and role from session token header.",
+        "description": "Return identity and role from session token or JWT header.",
         "operationId": "whoami_api_v1_api_identity_whoami_get",
         "responses": {
           "200": {
@@ -1605,7 +2526,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/api/identity/register": {
@@ -1658,7 +2584,7 @@
           "Identity"
         ],
         "summary": "Validate Session",
-        "description": "Validate a participant token against active sessions.",
+        "description": "Validate a participant or operator token against active sessions.",
         "operationId": "validate_session_api_v1_api_identity_validate_post",
         "requestBody": {
           "content": {
@@ -2509,13 +3435,13 @@
           "Identity"
         ],
         "summary": "Operator Login",
-        "description": "Verify operator passcode and issue operator session token.",
+        "description": "Verify operator passcode using Argon2 and issue short-lived JWT + rotating refresh token.",
         "operationId": "operator_login_api_identity_operator_login_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/OperatorLoginRequest"
+                "$ref": "#/components/schemas/app__identity__routes__OperatorLoginRequest"
               }
             }
           },
@@ -2553,7 +3479,7 @@
           "Identity"
         ],
         "summary": "Whoami",
-        "description": "Return identity and role from session token header.",
+        "description": "Return identity and role from session token or JWT header.",
         "operationId": "whoami_api_identity_whoami_get",
         "responses": {
           "200": {
@@ -2568,7 +3494,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/identity/register": {
@@ -2621,7 +3552,7 @@
           "Identity"
         ],
         "summary": "Validate Session",
-        "description": "Validate a participant token against active sessions.",
+        "description": "Validate a participant or operator token against active sessions.",
         "operationId": "validate_session_api_identity_validate_post",
         "requestBody": {
           "content": {
@@ -3205,17 +4136,25 @@
           "Attack Orchestrator"
         ],
         "summary": "Start Run",
-        "description": "Launch an authorized attack scenario against allowlisted private lab target.",
+        "description": "Deprecated: Operators are strictly defensive. Attack runs are participant-only via /api/v1/red/runs.",
         "operationId": "start_run_api_orchestrator_runs_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/app__orchestrator__routes__StartRunRequest"
+                "anyOf": [
+                  {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Req"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -3249,17 +4188,25 @@
           "Attack Orchestrator"
         ],
         "summary": "Start Run",
-        "description": "Launch an authorized attack scenario against allowlisted private lab target.",
+        "description": "Deprecated: Operators are strictly defensive. Attack runs are participant-only via /api/v1/red/runs.",
         "operationId": "start_run_api_orchestrator_run_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/app__orchestrator__routes__StartRunRequest"
+                "anyOf": [
+                  {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Req"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -4019,11 +4966,70 @@
         ],
         "title": "AlertModel"
       },
+      "AuthorizationUpdateRequest": {
+        "properties": {
+          "target_origin": {
+            "type": "string",
+            "title": "Target Origin",
+            "description": "Authorized target URL (must be private or loopback)"
+          },
+          "confirmed_ownership": {
+            "type": "boolean",
+            "title": "Confirmed Ownership",
+            "description": "Explicit ownership confirmation"
+          },
+          "enabled_scenarios": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Enabled Scenarios",
+            "description": "List of allowed scenario IDs"
+          },
+          "quota_per_participant": {
+            "type": "integer",
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Quota Per Participant",
+            "description": "Max runs allowed per participant",
+            "default": 5
+          },
+          "effects_per_run_max": {
+            "type": "integer",
+            "maximum": 200.0,
+            "minimum": 5.0,
+            "title": "Effects Per Run Max",
+            "description": "Max effects/requests per run",
+            "default": 50
+          },
+          "global_concurrency_cap": {
+            "type": "integer",
+            "maximum": 30.0,
+            "minimum": 1.0,
+            "title": "Global Concurrency Cap",
+            "description": "Max concurrent runs globally",
+            "default": 8
+          },
+          "reveal_mode": {
+            "type": "string",
+            "title": "Reveal Mode",
+            "description": "Detection feedback: off, after_run, live",
+            "default": "after_run"
+          }
+        },
+        "type": "object",
+        "required": [
+          "target_origin",
+          "confirmed_ownership"
+        ],
+        "title": "AuthorizationUpdateRequest"
+      },
       "AuthorizeTargetRequest": {
         "properties": {
           "operator_passcode": {
             "type": "string",
-            "title": "Operator Passcode"
+            "title": "Operator Passcode",
+            "default": ""
           },
           "target_origin": {
             "type": "string",
@@ -4052,7 +5058,6 @@
         },
         "type": "object",
         "required": [
-          "operator_passcode",
           "target_origin"
         ],
         "title": "AuthorizeTargetRequest"
@@ -4269,12 +5274,22 @@
           "rules_registered": {
             "type": "integer",
             "title": "Rules Registered",
-            "default": 4
+            "default": 7
           },
           "engine_ready": {
             "type": "boolean",
             "title": "Engine Ready",
             "default": true
+          },
+          "average_baseline_maturity": {
+            "type": "number",
+            "title": "Average Baseline Maturity",
+            "default": 0.0
+          },
+          "tracked_identities": {
+            "type": "integer",
+            "title": "Tracked Identities",
+            "default": 0
           }
         },
         "type": "object",
@@ -4376,6 +5391,20 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "IsolateMitigationRequest": {
+        "properties": {
+          "identity_id": {
+            "type": "string",
+            "title": "Identity Id",
+            "description": "Target participant identity ID to isolate/drop"
+          }
+        },
+        "type": "object",
+        "required": [
+          "identity_id"
+        ],
+        "title": "IsolateMitigationRequest"
+      },
       "LiveResponse": {
         "properties": {
           "status": {
@@ -4418,6 +5447,23 @@
         ],
         "title": "LoginRequest"
       },
+      "LogoutRequest": {
+        "properties": {
+          "refresh_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refresh Token"
+          }
+        },
+        "type": "object",
+        "title": "LogoutRequest"
+      },
       "ModelPromoteRequest": {
         "properties": {
           "stage": {
@@ -4435,20 +5481,6 @@
         },
         "type": "object",
         "title": "ModelPromoteRequest"
-      },
-      "OperatorLoginRequest": {
-        "properties": {
-          "passcode": {
-            "type": "string",
-            "minLength": 1,
-            "title": "Passcode"
-          }
-        },
-        "type": "object",
-        "required": [
-          "passcode"
-        ],
-        "title": "OperatorLoginRequest"
       },
       "ParticipantModel": {
         "properties": {
@@ -4522,6 +5554,20 @@
         ],
         "title": "ParticipantModel"
       },
+      "PhaseChangeRequest": {
+        "properties": {
+          "phase": {
+            "type": "string",
+            "title": "Phase",
+            "description": "Target phase: LOBBY, BASELINE, EXERCISE_OPEN, DEBRIEF, CLOSED"
+          }
+        },
+        "type": "object",
+        "required": [
+          "phase"
+        ],
+        "title": "PhaseChangeRequest"
+      },
       "PredictRequest": {
         "properties": {
           "features": {
@@ -4591,6 +5637,28 @@
         ],
         "title": "PredictResponse"
       },
+      "RateLimitMitigationRequest": {
+        "properties": {
+          "identity_id": {
+            "type": "string",
+            "title": "Identity Id",
+            "description": "Target participant identity ID e.g. pt_maya_01"
+          },
+          "rate_limit_rps": {
+            "type": "number",
+            "maximum": 50.0,
+            "minimum": 0.5,
+            "title": "Rate Limit Rps",
+            "description": "Max allowed requests/sec",
+            "default": 2.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "identity_id"
+        ],
+        "title": "RateLimitMitigationRequest"
+      },
       "ReadyResponse": {
         "properties": {
           "status": {
@@ -4620,6 +5688,21 @@
           "components"
         ],
         "title": "ReadyResponse"
+      },
+      "RefreshTokenRequest": {
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Refresh Token",
+            "description": "Rotating refresh token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "refresh_token"
+        ],
+        "title": "RefreshTokenRequest"
       },
       "RegisterIdentityRequest": {
         "properties": {
@@ -4674,6 +5757,20 @@
         ],
         "title": "RegisterIdentityRequest"
       },
+      "ResetMitigationRequest": {
+        "properties": {
+          "identity_id": {
+            "type": "string",
+            "title": "Identity Id",
+            "description": "Target participant identity ID to clear mitigations for"
+          }
+        },
+        "type": "object",
+        "required": [
+          "identity_id"
+        ],
+        "title": "ResetMitigationRequest"
+      },
       "SessionModel": {
         "properties": {
           "id": {
@@ -4723,6 +5820,74 @@
           "join_code"
         ],
         "title": "SessionModel"
+      },
+      "StartRedRunRequest": {
+        "properties": {
+          "scenario": {
+            "type": "string",
+            "title": "Scenario",
+            "description": "Scenario identifier: credential_stuffing, port_scan, canary_probe, burst_dos, scraping"
+          },
+          "target_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Url",
+            "description": "Target origin. Must be within the operator-authorized target allowlist."
+          },
+          "effects_max": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 50.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effects Max",
+            "description": "Maximum request effects / accounts to test in this run."
+          },
+          "duration_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 30.0,
+                "minimum": 5.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Seconds",
+            "description": "Duration cap for volumetric or load scenarios."
+          },
+          "requests_per_second": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 25.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requests Per Second",
+            "description": "Rate limit cap for requests per second."
+          }
+        },
+        "type": "object",
+        "required": [
+          "scenario"
+        ],
+        "title": "StartRedRunRequest"
       },
       "StartReplayRequest": {
         "properties": {
@@ -4806,6 +5971,64 @@
         ],
         "title": "TargetEventPayload",
         "description": "Event sent from the target application via webhook."
+      },
+      "TokenResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "ok"
+          },
+          "authenticated": {
+            "type": "boolean",
+            "title": "Authenticated",
+            "default": true
+          },
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token"
+          },
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In",
+            "default": 900
+          },
+          "identity_id": {
+            "type": "string",
+            "title": "Identity Id"
+          },
+          "alias": {
+            "type": "string",
+            "title": "Alias"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "refresh_token",
+          "token",
+          "identity_id",
+          "alias",
+          "role"
+        ],
+        "title": "TokenResponse"
       },
       "ValidateTokenRequest": {
         "properties": {
@@ -4935,6 +6158,35 @@
         ],
         "title": "WsTicketResponse"
       },
+      "app__api__v1__auth__OperatorLoginRequest": {
+        "properties": {
+          "passcode": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Passcode",
+            "description": "Operator authorization passcode"
+          }
+        },
+        "type": "object",
+        "required": [
+          "passcode"
+        ],
+        "title": "OperatorLoginRequest"
+      },
+      "app__identity__routes__OperatorLoginRequest": {
+        "properties": {
+          "passcode": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Passcode"
+          }
+        },
+        "type": "object",
+        "required": [
+          "passcode"
+        ],
+        "title": "OperatorLoginRequest"
+      },
       "app__main__ActivityRequest": {
         "properties": {
           "device_id": {
@@ -5006,142 +6258,6 @@
           "alias"
         ],
         "title": "JoinSessionRequest"
-      },
-      "app__orchestrator__routes__StartRunRequest": {
-        "properties": {
-          "scenario": {
-            "type": "string",
-            "title": "Scenario",
-            "description": "Scenario ID: credential_stuffing, port_scan, burst_dos, canary_probe, scraping"
-          },
-          "target_origin": {
-            "type": "string",
-            "title": "Target Origin",
-            "description": "Private lab target URL"
-          },
-          "accounts": {
-            "anyOf": [
-              {
-                "items": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Accounts"
-          },
-          "duration_seconds": {
-            "type": "integer",
-            "maximum": 30.0,
-            "minimum": 5.0,
-            "title": "Duration Seconds",
-            "default": 10
-          },
-          "requests_per_second": {
-            "type": "integer",
-            "maximum": 20.0,
-            "minimum": 1.0,
-            "title": "Requests Per Second",
-            "default": 15
-          },
-          "account_count": {
-            "type": "integer",
-            "maximum": 25.0,
-            "minimum": 5.0,
-            "title": "Account Count",
-            "default": 10
-          },
-          "scraping_iterations": {
-            "type": "integer",
-            "maximum": 5.0,
-            "minimum": 1.0,
-            "title": "Scraping Iterations",
-            "default": 2
-          },
-          "launched_by": {
-            "type": "string",
-            "title": "Launched By",
-            "description": "Participant alias or operator",
-            "default": "operator"
-          }
-        },
-        "type": "object",
-        "required": [
-          "scenario",
-          "target_origin"
-        ],
-        "title": "StartRunRequest"
-      },
-      "app__schemas__orchestrator__StartRunRequest": {
-        "properties": {
-          "scenario": {
-            "type": "string",
-            "title": "Scenario",
-            "description": "Scenario: credential_stuffing, port_scan, burst_dos, canary_probe, scraping"
-          },
-          "target_origin": {
-            "type": "string",
-            "title": "Target Origin",
-            "description": "Target origin passing RFC1918 / loopback allowlist"
-          },
-          "duration_seconds": {
-            "type": "integer",
-            "maximum": 120.0,
-            "minimum": 1.0,
-            "title": "Duration Seconds",
-            "default": 20
-          },
-          "requests_per_second": {
-            "type": "integer",
-            "maximum": 100.0,
-            "minimum": 1.0,
-            "title": "Requests Per Second",
-            "default": 15
-          },
-          "account_count": {
-            "type": "integer",
-            "maximum": 100.0,
-            "minimum": 1.0,
-            "title": "Account Count",
-            "default": 25
-          },
-          "scraping_iterations": {
-            "type": "integer",
-            "maximum": 20.0,
-            "minimum": 1.0,
-            "title": "Scraping Iterations",
-            "default": 3
-          },
-          "accounts": {
-            "anyOf": [
-              {
-                "items": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Accounts"
-          }
-        },
-        "type": "object",
-        "required": [
-          "scenario",
-          "target_origin"
-        ],
-        "title": "StartRunRequest"
       },
       "app__schemas__sessions__ActivityRequest": {
         "properties": {
@@ -5222,6 +6338,12 @@
           "alias"
         ],
         "title": "JoinSessionRequest"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }

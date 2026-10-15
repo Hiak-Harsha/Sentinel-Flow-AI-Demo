@@ -16,8 +16,67 @@ export function setupRealtimeQuerySync(): () => void {
   }
   isInitialized = true;
 
-  // 1. Telemetry Ticks
+  // Event Listeners for WebSocket Protocol v1
   const unsubs = [
+    // 0. Initial State Snapshot
+    realtimeClient.on("initial_state", (envelope: WsEnvelope) => {
+      const data = envelope.data;
+      if (data) {
+        if (data.session) {
+          queryClient.setQueryData(queryKeys.session, data.session);
+        }
+        if (Array.isArray(data.participants)) {
+          queryClient.setQueryData(queryKeys.participants, data.participants);
+        }
+        if (data.telemetry) {
+          queryClient.setQueryData(queryKeys.telemetry, (prev: any) => ({
+            ...prev,
+            ...data.telemetry,
+          }));
+        }
+        if (Array.isArray(data.recent_activity)) {
+          queryClient.setQueryData(queryKeys.recentActivity, data.recent_activity);
+        }
+      }
+    }),
+
+    // 1. Session Lifecycle
+    realtimeClient.on("session.created", (envelope: WsEnvelope) => {
+      const session = envelope.data?.session || envelope.data;
+      if (session) {
+        queryClient.setQueryData(queryKeys.session, session);
+        queryClient.invalidateQueries({ queryKey: queryKeys.session });
+      }
+    }),
+
+    realtimeClient.on("session.phase_changed", (envelope: WsEnvelope) => {
+      const data = envelope.data;
+      queryClient.setQueryData(queryKeys.session, (prev: any) => ({
+        ...prev,
+        phase: data?.phase || data?.session?.phase || prev?.phase,
+        ...(data?.session || {}),
+      }));
+      queryClient.invalidateQueries({ queryKey: queryKeys.session });
+      showToast.info("Session Phase Changed", `Current Phase: ${data?.phase || "UPDATED"}`);
+    }),
+
+    // 2. Participant Lifecycle
+    realtimeClient.on("participant.joined", (envelope: WsEnvelope) => {
+      const participant = envelope.data?.participant || envelope.data;
+      if (participant && (participant.id || participant.device_id)) {
+        queryClient.setQueryData(queryKeys.participants, (prev: any[] = []) => {
+          const id = participant.id || participant.device_id;
+          const exists = prev.some((p) => (p.id || p.device_id) === id);
+          if (!exists) {
+            return [participant, ...prev];
+          }
+          return prev.map((p) => ((p.id || p.device_id) === id ? { ...p, ...participant } : p));
+        });
+        showToast.info("Participant Joined", `${participant.alias || "New device"} connected to session`);
+      }
+    }),
+
+    // 3. Telemetry Ticks
     realtimeClient.on("telemetry.tick", (envelope: WsEnvelope) => {
       const data = envelope.data;
       if (data) {
@@ -42,7 +101,7 @@ export function setupRealtimeQuerySync(): () => void {
       }
     }),
 
-    // 2. Alert Raised
+    // 4. Alert Raised
     realtimeClient.on("alert.raised", (envelope: WsEnvelope) => {
       const alert = envelope.data?.alert || envelope.data;
       if (alert && (alert.id || alert.alert_id)) {
@@ -65,7 +124,7 @@ export function setupRealtimeQuerySync(): () => void {
       }
     }),
 
-    // 3. Alert Updated (analyst disposition, resolution)
+    // 5. Alert Updated (analyst disposition, resolution)
     realtimeClient.on("alert.updated", (envelope: WsEnvelope) => {
       const data = envelope.data;
       const alertId = data?.alert_id || data?.id;
@@ -83,7 +142,7 @@ export function setupRealtimeQuerySync(): () => void {
       }
     }),
 
-    // 4. Assessment Updated
+    // 6. Assessment Updated
     realtimeClient.on("assessment.updated", (envelope: WsEnvelope) => {
       const data = envelope.data;
       const identityId = data?.identity_id;
@@ -95,18 +154,72 @@ export function setupRealtimeQuerySync(): () => void {
       }
     }),
 
-    // 5. System Health
+    // 7. Attack Scenario Progress & Finished
+    realtimeClient.on("attack.progress", (envelope: WsEnvelope) => {
+      const run = envelope.data?.run || envelope.data;
+      if (run && run.run_id) {
+        queryClient.setQueryData(queryKeys.activeRuns, (prev: any[] = []) => {
+          const exists = prev.some((r) => r.run_id === run.run_id);
+          if (!exists) return [run, ...prev];
+          return prev.map((r) => (r.run_id === run.run_id ? { ...r, ...run } : r));
+        });
+        queryClient.setQueryData(queryKeys.run(run.run_id), run);
+      }
+    }),
+
+    realtimeClient.on("attack.effect", (envelope: WsEnvelope) => {
+      const runId = envelope.data?.run_id;
+      const effect = envelope.data?.effect;
+      if (runId && effect) {
+        queryClient.setQueryData(queryKeys.runEffects(runId), (prev: any[] = []) => {
+          const next = [...prev, effect];
+          return next.slice(-500);
+        });
+      }
+    }),
+
+    realtimeClient.on("attack.finished", (envelope: WsEnvelope) => {
+      const run = envelope.data?.run || envelope.data;
+      if (run?.run_id) {
+        queryClient.setQueryData(queryKeys.activeRuns, (prev: any[] = []) =>
+          prev.filter((r) => r.run_id !== run.run_id)
+        );
+        queryClient.invalidateQueries({ queryKey: queryKeys.runs });
+        showToast.info("Scenario Finished", `Run ${run.scenario || run.run_id} finished (${run.status || "COMPLETED"})`);
+      }
+    }),
+
+    // 8. Emergency Stop Circuit Breaker
+    realtimeClient.on("emergency_stop.engaged", (envelope: WsEnvelope) => {
+      queryClient.setQueryData(queryKeys.emergencyStop, { tripped: true, message: envelope.data?.message });
+      showToast.error("Emergency Circuit Breaker Tripped", envelope.data?.message || "Emergency stop engaged.");
+    }),
+
+    realtimeClient.on("emergency_stop.reset", () => {
+      queryClient.setQueryData(queryKeys.emergencyStop, { tripped: false });
+      showToast.success("Circuit Breaker Reset", "Emergency stop cleared.");
+    }),
+
+    // 9. Model & System Health
+    realtimeClient.on("model.status", (envelope: WsEnvelope) => {
+      if (envelope.data) {
+        queryClient.setQueryData(queryKeys.models, (prev: any) => ({ ...prev, ...envelope.data }));
+      }
+    }),
+
     realtimeClient.on("system.health", (envelope: WsEnvelope) => {
       if (envelope.data) {
         queryClient.setQueryData(queryKeys.systemHealth, envelope.data);
       }
     }),
 
-    // 6. Resync / Phase Changed
+    // 10. Resync / Phase Changed
     realtimeClient.on("resync_required", () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.alerts });
       queryClient.invalidateQueries({ queryKey: queryKeys.telemetry });
       queryClient.invalidateQueries({ queryKey: queryKeys.session });
+      queryClient.invalidateQueries({ queryKey: queryKeys.participants });
+      queryClient.invalidateQueries({ queryKey: queryKeys.activeRuns });
     }),
   ];
 

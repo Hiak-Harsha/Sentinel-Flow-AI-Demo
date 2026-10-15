@@ -20,6 +20,8 @@ class SessionModel(Base, TimestampMixin):
     session_code: Mapped[str] = mapped_column(String(32), unique=True, index=True, nullable=False)
     join_code: Mapped[str] = mapped_column(String(16), unique=True, index=True, nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="active", nullable=False, index=True)
+    phase: Mapped[str] = mapped_column(String(32), default="LOBBY", nullable=False)
+    authorizations_json: Mapped[dict[str, Any] | None] = mapped_column(CompatibleJSON, nullable=True)
     controlled_target_device_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

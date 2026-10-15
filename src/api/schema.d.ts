@@ -4,6 +4,94 @@
  */
 
 export interface paths {
+    "/api/v1/auth/operator-login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Authenticate operator with Argon2 passcode and issue short-lived JWT + rotating refresh token */
+        post: operations["operator_login_api_v1_auth_operator_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rotate refresh token and issue new JWT access token */
+        post: operations["refresh_token_api_v1_auth_refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke refresh token and invalidate operator session */
+        post: operations["logout_api_v1_auth_logout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/whoami": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get authenticated user role and identity context */
+        get: operations["whoami_api_v1_auth_whoami_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Prometheus formatted telemetry and system metrics
+         * @description Return standard Prometheus text format telemetry metrics.
+         */
+        get: operations["get_metrics_api_v1_metrics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health/live": {
         parameters: {
             query?: never;
@@ -316,6 +404,302 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/operator/session/phase": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Transition exercise session phase
+         * @description Advance session phase. Only operator or admin can transition phases.
+         */
+        post: operations["set_session_phase_api_v1_operator_session_phase_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/operator/authorization": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Retrieve active session authorization record */
+        get: operations["get_authorization_api_v1_operator_authorization_get"];
+        /** Configure authorized target, enabled scenarios, and quotas */
+        put: operations["update_authorization_api_v1_operator_authorization_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/operator/emergency-stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Emergency Stop: Halt all runs within 2s and trip circuit breaker */
+        post: operations["trigger_emergency_stop_api_v1_operator_emergency_stop_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/operator/emergency-stop/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reset emergency stop circuit breaker */
+        post: operations["reset_emergency_stop_api_v1_operator_emergency_stop_reset_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/operator/participants/{participant_id}/suspend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Suspend a participant's intrusion tools */
+        post: operations["suspend_participant_route_api_v1_operator_participants__participant_id__suspend_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/operator/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read-only view of recorded attack runs */
+        get: operations["list_operator_runs_api_v1_operator_runs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/operator/mitigations/rate-limit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rate limit an attacker identity */
+        post: operations["apply_rate_limit_api_v1_operator_mitigations_rate_limit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/operator/mitigations/isolate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Isolate / drop an attacker identity */
+        post: operations["apply_isolation_api_v1_operator_mitigations_isolate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/operator/mitigations/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reset active mitigations for an identity */
+        post: operations["reset_mitigation_api_v1_operator_mitigations_reset_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/operator/mitigations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List active operator mitigations */
+        get: operations["list_mitigations_api_v1_operator_mitigations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/operator/circuit-breaker/trip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Trip circuit breaker and halt all runs */
+        post: operations["trip_circuit_breaker_route_api_v1_operator_circuit_breaker_trip_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/operator/circuit-breaker/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reset circuit breaker */
+        post: operations["reset_circuit_breaker_route_api_v1_operator_circuit_breaker_reset_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/red/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Red Runs
+         * @description List attack runs with strict participant isolation.
+         *
+         *     Participants only see their own runs; operators and admins see all runs.
+         */
+        get: operations["list_red_runs_api_v1_red_runs_get"];
+        put?: never;
+        /**
+         * Start Participant Run
+         * @description Launch a bounded intrusion scenario under the authenticated participant's identity.
+         *
+         *     Gated strictly to participants. Operators receive 403 Forbidden.
+         */
+        post: operations["start_participant_run_api_v1_red_runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/red/runs/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Red Run
+         * @description Retrieve run details and effect timeline with participant isolation enforcement.
+         */
+        get: operations["get_red_run_api_v1_red_runs__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/red/runs/{run_id}/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Stop Red Run
+         * @description Halt an active attack run. Participants can only halt their own runs.
+         */
+        post: operations["stop_red_run_api_v1_red_runs__run_id__stop_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/red/scenarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Participant Scenarios
+         * @description Retrieve enabled scenarios and current quota status for this participant.
+         */
+        get: operations["get_participant_scenarios_api_v1_red_scenarios_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/detection/status": {
         parameters: {
             query?: never;
@@ -547,7 +931,13 @@ export interface paths {
         /** List all attack scenario runs */
         get: operations["list_runs_api_v1_orchestrator_runs_get"];
         put?: never;
-        /** Launch a bounded, consented attack scenario */
+        /**
+         * Deprecated: Operator attack launch prohibited
+         * @description In Sentinel Flow v2, operator attack launches are strictly prohibited.
+         *
+         *     The operator console is strictly defensive. Bounded attack scenarios must be
+         *     initiated by authorized classroom participants via /api/v1/red/runs.
+         */
         post: operations["launch_run_api_v1_orchestrator_runs_post"];
         delete?: never;
         options?: never;
@@ -842,7 +1232,7 @@ export interface paths {
         put?: never;
         /**
          * Operator Login
-         * @description Verify operator passcode and issue operator session token.
+         * @description Verify operator passcode using Argon2 and issue short-lived JWT + rotating refresh token.
          */
         post: operations["operator_login_api_v1_api_identity_operator_login_post"];
         delete?: never;
@@ -860,7 +1250,7 @@ export interface paths {
         };
         /**
          * Whoami
-         * @description Return identity and role from session token header.
+         * @description Return identity and role from session token or JWT header.
          */
         get: operations["whoami_api_v1_api_identity_whoami_get"];
         put?: never;
@@ -902,7 +1292,7 @@ export interface paths {
         put?: never;
         /**
          * Validate Session
-         * @description Validate a participant token against active sessions.
+         * @description Validate a participant or operator token against active sessions.
          */
         post: operations["validate_session_api_v1_api_identity_validate_post"];
         delete?: never;
@@ -1326,7 +1716,7 @@ export interface paths {
         put?: never;
         /**
          * Operator Login
-         * @description Verify operator passcode and issue operator session token.
+         * @description Verify operator passcode using Argon2 and issue short-lived JWT + rotating refresh token.
          */
         post: operations["operator_login_api_identity_operator_login_post"];
         delete?: never;
@@ -1344,7 +1734,7 @@ export interface paths {
         };
         /**
          * Whoami
-         * @description Return identity and role from session token header.
+         * @description Return identity and role from session token or JWT header.
          */
         get: operations["whoami_api_identity_whoami_get"];
         put?: never;
@@ -1386,7 +1776,7 @@ export interface paths {
         put?: never;
         /**
          * Validate Session
-         * @description Validate a participant token against active sessions.
+         * @description Validate a participant or operator token against active sessions.
          */
         post: operations["validate_session_api_identity_validate_post"];
         delete?: never;
@@ -1714,7 +2104,7 @@ export interface paths {
         put?: never;
         /**
          * Start Run
-         * @description Launch an authorized attack scenario against allowlisted private lab target.
+         * @description Deprecated: Operators are strictly defensive. Attack runs are participant-only via /api/v1/red/runs.
          */
         post: operations["start_run_api_orchestrator_runs_post"];
         delete?: never;
@@ -1734,7 +2124,7 @@ export interface paths {
         put?: never;
         /**
          * Start Run
-         * @description Launch an authorized attack scenario against allowlisted private lab target.
+         * @description Deprecated: Operators are strictly defensive. Attack runs are participant-only via /api/v1/red/runs.
          */
         post: operations["start_run_api_orchestrator_run_post"];
         delete?: never;
@@ -2173,9 +2563,54 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** AuthorizationUpdateRequest */
+        AuthorizationUpdateRequest: {
+            /**
+             * Target Origin
+             * @description Authorized target URL (must be private or loopback)
+             */
+            target_origin: string;
+            /**
+             * Confirmed Ownership
+             * @description Explicit ownership confirmation
+             */
+            confirmed_ownership: boolean;
+            /**
+             * Enabled Scenarios
+             * @description List of allowed scenario IDs
+             */
+            enabled_scenarios?: string[];
+            /**
+             * Quota Per Participant
+             * @description Max runs allowed per participant
+             * @default 5
+             */
+            quota_per_participant: number;
+            /**
+             * Effects Per Run Max
+             * @description Max effects/requests per run
+             * @default 50
+             */
+            effects_per_run_max: number;
+            /**
+             * Global Concurrency Cap
+             * @description Max concurrent runs globally
+             * @default 8
+             */
+            global_concurrency_cap: number;
+            /**
+             * Reveal Mode
+             * @description Detection feedback: off, after_run, live
+             * @default after_run
+             */
+            reveal_mode: string;
+        };
         /** AuthorizeTargetRequest */
         AuthorizeTargetRequest: {
-            /** Operator Passcode */
+            /**
+             * Operator Passcode
+             * @default
+             */
             operator_passcode: string;
             /** Target Origin */
             target_origin: string;
@@ -2286,7 +2721,7 @@ export interface components {
             };
             /**
              * Rules Registered
-             * @default 4
+             * @default 7
              */
             rules_registered: number;
             /**
@@ -2294,6 +2729,16 @@ export interface components {
              * @default true
              */
             engine_ready: boolean;
+            /**
+             * Average Baseline Maturity
+             * @default 0
+             */
+            average_baseline_maturity: number;
+            /**
+             * Tracked Identities
+             * @default 0
+             */
+            tracked_identities: number;
         };
         /** DispositionRequest */
         DispositionRequest: {
@@ -2342,6 +2787,14 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** IsolateMitigationRequest */
+        IsolateMitigationRequest: {
+            /**
+             * Identity Id
+             * @description Target participant identity ID to isolate/drop
+             */
+            identity_id: string;
+        };
         /** LiveResponse */
         LiveResponse: {
             /**
@@ -2364,6 +2817,11 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** LogoutRequest */
+        LogoutRequest: {
+            /** Refresh Token */
+            refresh_token?: string | null;
+        };
         /** ModelPromoteRequest */
         ModelPromoteRequest: {
             /**
@@ -2378,11 +2836,6 @@ export interface components {
              * @default
              */
             notes: string;
-        };
-        /** OperatorLoginRequest */
-        OperatorLoginRequest: {
-            /** Passcode */
-            passcode: string;
         };
         /** ParticipantModel */
         ParticipantModel: {
@@ -2408,6 +2861,14 @@ export interface components {
              * @default 0
              */
             request_count: number;
+        };
+        /** PhaseChangeRequest */
+        PhaseChangeRequest: {
+            /**
+             * Phase
+             * @description Target phase: LOBBY, BASELINE, EXERCISE_OPEN, DEBRIEF, CLOSED
+             */
+            phase: string;
         };
         /** PredictRequest */
         PredictRequest: {
@@ -2440,6 +2901,20 @@ export interface components {
             /** Latency Ms */
             latency_ms: number;
         };
+        /** RateLimitMitigationRequest */
+        RateLimitMitigationRequest: {
+            /**
+             * Identity Id
+             * @description Target participant identity ID e.g. pt_maya_01
+             */
+            identity_id: string;
+            /**
+             * Rate Limit Rps
+             * @description Max allowed requests/sec
+             * @default 2
+             */
+            rate_limit_rps: number;
+        };
         /** ReadyResponse */
         ReadyResponse: {
             /** Status */
@@ -2456,6 +2931,14 @@ export interface components {
                 [key: string]: components["schemas"]["ComponentHealth"];
             };
         };
+        /** RefreshTokenRequest */
+        RefreshTokenRequest: {
+            /**
+             * Refresh Token
+             * @description Rotating refresh token
+             */
+            refresh_token: string;
+        };
         /** RegisterIdentityRequest */
         RegisterIdentityRequest: {
             /** Alias */
@@ -2471,6 +2954,14 @@ export interface components {
             role: string;
             /** Passcode */
             passcode?: string | null;
+        };
+        /** ResetMitigationRequest */
+        ResetMitigationRequest: {
+            /**
+             * Identity Id
+             * @description Target participant identity ID to clear mitigations for
+             */
+            identity_id: string;
         };
         /** SessionModel */
         SessionModel: {
@@ -2492,6 +2983,34 @@ export interface components {
              * @default 60
              */
             max_participants: number;
+        };
+        /** StartRedRunRequest */
+        StartRedRunRequest: {
+            /**
+             * Scenario
+             * @description Scenario identifier: credential_stuffing, port_scan, canary_probe, burst_dos, scraping
+             */
+            scenario: string;
+            /**
+             * Target Url
+             * @description Target origin. Must be within the operator-authorized target allowlist.
+             */
+            target_url?: string | null;
+            /**
+             * Effects Max
+             * @description Maximum request effects / accounts to test in this run.
+             */
+            effects_max?: number | null;
+            /**
+             * Duration Seconds
+             * @description Duration cap for volumetric or load scenarios.
+             */
+            duration_seconds?: number | null;
+            /**
+             * Requests Per Second
+             * @description Rate limit cap for requests per second.
+             */
+            requests_per_second?: number | null;
         };
         /** StartReplayRequest */
         StartReplayRequest: {
@@ -2561,6 +3080,41 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** TokenResponse */
+        TokenResponse: {
+            /**
+             * Status
+             * @default ok
+             */
+            status: string;
+            /**
+             * Authenticated
+             * @default true
+             */
+            authenticated: boolean;
+            /** Access Token */
+            access_token: string;
+            /** Refresh Token */
+            refresh_token: string;
+            /** Token */
+            token: string;
+            /**
+             * Token Type
+             * @default bearer
+             */
+            token_type: string;
+            /**
+             * Expires In
+             * @default 900
+             */
+            expires_in: number;
+            /** Identity Id */
+            identity_id: string;
+            /** Alias */
+            alias: string;
+            /** Role */
+            role: string;
+        };
         /** ValidateTokenRequest */
         ValidateTokenRequest: {
             /** Token */
@@ -2614,6 +3168,19 @@ export interface components {
              */
             expires_in: number;
         };
+        /** OperatorLoginRequest */
+        app__api__v1__auth__OperatorLoginRequest: {
+            /**
+             * Passcode
+             * @description Operator authorization passcode
+             */
+            passcode: string;
+        };
+        /** OperatorLoginRequest */
+        app__identity__routes__OperatorLoginRequest: {
+            /** Passcode */
+            passcode: string;
+        };
         /** ActivityRequest */
         app__main__ActivityRequest: {
             /** Device Id */
@@ -2647,86 +3214,6 @@ export interface components {
             join_code: string;
             /** Alias */
             alias: string;
-        };
-        /** StartRunRequest */
-        app__orchestrator__routes__StartRunRequest: {
-            /**
-             * Scenario
-             * @description Scenario ID: credential_stuffing, port_scan, burst_dos, canary_probe, scraping
-             */
-            scenario: string;
-            /**
-             * Target Origin
-             * @description Private lab target URL
-             */
-            target_origin: string;
-            /** Accounts */
-            accounts?: {
-                [key: string]: string;
-            }[] | null;
-            /**
-             * Duration Seconds
-             * @default 10
-             */
-            duration_seconds: number;
-            /**
-             * Requests Per Second
-             * @default 15
-             */
-            requests_per_second: number;
-            /**
-             * Account Count
-             * @default 10
-             */
-            account_count: number;
-            /**
-             * Scraping Iterations
-             * @default 2
-             */
-            scraping_iterations: number;
-            /**
-             * Launched By
-             * @description Participant alias or operator
-             * @default operator
-             */
-            launched_by: string;
-        };
-        /** StartRunRequest */
-        app__schemas__orchestrator__StartRunRequest: {
-            /**
-             * Scenario
-             * @description Scenario: credential_stuffing, port_scan, burst_dos, canary_probe, scraping
-             */
-            scenario: string;
-            /**
-             * Target Origin
-             * @description Target origin passing RFC1918 / loopback allowlist
-             */
-            target_origin: string;
-            /**
-             * Duration Seconds
-             * @default 20
-             */
-            duration_seconds: number;
-            /**
-             * Requests Per Second
-             * @default 15
-             */
-            requests_per_second: number;
-            /**
-             * Account Count
-             * @default 25
-             */
-            account_count: number;
-            /**
-             * Scraping Iterations
-             * @default 3
-             */
-            scraping_iterations: number;
-            /** Accounts */
-            accounts?: {
-                [key: string]: string;
-            }[] | null;
         };
         /** ActivityRequest */
         app__schemas__sessions__ActivityRequest: {
@@ -2787,6 +3274,151 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    operator_login_api_v1_auth_operator_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["app__api__v1__auth__OperatorLoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refresh_token_api_v1_auth_refresh_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    logout_api_v1_auth_logout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LogoutRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    whoami_api_v1_auth_whoami_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    get_metrics_api_v1_metrics_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
     liveness_probe_api_v1_health_live_get: {
         parameters: {
             query?: never;
@@ -3276,6 +3908,513 @@ export interface operations {
             };
         };
     };
+    set_session_phase_api_v1_operator_session_phase_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhaseChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_authorization_api_v1_operator_authorization_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    update_authorization_api_v1_operator_authorization_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AuthorizationUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    trigger_emergency_stop_api_v1_operator_emergency_stop_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    reset_emergency_stop_api_v1_operator_emergency_stop_reset_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    suspend_participant_route_api_v1_operator_participants__participant_id__suspend_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                participant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_operator_runs_api_v1_operator_runs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    apply_rate_limit_api_v1_operator_mitigations_rate_limit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RateLimitMitigationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apply_isolation_api_v1_operator_mitigations_isolate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IsolateMitigationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reset_mitigation_api_v1_operator_mitigations_reset_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetMitigationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_mitigations_api_v1_operator_mitigations_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    trip_circuit_breaker_route_api_v1_operator_circuit_breaker_trip_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    reset_circuit_breaker_route_api_v1_operator_circuit_breaker_reset_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    list_red_runs_api_v1_red_runs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    }[];
+                };
+            };
+        };
+    };
+    start_participant_run_api_v1_red_runs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartRedRunRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_red_run_api_v1_red_runs__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stop_red_run_api_v1_red_runs__run_id__stop_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_participant_scenarios_api_v1_red_scenarios_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     get_detection_status_api_v1_detection_status_get: {
         parameters: {
             query?: never;
@@ -3636,9 +4775,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
-                "application/json": components["schemas"]["app__schemas__orchestrator__StartRunRequest"];
+                "application/json": {
+                    [key: string]: unknown;
+                } | null;
             };
         };
         responses: {
@@ -4058,7 +5199,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["OperatorLoginRequest"];
+                "application/json": components["schemas"]["app__identity__routes__OperatorLoginRequest"];
             };
         };
         responses: {
@@ -4777,7 +5918,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["OperatorLoginRequest"];
+                "application/json": components["schemas"]["app__identity__routes__OperatorLoginRequest"];
             };
         };
         responses: {
@@ -5337,9 +6478,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
-                "application/json": components["schemas"]["app__orchestrator__routes__StartRunRequest"];
+                "application/json": {
+                    [key: string]: unknown;
+                } | null;
             };
         };
         responses: {
@@ -5372,9 +6515,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
-                "application/json": components["schemas"]["app__orchestrator__routes__StartRunRequest"];
+                "application/json": {
+                    [key: string]: unknown;
+                } | null;
             };
         };
         responses: {

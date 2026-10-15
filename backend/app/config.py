@@ -81,9 +81,9 @@ class Settings(BaseSettings):
         return [o.strip() for o in self.allowed_origins.split(",") if o.strip()]
 
     def get_cors_origin_regex(self) -> str | None:
-        """Allow Vite dev server on any private-network IP when in development mode."""
+        """Allow Vite dev server on any private-network IP or local hostname in development mode."""
         if self.is_dev:
-            return r"^https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$"
+            return r"^https?://(localhost|127\.0\.0\.1|0\.0\.0\.0|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|.*\.local)(:\d+)?$"
         return None
 
 

@@ -118,6 +118,15 @@ async def init_db() -> None:
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        if get_db_url().startswith("sqlite"):
+            try:
+                await conn.execute(text("ALTER TABLE sessions ADD COLUMN phase VARCHAR(32) DEFAULT 'LOBBY';"))
+            except Exception:
+                pass
+            try:
+                await conn.execute(text("ALTER TABLE sessions ADD COLUMN authorizations_json JSON;"))
+            except Exception:
+                pass
 
 
 async def close_db() -> None:

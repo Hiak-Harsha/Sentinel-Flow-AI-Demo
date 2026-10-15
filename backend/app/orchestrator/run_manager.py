@@ -72,12 +72,56 @@ class RunManager:
             participant_identity_id="pt_maya_01",
             quota_limit=50,
         )
+        self.runs_file = Path(state_file).parent / "lab_runs.json" if state_file else (RUNTIME_DIR / "lab_runs.json")
+        self._load_runs()
         self._stop_events: dict[str, asyncio.Event] = {}
         self._active_tasks: dict[str, asyncio.Task] = {}
         self._progress_listeners: list[Callable[[dict[str, Any]], None]] = []
         self._effect_timelines: dict[str, list[dict[str, Any]]] = {}
         self.state_file = Path(state_file) if state_file else (RUNTIME_DIR / "emergency_stop.json")
         self.emergency_stop_tripped: bool = self._load_emergency_stop_state()
+
+    def _load_runs(self) -> None:
+        """Hydrate runs from persistent disk storage on startup."""
+        if self.runs_file.exists():
+            try:
+                data = json.loads(self.runs_file.read_text(encoding="utf-8"))
+                if isinstance(data, list):
+                    for item in data:
+                        if isinstance(item, dict) and "run_id" in item:
+                            status = item.get("status", "COMPLETED")
+                            # If server died while running, mark as STOPPED
+                            if status in ("RUNNING", "PENDING"):
+                                status = "STOPPED"
+                            run = AttackRun(
+                                run_id=item["run_id"],
+                                scenario=item.get("scenario", "unknown"),
+                                target_origin=item.get("target_origin", "http://127.0.0.1:8000"),
+                                status=status,
+                                progress_percent=item.get("progress_percent", 100.0),
+                                started_at_epoch=item.get("started_at_epoch", time.time()),
+                                completed_at_epoch=item.get("completed_at_epoch"),
+                                details=item.get("details", {}),
+                                error_message=item.get("error_message"),
+                                launched_by=item.get("launched_by", "participant"),
+                                participant_identity_id=item.get("participant_identity_id"),
+                                quota_limit=item.get("quota_limit", 50),
+                                requests_executed=item.get("requests_executed", 0),
+                            )
+                            self._runs[run.run_id] = run
+            except Exception as e:
+                logger.warning("Could not load runs from %s: %s", self.runs_file, e)
+
+    def _persist_runs(self) -> None:
+        """Save runs to persistent disk storage."""
+        try:
+            self.runs_file.parent.mkdir(parents=True, exist_ok=True)
+            self.runs_file.write_text(
+                json.dumps([r.to_dict() for r in self._runs.values()], indent=2),
+                encoding="utf-8",
+            )
+        except Exception as e:
+            logger.warning("Could not persist runs to %s: %s", self.runs_file, e)
 
     def _load_emergency_stop_state(self) -> bool:
         if self.state_file.exists():
@@ -136,6 +180,7 @@ class RunManager:
                 self._runs[run_id].completed_at_epoch = time.time()
                 stopped_runs.append(run_id)
 
+        self._persist_runs()
         for task in list(self._active_tasks.values()):
             if not task.done():
                 task.cancel()
@@ -241,6 +286,7 @@ class RunManager:
             quota_limit=50,
         )
         self._runs[run_id] = run
+        self._persist_runs()
 
         def _on_effect(effect: dict[str, Any]):
             attacker_id = effect.get("attacker_identity", "") or resolved_attacker
@@ -347,6 +393,7 @@ class RunManager:
             finally:
                 self._stop_events.pop(run_id, None)
                 self._active_tasks.pop(run_id, None)
+                self._persist_runs()
                 self._broadcast_progress({"type": "attack_finished", "run": run.to_dict()})
 
         task = asyncio.create_task(_execute())
@@ -361,6 +408,7 @@ class RunManager:
             if run_id in self._runs:
                 self._runs[run_id].status = "STOPPED"
                 self._runs[run_id].completed_at_epoch = time.time()
+                self._persist_runs()
             return True
         return False
 

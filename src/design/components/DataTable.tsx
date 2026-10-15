@@ -62,7 +62,7 @@ export function DataTable<TData>({
 
   if (loading) {
     return (
-      <div className={`p-4 space-y-3 rounded-xl border border-slate-800 bg-slate-900/60 ${className}`}>
+      <div className={`p-4 space-y-3 rounded-xl border border-[var(--border)] bg-[var(--surface-1)] ${className}`}>
         <Skeleton height={32} />
         <Skeleton height={40} />
         <Skeleton height={40} />
@@ -82,14 +82,14 @@ export function DataTable<TData>({
   }
 
   return (
-    <div className={`rounded-xl border border-slate-800 bg-slate-900/80 overflow-hidden shadow-md ${className}`}>
+    <div className={`rounded-xl border border-[var(--border)] bg-[var(--surface-1)] overflow-hidden shadow-md ${className}`}>
       <div
         ref={tableContainerRef}
         className="overflow-auto relative"
         style={{ maxHeight }}
       >
         <table className="w-full text-left border-collapse text-xs">
-          <thead className="sticky top-0 z-10 bg-slate-950/90 backdrop-blur-sm border-b border-slate-800">
+          <thead className="sticky top-0 z-10 bg-[var(--surface-2)] border-b border-[var(--border-subtle)]">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
@@ -99,13 +99,13 @@ export function DataTable<TData>({
                   return (
                     <th
                       key={header.id}
-                      className="p-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider select-none"
+                      className="p-3 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider select-none font-mono"
                       style={{ width: header.getSize() }}
                     >
                       {header.isPlaceholder ? null : (
                         <div
                           className={`flex items-center gap-1.5 ${
-                            canSort ? "cursor-pointer hover:text-slate-200" : ""
+                            canSort ? "cursor-pointer hover:text-[var(--text-primary)]" : ""
                           }`}
                           onClick={header.column.getToggleSortingHandler()}
                         >
@@ -114,13 +114,13 @@ export function DataTable<TData>({
                             header.getContext()
                           )}
                           {canSort && (
-                            <span className="text-slate-500">
+                            <span className="text-[var(--text-muted)]">
                               {sorted === "asc" ? (
-                                <ChevronUp className="w-3.5 h-3.5 text-cyan-400" />
+                                <ChevronUp className="w-3.5 h-3.5 text-[var(--accent)]" />
                               ) : sorted === "desc" ? (
-                                <ChevronDown className="w-3.5 h-3.5 text-cyan-400" />
+                                <ChevronDown className="w-3.5 h-3.5 text-[var(--accent)]" />
                               ) : (
-                                <ChevronsUpDown className="w-3.5 h-3.5 opacity-50" />
+                                <ChevronsUpDown className="w-3.5 h-3.5 opacity-40" />
                               )}
                             </span>
                           )}
@@ -146,8 +146,8 @@ export function DataTable<TData>({
                   key={row.id}
                   data-index={virtualRow.index}
                   onClick={() => onRowClick && onRowClick(row.original)}
-                  className={`border-b border-slate-800/60 transition-colors ${
-                    onRowClick ? "cursor-pointer hover:bg-slate-800/60" : "hover:bg-slate-800/30"
+                  className={`border-b border-[var(--border-subtle)] transition-colors ${
+                    onRowClick ? "cursor-pointer hover:bg-[var(--surface-2)]" : "hover:bg-[var(--surface-2)]/60"
                   }`}
                   style={{
                     position: "absolute",
@@ -161,7 +161,7 @@ export function DataTable<TData>({
                   {row.getVisibleCells().map((cell) => (
                     <td
                       key={cell.id}
-                      className="p-3 text-slate-300 sf-tabular align-middle truncate"
+                      className="p-3 text-[var(--text-primary)] sf-tabular align-middle truncate"
                       style={{ width: cell.column.getSize() }}
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}

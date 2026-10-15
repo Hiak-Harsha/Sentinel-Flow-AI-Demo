@@ -75,11 +75,11 @@ export const TopBar: React.FC<TopBarProps> = ({
   return (
     <header className="h-14 border-b border-[rgba(255,255,255,0.07)] bg-[#090c10] px-3 md:px-5 flex items-center justify-between gap-3 sticky top-0 z-30 select-none">
       {/* Left: Mobile hamburger, Brand title, Role tag, and Quick Search */}
-      <div className="flex items-center gap-3 flex-1 min-w-0 max-w-xl">
+      <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
         <button
           type="button"
           onClick={onToggleSidebar}
-          className="md:hidden p-1.5 rounded-lg text-[#9aa0a6] hover:text-[#f0f2f5] hover:bg-[#111417] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#fe9a00]"
+          className="md:hidden p-1.5 rounded-lg text-[#9aa0a6] hover:text-[#f0f2f5] hover:bg-[#111417] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#fe9a00] shrink-0"
           aria-label="Toggle mobile menu"
         >
           <Menu className="w-5 h-5" />
@@ -87,32 +87,45 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* Brand logo & title on mobile / when collapsed */}
         <div className="flex items-center gap-2 shrink-0 md:hidden">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#ffb454] to-[#fe9a00] flex items-center justify-center shadow-sm">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#ffb454] to-[#fe9a00] flex items-center justify-center shadow-sm shrink-0">
             <Shield className="w-4 h-4 text-[#1a1203]" />
           </div>
           <span className="font-display font-bold text-sm tracking-tight text-[#f0f2f5]">
             SENTINEL
           </span>
-          <Tag variant={isOperator ? "amber" : "neutral"} size="sm">
-            {isOperator ? "OPERATOR" : "RED TEAM"}
-          </Tag>
+          <span className="hidden sm:inline-flex">
+            <Tag variant={isOperator ? "amber" : "neutral"} size="sm">
+              {isOperator ? "OPERATOR" : "RED TEAM"}
+            </Tag>
+          </span>
         </div>
 
-        {/* Command Search Trigger */}
+        {/* Command Search Trigger (visible on md+) */}
         <button
           type="button"
           onClick={onOpenCommandPalette}
-          className="hidden sm:flex flex-1 items-center justify-between px-3 py-1.5 rounded-lg bg-[#0f1013] border border-[rgba(255,255,255,0.08)] text-xs text-[#5f6368] hover:border-[rgba(255,255,255,0.18)] hover:text-[#9aa0a6] transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#fe9a00] cursor-pointer"
+          className="hidden md:flex flex-1 max-w-md items-center justify-between px-3 py-1.5 rounded-lg bg-[#0f1013] border border-[rgba(255,255,255,0.08)] text-xs text-[#5f6368] hover:border-[rgba(255,255,255,0.18)] hover:text-[#9aa0a6] transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#fe9a00] cursor-pointer"
         >
           <span className="flex items-center gap-2 truncate">
-            <Search className="w-3.5 h-3.5 text-[#5f6368]" />
+            <Search className="w-3.5 h-3.5 text-[#5f6368] shrink-0" />
             <span className="truncate">Search commands, alerts, scenarios...</span>
           </span>
           <Kbd>Ctrl+K</Kbd>
         </button>
+
+        {/* Quick search icon button on mobile/tablet */}
+        <button
+          type="button"
+          onClick={onOpenCommandPalette}
+          className="md:hidden p-1.5 rounded-lg text-[#9aa0a6] hover:text-[#f0f2f5] hover:bg-[#111417] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#fe9a00] shrink-0"
+          aria-label="Search commands"
+          title="Search (Ctrl+K)"
+        >
+          <Search className="w-4 h-4 text-[#9aa0a6]" />
+        </button>
       </div>
 
-      {/* Center: Role-aware context chip */}
+      {/* Center: Role-aware context chip (xl screens) */}
       <div className="hidden xl:flex items-center">
         {isOperator ? (
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#0f1013] border border-[rgba(255,255,255,0.08)] text-xs font-mono">
@@ -136,8 +149,8 @@ export const TopBar: React.FC<TopBarProps> = ({
       </div>
 
       {/* Right: Threat Level, Join Code, Status Indicator, Emergency Stop, Identity */}
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-        {/* Active Classroom Join Code */}
+      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+        {/* Active Classroom Join Code (only on lg+ where space permits) */}
         {joinCode && (
           <button
             type="button"
@@ -147,7 +160,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                 showToast.info("Join Code Copied", `Share ${joinCode} with students.`);
               }
             }}
-            className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#2d1f0b] border border-[#fe9a00]/30 text-[#ffb454] hover:border-[#fe9a00]/60 text-xs font-mono font-medium transition-colors cursor-pointer"
+            className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#2d1f0b] border border-[#fe9a00]/30 text-[#ffb454] hover:border-[#fe9a00]/60 text-xs font-mono font-medium transition-colors cursor-pointer shrink-0"
             title="Click to copy participant join code"
           >
             <span className="text-[10px] text-[#9aa0a6] uppercase">ROOM:</span>
@@ -157,13 +170,14 @@ export const TopBar: React.FC<TopBarProps> = ({
         )}
 
         {/* Global Threat Level */}
-        <SeverityBadge severity={threatLevel} size="sm" />
+        <SeverityBadge severity={threatLevel} size="sm" hideLabelOnMobile className="shrink-0" />
 
         {/* Realtime WebSocket Connection Status */}
         <ConnectionIndicator
           status={status}
           lastSeq={lastSeq}
           latencyMs={latencyMs}
+          className="shrink-0"
         />
 
         {/* Emergency Stop Button (Operator only) */}
@@ -171,7 +185,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           <button
             type="button"
             onClick={handleEmergencyStop}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#2b1218] border border-[#f4526b]/40 text-[#f4526b] hover:bg-[#3d1620] hover:border-[#f4526b]/70 text-xs font-semibold font-mono tracking-tight transition-all active:translate-y-px focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#f4526b] cursor-pointer"
+            className="inline-flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1 rounded-lg bg-[#2b1218] border border-[#f4526b]/40 text-[#f4526b] hover:bg-[#3d1620] hover:border-[#f4526b]/70 text-xs font-semibold font-mono tracking-tight transition-all active:translate-y-px focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#f4526b] cursor-pointer shrink-0"
             title="Emergency Stop: Halt all attacks and active simulations"
           >
             <PowerOff className="w-3.5 h-3.5 text-[#f4526b]" />
@@ -180,7 +194,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         )}
 
         {/* Identity Pill */}
-        <div className="hidden lg:flex items-center">
+        <div className="hidden xl:flex items-center">
           <Pill
             size="sm"
             variant="default"

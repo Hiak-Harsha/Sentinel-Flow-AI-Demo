@@ -3,7 +3,7 @@ import React from "react";
 /**
  * Lightweight SVG sparkline strip for rate, byte volume, and error trends.
  */
-export function SparklineStrip({ data = [], color = "#22d3ee", height = 36, label = "", currentValue = "" }) {
+export function SparklineStrip({ data = [], color = "#fe9a00", height = 36, label = "", currentValue = "" }) {
   const points = data.length > 0 ? data : [0, 0, 0, 0, 0];
   const maxVal = Math.max(1, ...points);
   const minVal = Math.min(0, ...points);

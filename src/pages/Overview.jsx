@@ -265,7 +265,7 @@ export function Overview({
             <div className="text-2xl font-bold text-white mt-1 font-sans">{dynamicThroughput}</div>
           </div>
           <div className="my-2">
-            {renderSparkline("#06b6d4", "traffic", [30, 40, 35, 50, 45, 65, 55, 75, 70, 85, 80, 95])}
+            {renderSparkline("#fe9a00", "traffic", [30, 40, 35, 50, 45, 65, 55, 75, 70, 85, 80, 95])}
           </div>
           <div className="flex items-center gap-1.5 text-[10px]">
             <span className="text-cyan-400 font-bold flex items-center">↑ 23.1%</span>

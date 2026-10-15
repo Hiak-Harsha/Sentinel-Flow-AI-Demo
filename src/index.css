@@ -136,13 +136,13 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 a:focus-visible {
-  outline: 2px solid #22d3ee;
-  outline-offset: 3px;
+  outline: 2px solid #fe9a00;
+  outline-offset: 2px;
 }
 
 ::selection {
-  background: rgba(34, 211, 238, 0.3);
-  color: white;
+  background: rgba(254, 154, 0, 0.25);
+  color: #ffffff;
 }
 
 .ambient-orb {
@@ -150,7 +150,7 @@ a:focus-visible {
   border-radius: 9999px;
   filter: blur(80px);
   pointer-events: none;
-  opacity: 0.6;
+  opacity: 0.3;
 }
 
 .ambient-orb-one {
@@ -158,7 +158,7 @@ a:focus-visible {
   height: 32rem;
   top: -10rem;
   right: -8rem;
-  background: radial-gradient(circle, rgba(6, 182, 212, 0.2), transparent 70%);
+  background: radial-gradient(circle, rgba(254, 154, 0, 0.08), transparent 70%);
   animation: drift 14s ease-in-out infinite alternate;
 }
 
@@ -167,7 +167,7 @@ a:focus-visible {
   height: 28rem;
   bottom: -10rem;
   left: -8rem;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.18), transparent 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.04), transparent 70%);
   animation: drift 18s ease-in-out infinite alternate-reverse;
 }
 
@@ -177,7 +177,7 @@ a:focus-visible {
   letter-spacing: 0.18em;
   line-height: 1;
   text-transform: uppercase;
-  color: rgb(34 211 238 / 0.9);
+  color: var(--accent);
 }
 
 .primary-action {
@@ -185,23 +185,23 @@ a:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  border: 1px solid rgba(34, 211, 238, 0.6);
-  border-radius: 0.85rem;
-  background: linear-gradient(135deg, #06b6d4, #6366f1);
-  padding: 0.85rem 1.4rem;
-  color: #ffffff;
-  font-size: 0.95rem;
+  border: 1px solid #fe9a00;
+  border-radius: 0.5rem;
+  background: #fe9a00;
+  padding: 0.75rem 1.25rem;
+  color: #1a1203;
+  font-size: 0.875rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  box-shadow: 0 12px 36px rgba(6, 182, 212, 0.25);
-  transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+  box-shadow: 0 4px 16px rgba(254, 154, 0, 0.25);
+  transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease;
   cursor: pointer;
 }
 
 .primary-action:hover:not(:disabled) {
-  transform: translateY(-2px);
-  filter: brightness(1.1);
-  box-shadow: 0 16px 48px rgba(6, 182, 212, 0.35);
+  transform: translateY(-1px);
+  background: #ffb454;
+  box-shadow: 0 8px 24px rgba(254, 154, 0, 0.35);
 }
 
 .primary-action:disabled {
@@ -214,8 +214,8 @@ a:focus-visible {
   align-items: center;
   gap: 0.5rem;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 0.75rem;
-  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+  background: #111417;
   padding: 0.65rem 1rem;
   color: #e2e8f0;
   font-size: 0.875rem;
@@ -225,8 +225,8 @@ a:focus-visible {
 }
 
 .secondary-action:hover:not(:disabled) {
-  border-color: rgba(34, 211, 238, 0.4);
-  background: rgba(34, 211, 238, 0.1);
+  border-color: rgba(255, 255, 255, 0.24);
+  background: #16181c;
   color: #ffffff;
 }
 
@@ -236,17 +236,16 @@ a:focus-visible {
 }
 
 .panel-shell {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 1.15rem;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.012));
-  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface-1);
   padding: 1.25rem;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
   transition: border-color 200ms ease;
 }
 
 .panel-shell:hover {
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: var(--border-strong);
 }
 
 .source-link {
@@ -335,13 +334,14 @@ a:focus-visible {
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(34, 211, 238, 0.4);
+  background: rgba(254, 154, 0, 0.4);
 }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
 }

@@ -7,12 +7,14 @@ export interface SeverityBadgeProps extends React.HTMLAttributes<HTMLSpanElement
   severity: SeverityLevel;
   size?: "sm" | "md" | "lg";
   showPulse?: boolean;
+  hideLabelOnMobile?: boolean;
 }
 
 export const SeverityBadge: React.FC<SeverityBadgeProps> = ({
   severity,
   size = "md",
   showPulse = true,
+  hideLabelOnMobile = false,
   className = "",
   ...props
 }) => {
@@ -58,7 +60,7 @@ export const SeverityBadge: React.FC<SeverityBadgeProps> = ({
       {...props}
     >
       {icon}
-      <span>{label}</span>
+      <span className={hideLabelOnMobile ? "hidden sm:inline" : ""}>{label}</span>
       {showPulse && isAlerting && (
         <span className="relative flex h-1.5 w-1.5 ml-0.5">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-[#f4526b]" />

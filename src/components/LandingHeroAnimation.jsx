@@ -23,14 +23,14 @@ const BEAT_DETAILS = [
     step: "BEAT 3: REVERSE PROXY TELEMETRY",
     title: "Reverse Proxy & Traffic Logger Intercepts & Measures",
     badge: "SERVER MEASUREMENT",
-    badgeColor: "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
+    badgeColor: "bg-[#2d1f0b] text-[#ffb454] border-[#fe9a00]/40",
     desc: "Every request is metered server-side: precise response latency, payload byte sizes, status codes, and strengthened fingerprint entropy are extracted.",
   },
   {
     step: "BEAT 4: 3-LAYER AI ENGINE",
     title: "Multi-Model Fusion Engine Classifies Traffic",
     badge: "AI INFERENCE",
-    badgeColor: "bg-indigo-500/20 text-indigo-300 border-indigo-500/40",
+    badgeColor: "bg-[var(--surface-3)] text-[#e9edf2] border-white/20",
     desc: "Telemetry passes simultaneously through Random Forest (UNSW-NB15), Online Anomaly Detector, and Rule Correlator to compute an ensemble threat score.",
   },
   {
@@ -76,13 +76,13 @@ export function LandingHeroAnimation() {
   return (
     <div className="w-full max-w-4xl mx-auto my-6 flex flex-col items-center">
       {/* Visual Diagram Frame */}
-      <div className="w-full relative rounded-2xl bg-gradient-to-b from-slate-900/90 via-[#0a1220]/95 to-slate-950 border border-cyan-500/30 shadow-2xl shadow-cyan-950/40 overflow-hidden backdrop-blur-xl p-4 sm:p-6">
+      <div className="w-full relative rounded-2xl bg-[var(--surface-1)] border border-[var(--border)] shadow-xl overflow-hidden p-4 sm:p-6">
         {/* Top Status Bar of Diagram */}
         <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-2 border-b border-white/10 text-xs font-mono">
           <div className="flex items-center space-x-2">
             <span className="flex h-2.5 w-2.5 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#fe9a00] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#fe9a00]"></span>
             </span>
             <span className="text-slate-300 font-bold uppercase tracking-wider">
               SENTINEL FLOW · ARCHITECTURAL DEFENSE PIPELINE
@@ -99,7 +99,7 @@ export function LandingHeroAnimation() {
                   key={i}
                   onClick={() => setCurrentBeat(i)}
                   className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                    i === currentBeat ? "w-5 bg-cyan-400" : "w-1.5 bg-slate-700 hover:bg-slate-500"
+                    i === currentBeat ? "w-5 bg-[#fe9a00]" : "w-1.5 bg-slate-700 hover:bg-slate-500"
                   }`}
                   aria-label={`Jump to Beat ${i + 1}`}
                 />
@@ -118,14 +118,14 @@ export function LandingHeroAnimation() {
             <defs>
               {/* Gradients */}
               <linearGradient id="normalPulseGrad" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.2" />
+                <stop offset="0%" stopColor="#10b981" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#10b981" stopOpacity="0.2" />
               </linearGradient>
               <linearGradient id="attackPulseGrad" x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0%" stopColor="#f43f5e" stopOpacity="1" />
                 <stop offset="100%" stopColor="#fbbf24" stopOpacity="0.4" />
               </linearGradient>
-              <filter id="glowCyan" x="-20%" y="-20%" width="140%" height="140%">
+              <filter id="glowGreen" x="-20%" y="-20%" width="140%" height="140%">
                 <feGaussianBlur stdDeviation="3" result="blur" />
                 <feComposite in="SourceGraphic" in2="blur" operator="over" />
               </filter>
@@ -133,15 +133,19 @@ export function LandingHeroAnimation() {
                 <feGaussianBlur stdDeviation="4" result="blur" />
                 <feComposite in="SourceGraphic" in2="blur" operator="over" />
               </filter>
+              <filter id="glowAmber" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
             </defs>
 
             {/* Background Grid Pattern */}
             <g opacity="0.15">
               {[80, 160, 240, 320, 400, 480, 560, 640, 720, 800, 880].map((x) => (
-                <line key={`x-${x}`} x1={x} y1="20" x2={x} y2="460" stroke="#38bdf8" strokeWidth="0.5" strokeDasharray="3 3" />
+                <line key={`x-${x}`} x1={x} y1="20" x2={x} y2="460" stroke="#334155" strokeWidth="0.5" strokeDasharray="3 3" />
               ))}
               {[80, 160, 240, 320, 400].map((y) => (
-                <line key={`y-${y}`} x1="40" y1={y} x2="920" stroke="#38bdf8" strokeWidth="0.5" strokeDasharray="3 3" />
+                <line key={`y-${y}`} x1="40" y1={y} x2="920" stroke="#334155" strokeWidth="0.5" strokeDasharray="3 3" />
               ))}
             </g>
 
@@ -150,8 +154,8 @@ export function LandingHeroAnimation() {
             <path
               d="M 170 90 C 240 90, 260 210, 320 230"
               fill="none"
-              stroke="#0891b2"
-              strokeWidth="2"
+              stroke="#475569"
+              strokeWidth="1.5"
               strokeDasharray={isAttackerActive ? "4 4" : "none"}
               opacity="0.6"
             />
@@ -159,24 +163,24 @@ export function LandingHeroAnimation() {
             <path
               d="M 170 170 C 240 170, 260 230, 320 240"
               fill="none"
-              stroke="#0891b2"
-              strokeWidth="2"
+              stroke="#475569"
+              strokeWidth="1.5"
               opacity="0.6"
             />
             {/* Client 3 (Adversary or Client) -> Proxy */}
             <path
               d="M 170 270 C 240 270, 260 250, 320 250"
               fill="none"
-              stroke={isAttackerActive ? "#f43f5e" : "#0891b2"}
-              strokeWidth={isAttackerActive ? "3" : "2"}
+              stroke={isAttackerActive ? "#f43f5e" : "#475569"}
+              strokeWidth={isAttackerActive ? "2.5" : "1.5"}
               opacity={isAttackerActive ? "0.9" : "0.6"}
             />
             {/* Client 4 (Benign) -> Proxy */}
             <path
               d="M 170 370 C 240 370, 260 270, 320 260"
               fill="none"
-              stroke="#0891b2"
-              strokeWidth="2"
+              stroke="#475569"
+              strokeWidth="1.5"
               opacity="0.6"
             />
 
@@ -184,14 +188,14 @@ export function LandingHeroAnimation() {
             {!prefersReducedMotion && (
               <>
                 {/* Normal pulses */}
-                <circle r="4" fill="#22d3ee" filter="url(#glowCyan)">
+                <circle r="4" fill="#10b981" filter="url(#glowGreen)">
                   <animateMotion
                     path="M 170 90 C 240 90, 260 210, 320 230"
                     dur="2.4s"
                     repeatCount="indefinite"
                   />
                 </circle>
-                <circle r="4" fill="#22d3ee" filter="url(#glowCyan)">
+                <circle r="4" fill="#10b981" filter="url(#glowGreen)">
                   <animateMotion
                     path="M 170 170 C 240 170, 260 230, 320 240"
                     dur="2.8s"
@@ -199,7 +203,7 @@ export function LandingHeroAnimation() {
                     repeatCount="indefinite"
                   />
                 </circle>
-                <circle r="4" fill="#22d3ee" filter="url(#glowCyan)">
+                <circle r="4" fill="#10b981" filter="url(#glowGreen)">
                   <animateMotion
                     path="M 170 370 C 240 370, 260 270, 320 260"
                     dur="3.1s"
@@ -236,7 +240,7 @@ export function LandingHeroAnimation() {
                     </circle>
                   </>
                 ) : (
-                  <circle r="4" fill="#22d3ee">
+                  <circle r="4" fill="#10b981">
                     <animateMotion
                       path="M 170 270 C 240 270, 260 250, 320 250"
                       dur="2.6s"
@@ -252,12 +256,12 @@ export function LandingHeroAnimation() {
             <path
               d="M 440 260 C 490 260, 540 330, 610 350"
               fill="none"
-              stroke="#06b6d4"
+              stroke="#fe9a00"
               strokeWidth="2.5"
             />
             {/* Animated particles to Target */}
             {!prefersReducedMotion && (
-              <circle r="4" fill="#22d3ee">
+              <circle r="4" fill="#10b981">
                 <animateMotion
                   path="M 440 260 C 490 260, 540 330, 610 350"
                   dur="1.8s"
@@ -325,8 +329,8 @@ export function LandingHeroAnimation() {
             {/* Client 1 */}
             <g transform="translate(30, 65)">
               <rect width="140" height="48" rx="10" fill="#0f172a" stroke="#1e293b" strokeWidth="1.5" />
-              <circle cx="24" cy="24" r="10" fill="#0891b2" opacity="0.2" />
-              <text x="24" y="28" textAnchor="middle" fill="#22d3ee" fontSize="12" fontWeight="bold">01</text>
+              <circle cx="24" cy="24" r="10" fill="#10b981" opacity="0.2" />
+              <text x="24" y="28" textAnchor="middle" fill="#10b981" fontSize="12" fontWeight="bold">01</text>
               <text x="44" y="20" fill="#f8fafc" fontSize="11" fontWeight="bold" fontFamily="Inter, sans-serif">Participant 1</text>
               <text x="44" y="34" fill="#64748b" fontSize="9" fontFamily="JetBrains Mono, monospace">Chrome · 1.2 req/s</text>
             </g>
@@ -334,8 +338,8 @@ export function LandingHeroAnimation() {
             {/* Client 2 */}
             <g transform="translate(30, 145)">
               <rect width="140" height="48" rx="10" fill="#0f172a" stroke="#1e293b" strokeWidth="1.5" />
-              <circle cx="24" cy="24" r="10" fill="#0891b2" opacity="0.2" />
-              <text x="24" y="28" textAnchor="middle" fill="#22d3ee" fontSize="12" fontWeight="bold">02</text>
+              <circle cx="24" cy="24" r="10" fill="#10b981" opacity="0.2" />
+              <text x="24" y="28" textAnchor="middle" fill="#10b981" fontSize="12" fontWeight="bold">02</text>
               <text x="44" y="20" fill="#f8fafc" fontSize="11" fontWeight="bold" fontFamily="Inter, sans-serif">Participant 2</text>
               <text x="44" y="34" fill="#64748b" fontSize="9" fontFamily="JetBrains Mono, monospace">Safari · 0.8 req/s</text>
             </g>
@@ -355,14 +359,14 @@ export function LandingHeroAnimation() {
                 cx="24"
                 cy="25"
                 r="11"
-                fill={isAttackerActive ? "#f43f5e" : "#0891b2"}
+                fill={isAttackerActive ? "#f43f5e" : "#10b981"}
                 opacity={isAttackerActive ? "0.3" : "0.2"}
               />
               <text
                 x="24"
                 y="29"
                 textAnchor="middle"
-                fill={isAttackerActive ? "#fb7185" : "#22d3ee"}
+                fill={isAttackerActive ? "#fb7185" : "#10b981"}
                 fontSize="12"
                 fontWeight="bold"
               >
@@ -393,8 +397,8 @@ export function LandingHeroAnimation() {
             {/* Client 4 */}
             <g transform="translate(30, 345)">
               <rect width="140" height="48" rx="10" fill="#0f172a" stroke="#1e293b" strokeWidth="1.5" />
-              <circle cx="24" cy="24" r="10" fill="#0891b2" opacity="0.2" />
-              <text x="24" y="28" textAnchor="middle" fill="#22d3ee" fontSize="12" fontWeight="bold">04</text>
+              <circle cx="24" cy="24" r="10" fill="#10b981" opacity="0.2" />
+              <text x="24" y="28" textAnchor="middle" fill="#10b981" fontSize="12" fontWeight="bold">04</text>
               <text x="44" y="20" fill="#f8fafc" fontSize="11" fontWeight="bold" fontFamily="Inter, sans-serif">Participant 4</text>
               <text x="44" y="34" fill="#64748b" fontSize="9" fontFamily="JetBrains Mono, monospace">Edge · 1.0 req/s</text>
             </g>
@@ -405,12 +409,12 @@ export function LandingHeroAnimation() {
                 width="120"
                 height="100"
                 rx="14"
-                fill="#0a192f"
-                stroke="#06b6d4"
+                fill="#111417"
+                stroke="#fe9a00"
                 strokeWidth={isProxyInspecting ? "2" : "1"}
-                filter={isProxyInspecting ? "url(#glowCyan)" : "none"}
+                filter={isProxyInspecting ? "url(#glowAmber)" : "none"}
               />
-              <text x="60" y="24" textAnchor="middle" fill="#22d3ee" fontSize="10" fontWeight="bold" fontFamily="JetBrains Mono, monospace">
+              <text x="60" y="24" textAnchor="middle" fill="#fe9a00" fontSize="10" fontWeight="bold" fontFamily="JetBrains Mono, monospace">
                 REVERSE PROXY
               </text>
               <text x="60" y="38" textAnchor="middle" fill="#94a3b8" fontSize="9" fontFamily="JetBrains Mono, monospace">
@@ -420,14 +424,14 @@ export function LandingHeroAnimation() {
 
               {/* Server-Side Telemetry Chips */}
               <g transform="translate(14, 54)">
-                <rect width="92" height="16" rx="4" fill="#032b44" />
-                <text x="46" y="12" textAnchor="middle" fill="#38bdf8" fontSize="8" fontFamily="JetBrains Mono, monospace">
+                <rect width="92" height="16" rx="4" fill="#1a1d21" />
+                <text x="46" y="12" textAnchor="middle" fill="#94a3b8" fontSize="8" fontFamily="JetBrains Mono, monospace">
                   STATUS: 200 / 401
                 </text>
               </g>
               <g transform="translate(14, 74)">
-                <rect width="92" height="16" rx="4" fill="#032b44" />
-                <text x="46" y="12" textAnchor="middle" fill="#38bdf8" fontSize="8" fontFamily="JetBrains Mono, monospace">
+                <rect width="92" height="16" rx="4" fill="#1a1d21" />
+                <text x="46" y="12" textAnchor="middle" fill="#94a3b8" fontSize="8" fontFamily="JetBrains Mono, monospace">
                   LAT: 28ms · 1.4KB
                 </text>
               </g>
@@ -506,7 +510,7 @@ export function LandingHeroAnimation() {
                 x="60"
                 y="54"
                 textAnchor="middle"
-                fill={isAlertFired ? "#fb7185" : isModelAnalyzing ? "#fbbf24" : "#22d3ee"}
+                fill={isAlertFired ? "#fb7185" : isModelAnalyzing ? "#fbbf24" : "#10b981"}
                 fontSize="24"
                 fontWeight="bold"
                 fontFamily="JetBrains Mono, monospace"
@@ -532,17 +536,17 @@ export function LandingHeroAnimation() {
                 width="170"
                 height="75"
                 rx="12"
-                fill="#071b2d"
-                stroke="#0284c7"
+                fill="#111417"
+                stroke="rgba(255,255,255,0.15)"
                 strokeWidth="1.5"
               />
-              <text x="85" y="26" textAnchor="middle" fill="#38bdf8" fontSize="11" fontWeight="bold" fontFamily="Inter, sans-serif">
+              <text x="85" y="26" textAnchor="middle" fill="#e2e8f0" fontSize="11" fontWeight="bold" fontFamily="Inter, sans-serif">
                 Target Application
               </text>
               <text x="85" y="44" textAnchor="middle" fill="#94a3b8" fontSize="8" fontFamily="JetBrains Mono, monospace">
                 kee-crochet-shop.vercel.app
               </text>
-              <rect x="25" y="52" width="120" height="16" rx="4" fill="#032b44" />
+              <rect x="25" y="52" width="120" height="16" rx="4" fill="#1a1d21" />
               <text x="85" y="63" textAnchor="middle" fill="#34d399" fontSize="8" fontWeight="bold" fontFamily="JetBrains Mono, monospace">
                 ✓ SHOP OPERATIONAL
               </text>
@@ -588,7 +592,7 @@ export function LandingHeroAnimation() {
         <div className="mt-4 pt-3 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="space-y-0.5">
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-400">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#fe9a00]">
                 {active.step}
               </span>
               <span className="text-slate-500 text-xs">·</span>
@@ -607,7 +611,7 @@ export function LandingHeroAnimation() {
             </button>
             <button
               onClick={() => setCurrentBeat((prev) => (prev + 1) % TOTAL_BEATS)}
-              className="px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/30 transition"
+              className="px-2.5 py-1 rounded-lg bg-[#fe9a00]/15 border border-[#fe9a00]/40 text-[#ffb454] hover:bg-[#fe9a00]/25 transition"
               title="Next scene"
             >
               Next ▶

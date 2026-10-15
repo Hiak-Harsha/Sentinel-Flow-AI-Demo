@@ -60,7 +60,7 @@ export function LiveEventRateChart({
               {
                 key: "requests",
                 name: "Requests / sec",
-                color: activeAttack ? "#f43f5e" : "#06b6d4",
+                color: activeAttack ? "#f43f5e" : "#fe9a00",
                 area: true,
               },
             ]}
@@ -70,7 +70,7 @@ export function LiveEventRateChart({
 
         <div className="mt-2.5 pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs text-[var(--text-muted)] font-mono">
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-[var(--accent)] inline-block" />
             5-second sliding window telemetry
           </span>
           <span>Sampled at 1 Hz via WebSocket</span>

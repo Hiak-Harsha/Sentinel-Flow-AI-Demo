@@ -14,7 +14,7 @@ export const Sparkline: React.FC<SparklineProps> = ({
   data,
   width = 96,
   height = 28,
-  color = "#22d3ee",
+  color = "#fe9a00",
   fill = true,
   strokeWidth = 1.5,
   className = "",

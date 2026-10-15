@@ -29,7 +29,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
         <button
           type="button"
           onClick={handleCopy}
-          className="flex items-center gap-1 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400 rounded px-1.5 py-0.5"
+          className="flex items-center gap-1 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fe9a00] rounded px-1.5 py-0.5"
           aria-label="Copy code"
         >
           {copied ? (

@@ -52,7 +52,7 @@ export const KeyValueList: React.FC<KeyValueListProps> = ({
               <button
                 type="button"
                 onClick={() => handleCopy(item.key, item.copyable!)}
-                className="text-slate-500 hover:text-cyan-400 transition-colors p-1 rounded hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400"
+                className="text-slate-500 hover:text-[#fe9a00] transition-colors p-1 rounded hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fe9a00]"
                 title="Copy to clipboard"
                 aria-label={`Copy ${item.key}`}
               >

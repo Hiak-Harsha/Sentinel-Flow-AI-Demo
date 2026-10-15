@@ -260,8 +260,8 @@ export function LiveMonitor({
                     <>
                       <defs>
                         <linearGradient id="streamGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.4" />
-                          <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.0" />
+                          <stop offset="0%" stopColor="#fe9a00" stopOpacity="0.4" />
+                          <stop offset="100%" stopColor="#fe9a00" stopOpacity="0.0" />
                         </linearGradient>
                       </defs>
                       {/* Area fill */}
@@ -277,7 +277,7 @@ export function LiveMonitor({
                           .map((p, i) => `${(i / (chartPoints.length - 1)) * 100},${100 - (p.rate / maxRate) * 100}`)
                           .join(" ")}
                         fill="none"
-                        stroke="#22d3ee"
+                        stroke="#fe9a00"
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"

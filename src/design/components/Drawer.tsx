@@ -48,13 +48,13 @@ export const Drawer: React.FC<DrawerProps> = ({
     <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-200 animate-in fade-in"
+        className="fixed inset-0 bg-black/80 transition-opacity duration-200 animate-in fade-in"
         onClick={onClose}
       />
 
       {/* Panel */}
       <div
-        className={`fixed z-50 bg-slate-900 border-slate-700/80 shadow-2xl flex flex-col transition-transform duration-200 animate-in ${
+        className={`fixed z-50 bg-[var(--surface-1)] border-[var(--border)] shadow-2xl flex flex-col transition-transform duration-200 animate-in ${
           side === "right"
             ? "slide-in-from-right"
             : side === "left"
@@ -62,17 +62,17 @@ export const Drawer: React.FC<DrawerProps> = ({
             : "slide-in-from-bottom"
         } ${positionClasses}`}
       >
-        <div className="p-5 border-b border-slate-800/80 flex items-center justify-between shrink-0">
+        <div className="p-5 border-b border-[var(--border-subtle)] flex items-center justify-between shrink-0">
           <div>
-            <h3 className="text-base font-bold text-slate-100 tracking-tight">{title}</h3>
+            <h3 className="text-base font-bold text-[var(--text-primary)] tracking-tight">{title}</h3>
             {description && (
-              <p className="text-xs text-slate-400 mt-0.5">{description}</p>
+              <p className="text-xs text-[var(--text-muted)] mt-0.5">{description}</p>
             )}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fe9a00]"
             aria-label="Close drawer"
           >
             <X className="w-5 h-5" />

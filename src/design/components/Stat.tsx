@@ -9,7 +9,7 @@ export interface StatProps {
   changePeriod?: string; // e.g. "vs last 15m"
   icon?: React.ReactNode;
   sparkline?: React.ReactNode;
-  variant?: "default" | "critical" | "warning" | "success" | "cyan";
+  variant?: "default" | "critical" | "warning" | "success" | "brand";
   className?: string;
 }
 
@@ -25,15 +25,15 @@ export const Stat: React.FC<StatProps> = ({
   className = "",
 }) => {
   const accentBorder = {
-    default: "border-slate-800 hover:border-slate-700",
+    default: "border-white/10 hover:border-white/20",
     critical: "border-rose-900/50 hover:border-rose-700/60 bg-rose-950/20",
     warning: "border-amber-900/50 hover:border-amber-700/60 bg-amber-950/20",
     success: "border-emerald-900/50 hover:border-emerald-700/60 bg-emerald-950/20",
-    cyan: "border-cyan-900/50 hover:border-cyan-700/60 bg-cyan-950/20",
+    brand: "border-amber-500/30 hover:border-amber-500/50 bg-amber-950/20",
   }[variant];
 
   return (
-    <div className={`p-4 rounded-xl bg-slate-900/70 border backdrop-blur-sm transition-all duration-200 ${accentBorder} ${className}`}>
+    <div className={`p-4 rounded-xl bg-[#111417] border transition-all duration-200 ${accentBorder} ${className}`}>
       <div className="flex items-center justify-between gap-2 mb-2">
         <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">{label}</span>
         {icon && <span className="text-slate-400">{icon}</span>}

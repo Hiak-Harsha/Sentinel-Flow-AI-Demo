@@ -16,6 +16,7 @@ from .targets import router as targets_router
 from .ws_ticket import router as ws_ticket_router
 from .auth import router as auth_router
 from .metrics import router as metrics_router
+from .operator import router as operator_router
 from app.identity.routes import router as identity_router
 from app.pipeline.routes import router as pipeline_router
 
@@ -26,6 +27,7 @@ v1_router.include_router(metrics_router)
 v1_router.include_router(health_router)
 v1_router.include_router(overview_router)
 v1_router.include_router(sessions_router)
+v1_router.include_router(operator_router)
 v1_router.include_router(detection_router)
 v1_router.include_router(models_router)
 v1_router.include_router(orchestrator_router)

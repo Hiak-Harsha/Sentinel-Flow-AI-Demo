@@ -29,12 +29,16 @@ def _generate_join_code() -> str:
     return f"SF-{part1}{part2}"
 
 
+VALID_EXERCISE_PHASES = ["LOBBY", "BASELINE", "EXERCISE_OPEN", "DEBRIEF", "CLOSED"]
+
+
 class SessionService:
     def __init__(self, repo: SessionRepository | None = None) -> None:
         self.repo = repo or SessionRepository()
         self.active_session: dict[str, Any] | None = None
         self.participants: dict[str, dict[str, Any]] = {}
         self.past_sessions: list[dict[str, Any]] = []
+        self.session_authorizations: dict[str, dict[str, Any]] = {}
 
     def _persist_async(self, coro) -> None:
         """Schedule a database write task if an event loop is running."""
@@ -53,12 +57,14 @@ class SessionService:
         try:
             db_session = await self.repo.get_active_session()
             if db_session:
+                raw_phase = getattr(db_session, "phase", None) or "LOBBY"
+                phase = raw_phase if raw_phase in VALID_EXERCISE_PHASES else "LOBBY"
                 self.active_session = {
                     "id": db_session.id,
                     "join_code": db_session.join_code,
                     "created_at": db_session.created_at.isoformat().replace("+00:00", "Z"),
                     "status": db_session.status.upper(),
-                    "phase": "WAITING_FOR_USERS" if not db_session.participants else "BASELINE_COLLECTION",
+                    "phase": phase,
                     "threat_level": "LOW",
                     "controlled_target": db_session.controlled_target_device_id,
                     "controlled_target_device": db_session.controlled_target_device_id,
@@ -101,7 +107,7 @@ class SessionService:
             "join_code": join_code,
             "created_at": now,
             "status": "MONITORING",
-            "phase": "WAITING_FOR_USERS",
+            "phase": "LOBBY",
             "threat_level": "LOW",
             "controlled_target": None,
             "controlled_target_device": None,
@@ -137,7 +143,7 @@ class SessionService:
             "join_code": join_code,
             "created_at": now,
             "status": "MONITORING",
-            "phase": "WAITING_FOR_USERS",
+            "phase": "LOBBY",
             "threat_level": "LOW",
             "controlled_target": None,
             "controlled_target_device": None,
@@ -197,8 +203,6 @@ class SessionService:
         }
 
         self.participants[participant["id"]] = participant
-        if session["phase"] == "WAITING_FOR_USERS":
-            session["phase"] = "BASELINE_COLLECTION"
 
         self._persist_async(
             self.repo.add_participant(
@@ -250,8 +254,6 @@ class SessionService:
         }
 
         self.participants[participant["id"]] = participant
-        if session["phase"] == "WAITING_FOR_USERS":
-            session["phase"] = "BASELINE_COLLECTION"
 
         await self.repo.add_participant(
             participant_id=participant_id,
@@ -321,3 +323,112 @@ class SessionService:
 
     def get_history(self) -> list[dict[str, Any]]:
         return list(reversed(self.past_sessions))
+
+    def transition_phase(self, new_phase: str, operator_id: str = "Operator") -> dict[str, Any]:
+        """Advance session phase along the explicit state machine: LOBBY -> BASELINE -> EXERCISE_OPEN -> DEBRIEF -> CLOSED."""
+        norm_phase = new_phase.strip().upper()
+        if norm_phase not in VALID_EXERCISE_PHASES:
+            raise ValueError(
+                f"Invalid exercise phase: '{new_phase}'. Must be one of {VALID_EXERCISE_PHASES}."
+            )
+
+        session = self.get_current_session()
+        old_phase = session.get("phase", "LOBBY")
+        session["phase"] = norm_phase
+        session["phase_updated_at"] = _timestamp()
+        session["phase_updated_by"] = operator_id
+
+        self._persist_async(
+            self.repo.save_session(
+                session_id=session["id"],
+                session_code=f"session_{session['id'][:8]}",
+                join_code=session["join_code"],
+                status="active" if norm_phase != "CLOSED" else "closed",
+                controlled_target_device_id=session.get("controlled_target"),
+            )
+        )
+        logger.info(
+            "Session %s phase changed: %s -> %s by %s",
+            session["id"][:8],
+            old_phase,
+            norm_phase,
+            operator_id,
+        )
+        return session
+
+    def get_authorization_record(self, session_id: str | None = None) -> dict[str, Any]:
+        """Retrieve the operator authorization record for the session."""
+        session = self.get_current_session()
+        sid = session_id or session["id"]
+        if sid in self.session_authorizations:
+            return self.session_authorizations[sid]
+
+        from app.config import DEFAULT_TARGET_URL
+        default_rec = {
+            "session_id": sid,
+            "target_origin": DEFAULT_TARGET_URL,
+            "confirmed_ownership": True,
+            "enabled_scenarios": [
+                "credential_stuffing",
+                "port_scan",
+                "burst_dos",
+                "canary_probe",
+                "scraping",
+            ],
+            "quota_per_participant": 5,
+            "effects_per_run_max": 50,
+            "global_concurrency_cap": 8,
+            "reveal_mode": "after_run",
+            "authorized_by": "Lab Administrator",
+            "authorized_at_iso": _timestamp(),
+            "consent_token": "",
+        }
+        self.session_authorizations[sid] = default_rec
+        return default_rec
+
+    def set_authorization_record(
+        self,
+        auth_data: dict[str, Any],
+        operator_id: str = "Operator",
+    ) -> dict[str, Any]:
+        """Update operator authorization parameters (target, enabled scenarios, quotas, concurrency, reveal mode)."""
+        session = self.get_current_session()
+        sid = session["id"]
+        current = self.get_authorization_record(sid)
+
+        updated = {
+            **current,
+            **auth_data,
+            "session_id": sid,
+            "authorized_by": operator_id,
+            "authorized_at_iso": _timestamp(),
+        }
+        self.session_authorizations[sid] = updated
+        logger.info(
+            "Session %s authorization updated by %s (target=%s, scenarios=%d, concurrency=%d)",
+            sid[:8],
+            operator_id,
+            updated.get("target_origin"),
+            len(updated.get("enabled_scenarios", [])),
+            updated.get("global_concurrency_cap", 8),
+        )
+        return updated
+
+    def suspend_participant(self, identifier: str, operator_id: str = "Operator") -> dict[str, Any]:
+        """Suspend a participant's intrusion tools."""
+        p = self.get_participant_by_token_or_id(identifier)
+        if not p:
+            raise ValueError(f"Participant '{identifier}' not found in active session.")
+
+        p["status"] = "SUSPENDED"
+        p["activity"] = f"Suspended by {operator_id}"
+        p["suspended_at"] = _timestamp()
+        p["suspended_by"] = operator_id
+        logger.warning("Participant %s (%s) was SUSPENDED by %s", p["alias"], p["device_id"], operator_id)
+        return p
+
+    def is_participant_suspended(self, identifier: str) -> bool:
+        """Check whether participant has been suspended by operator."""
+        p = self.get_participant_by_token_or_id(identifier)
+        return bool(p and p.get("status") == "SUSPENDED")
+

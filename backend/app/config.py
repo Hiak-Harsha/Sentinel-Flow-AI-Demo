@@ -25,6 +25,7 @@ EVIDENCE_LEDGER_PATH = RUNTIME_DIR / "evidence_ledger.db"
 DEFAULT_OPERATOR_PASSCODE = "SF-OPERATOR-2026"
 DEFAULT_OPERATOR_SECRET = "sentinel-operator-hmac-sha256-key-2026"
 DEFAULT_WEBHOOK_SECRET = "sentinel-lab-webhook-secret-2026"
+DEFAULT_INTERNAL_HMAC_SECRET = "sentinel-internal-actor-hmac-secret-2026"
 
 
 class Settings(BaseSettings):
@@ -51,6 +52,14 @@ class Settings(BaseSettings):
     operator_passcode: str = Field(default=DEFAULT_OPERATOR_PASSCODE, alias="SENTINEL_OPERATOR_PASSCODE")
     operator_secret: str = Field(default=DEFAULT_OPERATOR_SECRET, alias="SENTINEL_OPERATOR_SECRET")
     webhook_secret: str = Field(default=DEFAULT_WEBHOOK_SECRET, alias="SENTINEL_WEBHOOK_SECRET")
+    internal_hmac_secret: str = Field(
+        default=DEFAULT_INTERNAL_HMAC_SECRET,
+        alias="SENTINEL_INTERNAL_HMAC_SECRET",
+    )
+    dev_allow_loopback_bypass: bool = Field(
+        default=False,
+        alias="SENTINEL_DEV_ALLOW_LOOPBACK_BYPASS",
+    )
     db_url: str | None = Field(default=None, alias="DATABASE_URL")
     redis_url: str = Field(default="redis://localhost:6379/0", alias="REDIS_URL")
     enable_host_sensor: bool = Field(default=False, alias="SENTINEL_ENABLE_HOST_SENSOR")
@@ -85,6 +94,8 @@ SENTINEL_ENV = settings.env
 OPERATOR_PASSCODE = settings.operator_passcode
 OPERATOR_SECRET_KEY = settings.operator_secret
 WEBHOOK_SHARED_SECRET = settings.webhook_secret
+INTERNAL_HMAC_SECRET = settings.internal_hmac_secret
+DEV_ALLOW_LOOPBACK_BYPASS = settings.dev_allow_loopback_bypass
 ALLOWED_ORIGINS = settings.get_cors_origins()
 DEFAULT_TARGET_URL = settings.target_url
 PROXY_TIMEOUT_SECONDS = settings.proxy_timeout
@@ -100,6 +111,8 @@ def validate_safety_configuration() -> None:
     """Ensure production environments refuse default or placeholder secrets."""
     env = os.getenv("SENTINEL_ENV", settings.env).strip().lower()
     if env in ("production", "prod"):
+        if getattr(settings, "dev_allow_loopback_bypass", False):
+            raise RuntimeError("Loopback bypass cannot be enabled in production environment.")
         insecure: list[str] = []
         passcode = os.getenv("SENTINEL_OPERATOR_PASSCODE", settings.operator_passcode)
         secret = os.getenv("SENTINEL_OPERATOR_SECRET", settings.operator_secret)

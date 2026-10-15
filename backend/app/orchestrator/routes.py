@@ -28,31 +28,71 @@ def get_run_manager() -> RunManager:
     return _run_manager
 
 
+import logging
+from app.config import settings
+from app.auth.security import decode_access_token
+
+logger = logging.getLogger("sentinel_flow.orchestrator.routes")
+
+
 def verify_operator_access(request: Request) -> None:
-    """Server-side verification of operator role."""
+    """Server-side verification of operator role with zero unauthenticated loopback bypass."""
+    raw_auth = request.headers.get("Authorization", "")
     token = (
         request.headers.get("X-Identity-Token")
-        or request.headers.get("Authorization", "").replace("Bearer ", "").strip()
+        or (raw_auth[7:].strip() if raw_auth.startswith("Bearer ") else raw_auth.strip())
         or request.cookies.get("sentinel_session")
     )
-    # Check session role
+
+    if not token:
+        # Dev shortcut strictly gated behind SENTINEL_ENV=dev AND DEV_ALLOW_LOOPBACK_BYPASS=True
+        if settings.is_dev and getattr(settings, "dev_allow_loopback_bypass", False):
+            client_ip = request.client.host if request.client else ""
+            if client_ip in ("127.0.0.1", "localhost", "::1", "testserver", "testclient"):
+                logger.warning("DEV_ALLOW_LOOPBACK_BYPASS active: granting operator access to %s", client_ip)
+                return
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required: operator privileges required.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # 1. Try decoding as JWT access token
+    try:
+        claims = decode_access_token(token)
+        role = claims.get("role", "")
+        if role in ("operator", "admin"):
+            return
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Operator privileges required; calling role '{role}' is forbidden.",
+        )
+    except HTTPException:
+        raise
+    except Exception:
+        pass
+
+    # 2. Check session manager for registered session tokens
     try:
         from app.identity.routes import get_session_manager
         sm = get_session_manager()
         session = sm.validate_token(token) if token else None
-        if session and session.role == "operator":
+        if session and session.role in ("operator", "admin"):
             return
+        if session:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Operator privileges required; calling role '{session.role}' is forbidden.",
+            )
+    except HTTPException:
+        raise
     except Exception:
         pass
 
-    # In local development / classroom setting, permit if from loopback with operator intent
-    client_ip = request.client.host if request.client else "127.0.0.1"
-    if client_ip in ("127.0.0.1", "localhost", "::1", "testserver", "testclient"):
-        return
-
     raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail="Operator privileges required to execute orchestration actions.",
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid or unverified authentication token.",
+        headers={"WWW-Authenticate": "Bearer error=\"invalid_token\""},
     )
 
 
@@ -115,7 +155,7 @@ class ConsentRequest(BaseModel):
 
 class StartRunRequest(BaseModel):
     scenario: str = Field(..., description="Scenario ID: credential_stuffing, port_scan, burst_dos, canary_probe, scraping")
-    target_origin: str = Field(..., description="Private lab target URL")
+    target_origin: str = Field(default="http://127.0.0.1:8000", description="Private lab target URL")
     accounts: list[dict[str, str]] | None = None
     duration_seconds: int = Field(default=10, ge=5, le=30)
     requests_per_second: int = Field(default=15, ge=1, le=20)

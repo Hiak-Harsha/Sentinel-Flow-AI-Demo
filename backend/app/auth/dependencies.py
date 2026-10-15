@@ -27,6 +27,16 @@ _http_bearer = HTTPBearer(auto_error=False)
 
 
 @dataclass
+class Actor:
+    """Authenticated security actor with role and session binding (Phase 1)."""
+
+    identity_id: str
+    role: str
+    session_id: str | None = None
+    alias: str = ""
+
+
+@dataclass
 class UserContext:
     """Authenticated user context carrying identity attributes and security role."""
 
@@ -35,6 +45,7 @@ class UserContext:
     role: str
     authenticated: bool = True
     token_type: str = "jwt"
+    session_id: str | None = None
 
     def has_role(self, minimum_role: str) -> bool:
         user_rank = ROLE_RANKS.get(self.role, 0)
@@ -82,6 +93,7 @@ async def get_current_user(
             role=claims.get("role", "participant"),
             authenticated=True,
             token_type="jwt",
+            session_id=claims.get("session_id"),
         )
     except jwt.ExpiredSignatureError:
         raise HTTPException(
@@ -106,6 +118,7 @@ async def get_current_user(
                 role=session.role,
                 authenticated=True,
                 token_type="opaque",
+                session_id=getattr(session, "session_id", None),
             )
     except Exception:
         pass
@@ -130,6 +143,50 @@ def require_authenticated() -> Callable[[UserContext], UserContext]:
         return user
 
     return _checker
+
+
+def require_role(*roles: str) -> Callable[[UserContext], Actor]:
+    """Dependency enforcing role-based authorization and returning an Actor(identity_id, role, session_id).
+    
+    Returns 401 if unauthenticated.
+    Returns 403 if role is not permitted.
+    Admin is permitted on operator routes, but NOT on participant-only attack routes.
+    """
+    allowed_roles = set(roles)
+
+    async def _actor_checker(user: UserContext = Depends(get_current_user)) -> Actor:
+        if not user.authenticated or user.role == "anonymous":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required to access this resource.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        # Admin is automatically allowed for operator/analyst routes unless explicitly participant-only
+        effective_allowed = set(allowed_roles)
+        if "admin" not in effective_allowed and any(r in effective_allowed for r in ("operator", "analyst")):
+            effective_allowed.add("admin")
+
+        if user.role not in effective_allowed:
+            logger.warning(
+                "Access denied for actor %s (role: %s); requires one of %s",
+                user.identity_id,
+                user.role,
+                roles,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Forbidden: Role '{user.role}' lacks sufficient privileges for this operation.",
+            )
+
+        return Actor(
+            identity_id=user.identity_id,
+            role=user.role,
+            session_id=user.session_id,
+            alias=user.alias,
+        )
+
+    return _actor_checker
 
 
 def require_roles(allowed_roles: list[str]) -> Callable[[UserContext], UserContext]:

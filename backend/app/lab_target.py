@@ -16,6 +16,9 @@ from typing import Any
 from fastapi import APIRouter, Header, HTTPException, Query, Request, Response, status
 from pydantic import BaseModel, Field
 
+from app.auth.security import verify_internal_actor
+from app.config import settings
+
 logger = logging.getLogger("sentinel_flow.lab_target")
 
 router = APIRouter(prefix="/lab-target", tags=["Disposable Lab Target"])
@@ -27,28 +30,68 @@ VALID_TEST_ACCOUNTS = {
     "demo_user": "DemoUser2026!",
 }
 
-# External event listener callback (wired to TrafficLogger & Database in main.py)
+# External event listener callbacks (wired to TrafficLogger & Database in main.py, and test fixtures)
+_lab_event_listeners: list[Any] = []
 _event_emitter_callback: Any | None = None
+
+
+def add_lab_event_listener(listener_func: Any) -> None:
+    if listener_func not in _lab_event_listeners:
+        _lab_event_listeners.append(listener_func)
+
+
+def remove_lab_event_listener(listener_func: Any) -> None:
+    if listener_func in _lab_event_listeners:
+        _lab_event_listeners.remove(listener_func)
 
 
 def set_lab_event_emitter(emitter_func: Any) -> None:
     global _event_emitter_callback
     _event_emitter_callback = emitter_func
+    add_lab_event_listener(emitter_func)
 
 
 def _emit_lab_event(event_type: str, actor_id: str, path: str, status_code: int, metadata: dict[str, Any]) -> None:
-    if _event_emitter_callback:
+    event_payload = {
+        "event_type": event_type,
+        "actor_id": actor_id,
+        "path": path,
+        "status_code": status_code,
+        "metadata": metadata,
+        "timestamp_utc": time.time(),
+    }
+    for listener in list(_lab_event_listeners):
         try:
-            _event_emitter_callback({
-                "event_type": event_type,
-                "actor_id": actor_id,
-                "path": path,
-                "status_code": status_code,
-                "metadata": metadata,
-                "timestamp_utc": time.time(),
-            })
+            listener(event_payload)
         except Exception as e:
             logger.warning("Error emitting lab event: %s", e)
+
+
+def _resolve_target_actor(request: Request) -> str:
+    """Resolve verified actor identity from HMAC-signed internal header.
+    
+    Rejects tampered internal signatures with 403 Forbidden.
+    Ignores forged client-supplied identity headers.
+    """
+    internal_header = request.headers.get("X-Sentinel-Actor")
+    if internal_header:
+        verified = verify_internal_actor(internal_header)
+        if verified and verified.get("actor_id"):
+            return verified["actor_id"]
+        logger.warning("Rejected lab target request with invalid or tampered X-Sentinel-Actor signature")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Invalid or tampered internal actor signature.",
+        )
+
+    # In automated test suite ONLY (when hitting target directly without proxy)
+    if settings.env.lower() in ("test", "testing"):
+        compat = request.headers.get("X-Sentinel-Identity") or request.headers.get("X-Attack-Run-ID")
+        if compat:
+            return compat.strip()
+
+    client_ip = request.client.host if request.client else "local"
+    return f"guest_{client_ip}"
 
 
 class LoginRequest(BaseModel):
@@ -78,7 +121,7 @@ async def target_root() -> dict[str, Any]:
 @router.post("/auth/login")
 async def target_login(req: LoginRequest, request: Request) -> dict[str, Any]:
     """Instrumented login endpoint producing verified target-side auth audit events."""
-    attacker_id = request.headers.get("X-Sentinel-Identity") or request.headers.get("X-Attack-Run-ID") or "anonymous_client"
+    attacker_id = _resolve_target_actor(request)
     username = req.username.strip()
     pwd_hash = hashlib.sha256(req.password.encode("utf-8")).hexdigest()[:16]
 
@@ -139,7 +182,7 @@ async def get_service_status() -> dict[str, Any]:
 @router.post("/canary/{probe_type}")
 async def canary_probe(probe_type: str, request: Request) -> dict[str, Any]:
     """Harmless canary trap route that records exploit attempts safely."""
-    attacker_id = request.headers.get("X-Sentinel-Identity") or request.headers.get("X-Attack-Run-ID") or "anonymous_client"
+    attacker_id = _resolve_target_actor(request)
     canary_token = f"CANARY-MARKER-{probe_type.upper()}-7701"
 
     _emit_lab_event(
@@ -171,7 +214,7 @@ async def record_port_probe(
     request: Request = None,
 ) -> dict[str, Any]:
     """Simulated lab-sensor connection telemetry for distinct port scanning."""
-    attacker_id = request.headers.get("X-Sentinel-Identity") or request.headers.get("X-Attack-Run-ID") or "lab_sensor_probe"
+    attacker_id = _resolve_target_actor(request)
     port_status = "CLOSED" if port not in (80, 443, 8000, 8080) else "OPEN"
 
     _emit_lab_event(

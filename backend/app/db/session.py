@@ -41,6 +41,7 @@ def get_engine() -> AsyncEngine:
         connect_args: dict[str, Any] = {}
         if url.startswith("sqlite"):
             from sqlalchemy.pool import NullPool
+            from sqlalchemy import event
 
             connect_args["check_same_thread"] = False
             connect_args["timeout"] = 30.0
@@ -51,6 +52,15 @@ def get_engine() -> AsyncEngine:
                 echo=False,
                 future=True,
             )
+
+            @event.listens_for(_engine.sync_engine, "connect")
+            def _set_sqlite_pragma(dbapi_connection, connection_record):
+                cursor = dbapi_connection.cursor()
+                try:
+                    cursor.execute("PRAGMA busy_timeout = 30000;")
+                    cursor.execute("PRAGMA foreign_keys = ON;")
+                finally:
+                    cursor.close()
         else:
             _engine = create_async_engine(
                 url,

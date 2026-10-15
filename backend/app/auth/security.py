@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import base64
 import hashlib
+import hmac
+import json
 import logging
 import os
 import secrets
@@ -320,3 +323,98 @@ class LoginRateLimiter:
 
 
 login_rate_limiter = LoginRateLimiter(max_failures=5, lockout_seconds=60.0)
+
+
+# ============================================================================
+# Signed Internal Actor Header & Run Token Functions (Phase 1 & 2)
+# ============================================================================
+
+def sign_internal_actor(
+    *,
+    actor_id: str,
+    role: str = "participant",
+    session_id: str | None = None,
+    run_id: str | None = None,
+) -> str:
+    """Create an HMAC-SHA256 signed internal actor token for proxy -> target forwarding.
+    
+    Format: base64url(json_payload).hmac_signature
+    """
+    now = int(time.time())
+    payload_dict = {
+        "act": actor_id,
+        "rol": role,
+        "sid": session_id or "",
+        "rid": run_id or "",
+        "iat": now,
+        "nonce": secrets.token_hex(8),
+    }
+    payload_json = json.dumps(payload_dict, separators=(",", ":")).encode("utf-8")
+    payload_b64 = base64.urlsafe_b64encode(payload_json).decode("ascii").rstrip("=")
+
+    secret = settings.internal_hmac_secret.encode("utf-8")
+    sig = hmac.new(secret, payload_b64.encode("ascii"), hashlib.sha256).hexdigest()
+    return f"{payload_b64}.{sig}"
+
+
+def verify_internal_actor(signed_header: str | None) -> dict[str, Any] | None:
+    """Verify HMAC signature and freshness of an internal actor header.
+    
+    Returns payload dict if valid and within 300s clock skew window, or None if invalid/expired.
+    """
+    if not signed_header or "." not in signed_header:
+        return None
+    try:
+        payload_b64, sig = signed_header.strip().split(".", 1)
+        secret = settings.internal_hmac_secret.encode("utf-8")
+        expected_sig = hmac.new(secret, payload_b64.encode("ascii"), hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(sig, expected_sig):
+            return None
+
+        # Add padding back for base64 decode
+        padded = payload_b64 + "=" * (-len(payload_b64) % 4)
+        payload_bytes = base64.urlsafe_b64decode(padded.encode("ascii"))
+        payload = json.loads(payload_bytes.decode("utf-8"))
+
+        # Check freshness (max 300 seconds)
+        iat = payload.get("iat", 0)
+        if abs(time.time() - iat) > 300:
+            return None
+
+        return {
+            "actor_id": payload.get("act", "unknown"),
+            "role": payload.get("rol", "participant"),
+            "session_id": payload.get("sid") or None,
+            "run_id": payload.get("rid") or None,
+        }
+    except Exception:
+        return None
+
+
+def mint_run_token(run_id: str, participant_identity_id: str, ttl_seconds: int = 120) -> str:
+    """Generate a short-lived token binding an attack run to an authenticated participant."""
+    now = int(time.time())
+    payload = {
+        "rid": run_id,
+        "sub": participant_identity_id,
+        "iat": now,
+        "exp": now + ttl_seconds,
+        "typ": "run_token",
+    }
+    return jwt.encode(payload, settings.operator_secret, algorithm="HS256")
+
+
+def verify_run_token(token: str | None, run_id: str) -> str | None:
+    """Validate a run token against the requested run_id. Returns participant_identity_id or None."""
+    if not token:
+        return None
+    try:
+        claims = jwt.decode(token.strip(), settings.operator_secret, algorithms=["HS256"])
+        if claims.get("typ") != "run_token":
+            return None
+        if claims.get("rid") != run_id:
+            return None
+        return claims.get("sub")
+    except Exception:
+        return None
+

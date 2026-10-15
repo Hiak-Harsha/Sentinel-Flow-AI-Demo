@@ -289,6 +289,11 @@ class AlertManager:
         self._active_incidents[incident_id] = incident
         self._group_index[group_key] = incident_id
         self._history.append(incident)
+        try:
+            from app.observability.metrics import record_alert_raised
+            record_alert_raised(severity=new_threat_level, scenario=primary_technique)
+        except Exception:
+            pass
 
         logger.warning(
             "RAISED INCIDENT [%s] %s for %s (Score: %.2f, Technique: %s)",

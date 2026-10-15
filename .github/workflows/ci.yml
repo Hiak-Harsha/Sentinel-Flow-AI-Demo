@@ -1,0 +1,128 @@
+name: Sentinel Flow CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'upgrade/**'
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff mypy
+          pip install -r backend/requirements.txt
+
+      - name: Run Ruff Linter
+        run: |
+          ruff check backend/app
+
+      - name: Install Node dependencies
+        run: |
+          npm ci
+
+      - name: Run TypeScript typecheck
+        run: |
+          npx tsc --noEmit
+
+  backend-tests:
+    name: Backend Tests & Coverage (>= 80%)
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt pytest-cov hypothesis
+
+      - name: Run Pytest with Hypothesis & Domain Coverage Enforcement
+        env:
+          PYTHONPATH: ".:backend"
+          SENTINEL_ENV: "test"
+          DATABASE_URL: "sqlite+aiosqlite:///./test_sentinel.db"
+          REDIS_URL: "redis://localhost:6379/0"
+        run: |
+          pytest -v \
+            --cov=app.detection \
+            --cov=app.pipeline \
+            --cov=app.orchestrator \
+            --cov=app.identity \
+            --cov-fail-under=80 \
+            backend/tests
+
+  frontend-build:
+    name: Frontend Build & Asset Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Node dependencies
+        run: |
+          npm ci
+
+      - name: Build production bundle
+        run: |
+          npm run build
+
+  docker-compose-validation:
+    name: Docker Compose Syntax & Service Configuration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate Docker Compose Configuration
+        run: |
+          docker compose config

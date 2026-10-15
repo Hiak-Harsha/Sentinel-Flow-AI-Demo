@@ -185,6 +185,12 @@ class WebSocketManager:
             identity_id=auth_data.get("identity_id"),
         )
         self.clients.add(client)
+        try:
+            from app.observability.metrics import record_ws_connection
+            for ch in client.channels:
+                record_ws_connection(channel=ch, role=client.role, delta=1)
+        except Exception:
+            pass
         logger.info(
             "ws_client_connected",
             role=client.role,
@@ -196,6 +202,12 @@ class WebSocketManager:
     def disconnect(self, client: WsClientConnection) -> None:
         client.is_active = False
         self.clients.discard(client)
+        try:
+            from app.observability.metrics import record_ws_connection
+            for ch in client.channels:
+                record_ws_connection(channel=ch, role=client.role, delta=-1)
+        except Exception:
+            pass
         logger.info("ws_client_disconnected", remaining_clients=len(self.clients))
 
     def broadcast(

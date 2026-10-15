@@ -99,6 +99,12 @@ class InMemoryEventBus:
             return False
 
         self._published_count += 1
+        try:
+            from app.observability.metrics import record_event_ingested
+            record_event_ingested(source=event.source, provenance=event.provenance)
+        except Exception:
+            pass
+
         for queue in self._queues.values():
             try:
                 queue.put_nowait(event)

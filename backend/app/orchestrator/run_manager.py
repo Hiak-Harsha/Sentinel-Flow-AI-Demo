@@ -100,6 +100,18 @@ class RunManager:
         """Return ordered list of per-request effect events for run (up to 500)."""
         return self._effect_timelines.get(run_id, [])
 
+    def get_status(self) -> dict[str, Any]:
+        """Return status of orchestrator, active runs, and emergency stop."""
+        active_count = sum(1 for r in self._runs.values() if r.status == "RUNNING")
+        return {
+            "emergency_stop": self.emergency_stop_tripped,
+            "emergency_stop_tripped": self.emergency_stop_tripped,
+            "active_runs_count": active_count,
+            "total_runs_count": len(self._runs),
+            "allowed_origins": getattr(self.enforcer.allowlist, "allowed_origins", []),
+            "consent_active": len(self.consent_gate._audit_log) > 0,
+        }
+
     def emergency_stop(self) -> dict[str, Any]:
         """Trips the emergency circuit breaker and halts all active running scenarios immediately."""
         self.emergency_stop_tripped = True

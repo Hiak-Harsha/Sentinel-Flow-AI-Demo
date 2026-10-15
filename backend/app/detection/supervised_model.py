@@ -140,6 +140,15 @@ class SupervisedClassifier:
         try:
             probabilities = model.predict_proba(df)[0]
             latency_ms = (time.perf_counter() - t0) * 1000.0
+            try:
+                from app.observability.metrics import record_inference_latency
+                record_inference_latency(
+                    model=getattr(self, "model_name", None) or "production_classifier",
+                    stage="production",
+                    duration_seconds=latency_ms / 1000.0,
+                )
+            except Exception:
+                pass
 
             # Target class index (1 = Attack)
             class_pos = {int(label): i for i, label in enumerate(model.classes_)}

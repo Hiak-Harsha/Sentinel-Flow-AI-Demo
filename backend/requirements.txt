@@ -18,3 +18,5 @@ redis>=5.0.0
 psutil>=5.9.0
 pyjwt>=2.8.0
 argon2-cffi>=23.1.0
+prometheus-client>=0.20.0
+hypothesis>=6.0.0

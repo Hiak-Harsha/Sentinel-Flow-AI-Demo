@@ -538,7 +538,28 @@ app.add_middleware(
 app.middleware("http")(request_id_middleware)
 app.middleware("http")(security_headers_middleware)
 app.middleware("http")(request_size_limit_middleware)
+
+
+@app.middleware("http")
+async def metrics_middleware(request, call_next):
+    from app.observability.metrics import record_http_request
+    t0 = time.perf_counter()
+    response = await call_next(request)
+    duration = time.perf_counter() - t0
+    record_http_request(request.method, request.url.path, response.status_code, duration)
+    return response
+
+
 register_error_handlers(app)
+
+
+@app.get("/metrics", include_in_schema=False)
+def prometheus_metrics():
+    from app.observability.metrics import get_metrics_payload
+    from fastapi import Response
+    content, content_type = get_metrics_payload()
+    return Response(content=content, media_type=content_type)
+
 
 # Canonical API v1
 app.include_router(v1_router)
